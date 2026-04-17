@@ -12,12 +12,13 @@ export const PRODUCTION_SITE_URL = "https://amentiaiaffiliates.online";
 
 /**
  * Domain specifically for generated site previews (the /p/... pages we share
- * with prospects). Kept separate from the app domain so marketing links and
- * cold outreach go to a clean, client-facing URL.
+ * with prospects). Defaults to the main app domain (.online) because the
+ * dedicated .com domain is not yet pointed at this deployment.
  *
- * Override with NEXT_PUBLIC_PREVIEW_BASE_URL.
+ * Override with NEXT_PUBLIC_PREVIEW_BASE_URL once DNS for
+ * amentiaiaffiliates.com is configured — then bump this to the .com host.
  */
-export const PRODUCTION_PREVIEW_URL = "https://amentiaiaffiliates.com";
+export const PRODUCTION_PREVIEW_URL = PRODUCTION_SITE_URL;
 
 export function getSiteBaseUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.trim();
