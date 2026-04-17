@@ -1,0 +1,494 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "windows"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String?
+  avatarUrl  String?
+  role       String   @default("owner")
+  createdAt  DateTime @default(now())
+
+  ownedOpportunities Opportunity[] @relation("OpportunityOwner")
+  assignedTasks      Task[]        @relation("TaskAssignee")
+  messages           Message[]
+  ownedContacts      Contact[]     @relation("ContactOwner")
+  notes              Note[]
+  activities         ActivityEvent[]
+  followedContacts   ContactFollower[]
+}
+
+model Pipeline {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  stages        Stage[]
+  opportunities Opportunity[]
+}
+
+model Stage {
+  id         String   @id @default(cuid())
+  name       String
+  color      String
+  position   Int
+  pipelineId String
+  pipeline   Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+
+  opportunities Opportunity[]
+
+  @@index([pipelineId])
+}
+
+model Business {
+  id        String   @id @default(cuid())
+  name      String
+  website   String?
+  phone     String?
+  email     String?
+  address   String?
+  city      String?
+  state     String?
+  zip       String?
+  industry  String?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  contacts      Contact[]
+  opportunities Opportunity[]
+  sites         Site[]
+}
+
+model Contact {
+  id            String   @id @default(cuid())
+  firstName     String?
+  lastName      String?
+  email         String?
+  phone         String?
+  phoneType     String?  @default("Mobile")
+  role          String?
+  tags          String[]
+  dateOfBirth   DateTime?
+  contactSource String?
+  contactType   String?  @default("Lead")
+  timezone      String?
+  address       String?
+  city          String?
+  state         String?
+  postalCode    String?
+  country       String?
+
+  instagram     String?
+  facebook      String?
+  twitter       String?
+  linkedin      String?
+  tiktok        String?
+  website       String?
+
+  dndCalls      Boolean  @default(false)
+  dndSms        Boolean  @default(false)
+  dndEmail      Boolean  @default(false)
+
+  ownerId       String?
+  owner         User?    @relation("ContactOwner", fields: [ownerId], references: [id])
+
+  businessId    String?
+  business      Business? @relation(fields: [businessId], references: [id])
+
+  customFields  Json?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt @default(now())
+
+  opportunities Opportunity[]
+  conversations Conversation[]
+  notes         Note[]
+  tasks         Task[]         @relation("TaskContact")
+  activities    ActivityEvent[]
+  followers     ContactFollower[]
+
+  @@index([businessId])
+  @@index([ownerId])
+  @@index([email])
+}
+
+model ContactFollower {
+  id        String  @id @default(cuid())
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@unique([contactId, userId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  body      String
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([contactId])
+}
+
+model ActivityEvent {
+  id            String   @id @default(cuid())
+  type          String   // opportunity.created | opportunity.stage_changed | note.created | email.sent | contact.created | ...
+  title         String
+  details       Json?
+  contactId     String?
+  contact       Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  actorId       String?
+  actor         User?    @relation(fields: [actorId], references: [id])
+  createdAt     DateTime @default(now())
+
+  @@index([contactId, createdAt])
+  @@index([opportunityId, createdAt])
+  @@index([type])
+}
+
+model SmartList {
+  id        String   @id @default(cuid())
+  name      String
+  scope     String   @default("contacts") // contacts | opportunities | companies
+  filters   Json
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model CustomField {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  label     String
+  type      String   // text | number | date | select | multiselect | url | boolean
+  options   String[]
+  section   String   @default("General Info")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Opportunity {
+  id         String   @id @default(cuid())
+  title      String
+  value      Decimal  @default(0) @db.Decimal(12, 2)
+  status     String   @default("open")
+  source     String?
+  notes      String?
+  position   Int      @default(0)
+  pipelineId String
+  pipeline   Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  stageId    String
+  stage      Stage    @relation(fields: [stageId], references: [id])
+  contactId  String?
+  contact    Contact? @relation(fields: [contactId], references: [id])
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
+  ownerId    String?
+  owner      User?     @relation("OpportunityOwner", fields: [ownerId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  tasks         Task[]
+  appointments  Appointment[]
+  activities    ActivityEvent[]
+
+  @@index([pipelineId, stageId])
+  @@index([businessId])
+}
+
+model Conversation {
+  id         String    @id @default(cuid())
+  channel    String    @default("email")
+  subject    String?
+  contactId  String?
+  contact    Contact?  @relation(fields: [contactId], references: [id])
+  lastMessageAt DateTime @default(now())
+  unread     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+
+  messages Message[]
+
+  @@index([contactId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  direction      String       // inbound | outbound
+  body           String
+  authorId       String?
+  author         User?        @relation(fields: [authorId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+}
+
+model Calendar {
+  id        String   @id @default(cuid())
+  name      String
+  color     String   @default("#3a86ff")
+  createdAt DateTime @default(now())
+
+  appointments Appointment[]
+}
+
+model Appointment {
+  id            String   @id @default(cuid())
+  title         String
+  startsAt      DateTime
+  endsAt        DateTime
+  location      String?
+  notes         String?
+  calendarId    String
+  calendar      Calendar @relation(fields: [calendarId], references: [id])
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+  createdAt     DateTime @default(now())
+
+  @@index([calendarId])
+  @@index([opportunityId])
+}
+
+model Site {
+  id         String   @id @default(cuid())
+  url        String
+  title      String?
+  description String?
+  favicon    String?
+  rawHtml    String?
+  textContent String?
+  screenshot String?
+  palette    String[]
+  fonts      String[]
+  headings   Json?
+  images     Json?
+  links      Json?
+  status     String   @default("scraped") // scraped | failed
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
+  createdAt  DateTime @default(now())
+
+  rebuilds SiteRebuild[]
+  scrapedBusinesses ScrapedBusiness[]
+
+  @@index([businessId])
+}
+
+model SiteRebuild {
+  id          String   @id @default(cuid())
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  prompt      String?
+  html        String
+  notes       String?
+  model       String?
+  status      String   @default("ready")
+  createdAt   DateTime @default(now())
+
+  @@index([siteId])
+}
+
+model Task {
+  id            String   @id @default(cuid())
+  title         String
+  body          String?
+  done          Boolean  @default(false)
+  dueAt         DateTime?
+  assigneeId    String?
+  assignee      User?    @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+  contactId     String?
+  contact       Contact? @relation("TaskContact", fields: [contactId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt @default(now())
+
+  @@index([contactId])
+  @@index([assigneeId])
+  @@index([dueAt])
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  name        String
+  channel     String   @default("email")
+  status      String   @default("draft")
+  subject     String?
+  body        String?
+  sent        Int      @default(0)
+  opened      Int      @default(0)
+  replied     Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model Automation {
+  id        String   @id @default(cuid())
+  name      String
+  trigger   String
+  active    Boolean  @default(true)
+  steps     Json
+  createdAt DateTime @default(now())
+}
+
+model ScrapedBusiness {
+  id             String   @id @default(cuid())
+  source         String   // google | yelp | instagram | manual
+  sourceId       String?
+  name           String
+  category       String?
+  industry       String?
+  website        String?
+  phone          String?
+  email          String?
+  address        String?
+  city           String?
+  state          String?
+  country        String?  @default("USA")
+  postalCode     String?
+  lat            Float?
+  lng            Float?
+  rating         Float?
+  reviewsCount   Int      @default(0)
+  confidence     Int      @default(0)
+  hqConfidence   Int      @default(0)
+  instagram      String?
+  facebook       String?
+  twitter        String?
+  tiktok         String?
+  linkedin       String?
+  tags           String[]
+  notes          String?
+  archived       Boolean  @default(false)
+
+  enriched       Boolean  @default(false)
+  qualified      Boolean  @default(false)
+  hasWebsite     Boolean  @default(false)
+  audited        Boolean  @default(false)
+  siteGenerated  Boolean  @default(false)
+  emailReady     Boolean  @default(false)
+  inCampaign     Boolean  @default(false)
+  campaignComplete Boolean @default(false)
+  inSales        Boolean  @default(false)
+  closedWon      Boolean  @default(false)
+
+  scrapeJobId    String?
+  scrapeJob      ScrapeJob? @relation(fields: [scrapeJobId], references: [id])
+  siteId         String?
+  site           Site?    @relation(fields: [siteId], references: [id])
+  emailDrafts    EmailDraft[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([source])
+  @@index([state, city])
+  @@index([industry])
+  @@index([archived])
+}
+
+model ScrapeJob {
+  id          String    @id @default(cuid())
+  source      String
+  query       Json
+  status      String    @default("queued") // queued | running | done | failed
+  progress    Int       @default(0)
+  total       Int       @default(0)
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  error       String?
+  createdAt   DateTime  @default(now())
+
+  businesses ScrapedBusiness[]
+}
+
+model EmailDraft {
+  id                String   @id @default(cuid())
+  scrapedBusinessId String?
+  scrapedBusiness   ScrapedBusiness? @relation(fields: [scrapedBusinessId], references: [id])
+  subject           String
+  body              String
+  tone              String?
+  model             String?
+  status            String   @default("draft") // draft | queued | sending | sent | failed
+  sentAt            DateTime?
+  openedAt          DateTime?
+  repliedAt         DateTime?
+  createdAt         DateTime @default(now())
+
+  @@index([scrapedBusinessId])
+  @@index([status])
+}
+
+model BatchJob {
+  id         String    @id @default(cuid())
+  type       String    // scrape | enrich | audit | site_generate | email_gen | email_send
+  name       String
+  status     String    @default("queued")
+  total      Int       @default(0)
+  completed  Int       @default(0)
+  failed     Int       @default(0)
+  params     Json
+  startedAt  DateTime?
+  finishedAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model AiUsageEvent {
+  id           String   @id @default(cuid())
+  model        String
+  purpose      String
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  cents        Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([purpose])
+}
+
+model IndustryProgress {
+  id         String    @id @default(cuid())
+  industry   String    @unique
+  totalFound Int       @default(0)
+  enriched   Int       @default(0)
+  qualified  Int       @default(0)
+  emailed    Int       @default(0)
+  lastRunAt  DateTime?
+  updatedAt  DateTime  @updatedAt @default(now())
+}
+
+model SocialAccount {
+  id         String   @id @default(cuid())
+  platform   String   // instagram | twitter
+  handle     String
+  followers  Int      @default(0)
+  following  Int      @default(0)
+  engagement Float    @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+model SocialFollowJob {
+  id         String   @id @default(cuid())
+  platform   String
+  target     String
+  status     String   @default("queued")
+  followed   Int      @default(0)
+  unfollowed Int      @default(0)
+  createdAt  DateTime @default(now())
+}

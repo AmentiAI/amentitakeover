@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --border: 214 32% 91%;
+}
+
+html, body {
+  height: 100%;
+  background: #f5f7fb;
+  color: #0b1a2b;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.scrollbar-thin::-webkit-scrollbar { height: 8px; width: 8px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+
+@layer utilities {
+  .stage-band-warm { background: linear-gradient(180deg, #f5a623 0%, #f5a62366 100%); }
+  .stage-band-engaged { background: linear-gradient(180deg, #e9c46a 0%, #e9c46a66 100%); }
+  .stage-band-contacted { background: linear-gradient(180deg, #7cb342 0%, #7cb34266 100%); }
+  .stage-band-replied { background: linear-gradient(180deg, #2e8b57 0%, #2e8b5766 100%); }
+  .stage-band-interested { background: linear-gradient(180deg, #2ca6a4 0%, #2ca6a466 100%); }
+  .stage-band-callback { background: linear-gradient(180deg, #3a86ff 0%, #3a86ff66 100%); }
+  .stage-band-meeting { background: linear-gradient(180deg, #5e60ce 0%, #5e60ce66 100%); }
+  .stage-band-proposal { background: linear-gradient(180deg, #8338ec 0%, #8338ec66 100%); }
+  .stage-band-nurture { background: linear-gradient(180deg, #d6336c 0%, #d6336c66 100%); }
+  .stage-band-won { background: linear-gradient(180deg, #8b0000 0%, #8b000066 100%); }
+}
