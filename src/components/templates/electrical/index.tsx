@@ -176,7 +176,7 @@ function Hero({ data, phoneHref }: { data: ElectricalSiteData; phoneHref: string
       />
       <div
         className="pointer-events-none absolute -right-40 bottom-0 h-[480px] w-[480px] rounded-full blur-3xl"
-        style={{ backgroundColor: data.palette.trust, opacity: 0.08 }}
+        style={{ backgroundColor: data.palette.base, opacity: 0.08 }}
       />
 
       <div className="relative mx-auto max-w-[1400px] px-4 sm:px-6 pb-16 pt-10 sm:pb-24 sm:pt-16 lg:pb-32 lg:pt-20">
