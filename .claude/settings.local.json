@@ -12,7 +12,8 @@
       "WebSearch",
       "WebFetch(domain:www.framer.com)",
       "WebFetch(domain:hookagency.com)",
-      "WebFetch(domain:roofingseo.services)"
+      "WebFetch(domain:roofingseo.services)",
+      "Bash(echo \"EXIT $?\")"
     ]
   }
 }

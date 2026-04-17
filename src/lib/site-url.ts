@@ -3,16 +3,30 @@
  * from outside the browser (emails, lead notifications, etc).
  *
  * Resolution order:
- *   1. NEXT_PUBLIC_APP_URL (explicit — preferred)
- *   2. VERCEL_URL (Vercel auto-injects)
- *   3. http://localhost:3000 (dev fallback)
+ *   1. NEXT_PUBLIC_APP_URL (explicit override)
+ *   2. Production default → https://signulldev.com
+ *   3. VERCEL_URL for preview / branch deploys
+ *   4. http://localhost:3000 (dev fallback)
  */
+export const PRODUCTION_SITE_URL = "https://signulldev.com";
+
 export function getSiteBaseUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (fromEnv) return stripTrailingSlash(fromEnv);
+  if (fromEnv) return ensureScheme(stripTrailingSlash(fromEnv));
+
+  const vercelEnv = process.env.VERCEL_ENV;
+  if (vercelEnv === "production") return PRODUCTION_SITE_URL;
+
   const vercel = process.env.VERCEL_URL?.trim();
   if (vercel) return `https://${stripTrailingSlash(vercel)}`;
+
+  if (process.env.NODE_ENV === "production") return PRODUCTION_SITE_URL;
   return "http://localhost:3000";
+}
+
+function ensureScheme(s: string): string {
+  if (/^https?:\/\//i.test(s)) return s;
+  return `https://${s}`;
 }
 
 /**

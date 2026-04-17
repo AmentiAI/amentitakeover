@@ -237,7 +237,7 @@ function LogoPanel({
             <img
               src={business.logoUrl ?? undefined}
               alt={`${business.name} logo`}
-              className="max-h-full max-w-full object-contain"
+              className="h-full w-full object-contain"
             />
           ) : hero.image ? (
             <img

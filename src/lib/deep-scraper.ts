@@ -2,7 +2,7 @@ import * as cheerio from "cheerio";
 import { scrapeSite, type ScrapeResult } from "./scraper";
 
 export type DeepScrapeResult = ScrapeResult & {
-  pages: { url: string; kind: "home" | "contact" | "about"; text: string }[];
+  pages: { url: string; kind: "home" | "contact" | "about" | "services" | "work"; text: string }[];
   emails: string[];
   phones: string[];
   socials: {
@@ -20,8 +20,17 @@ export type DeepScrapeResult = ScrapeResult & {
 const CONTACT_HINTS = ["contact", "get-in-touch", "reach-us", "quote"];
 const ABOUT_HINTS = ["about", "who-we-are", "our-story", "team"];
 const SERVICES_HINTS = ["services", "what-we-do", "solutions"];
-const WORK_HINTS = ["gallery", "portfolio", "projects", "work", "case-studies"];
-const MAX_SUBPAGES = 5;
+const WORK_HINTS = [
+  "gallery",
+  "portfolio",
+  "projects",
+  "work",
+  "case-studies",
+  "our-work",
+  "recent-work",
+  "jobs",
+];
+const MAX_SUBPAGES = 6;
 
 export async function deepScrapeSite(inputUrl: string): Promise<DeepScrapeResult> {
   const base = await scrapeSite(inputUrl);
@@ -33,10 +42,18 @@ export async function deepScrapeSite(inputUrl: string): Promise<DeepScrapeResult
   const originHost = safeHost(base.url);
   const seen = new Set<string>([normalizeForDedup(base.url)]);
 
-  const candidates: { href: string; kind: string }[] = [];
-  for (const hints of [CONTACT_HINTS, ABOUT_HINTS, SERVICES_HINTS, WORK_HINTS]) {
-    const hit = pickLink(base.links, originHost, hints);
-    if (hit) candidates.push(hit);
+  // Portfolio/work pages first — these have the richest imagery, which is the
+  // most important payload for downstream template generation.
+  const candidates: { href: string; kind: "work" | "services" | "about" | "contact" }[] = [];
+  const groups: { hints: string[]; kind: "work" | "services" | "about" | "contact" }[] = [
+    { hints: WORK_HINTS, kind: "work" },
+    { hints: SERVICES_HINTS, kind: "services" },
+    { hints: ABOUT_HINTS, kind: "about" },
+    { hints: CONTACT_HINTS, kind: "contact" },
+  ];
+  for (const g of groups) {
+    const hit = pickLink(base.links, originHost, g.hints);
+    if (hit) candidates.push({ href: hit.href, kind: g.kind });
   }
 
   const extraImages: ScrapeResult["images"] = [];
@@ -52,7 +69,7 @@ export async function deepScrapeSite(inputUrl: string): Promise<DeepScrapeResult
       const sub = await scrapeSite(target.href);
       pages.push({
         url: sub.url,
-        kind: target.kind as "contact" | "about",
+        kind: target.kind,
         text: sub.textContent,
       });
       extraImages.push(...sub.images);
@@ -114,14 +131,14 @@ function pickLink(
   links: ScrapeResult["links"],
   originHost: string,
   hints: string[],
-): { href: string; kind: string } | null {
+): { href: string } | null {
   const sameHost = links.filter((l) => safeHost(l.href) === originHost);
   for (const h of hints) {
     const hit = sameHost.find((l) => {
       const p = safePath(l.href);
       return p.includes(h) || l.text.toLowerCase().includes(h.replace(/-/g, " "));
     });
-    if (hit) return { href: hit.href, kind: hints[0] };
+    if (hit) return { href: hit.href };
   }
   return null;
 }

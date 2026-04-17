@@ -12,6 +12,8 @@
  * produces a usable page.
  */
 
+import { pickBrandPalette } from "@/lib/color-pick";
+
 export type RoofingSiteData = {
   slug: string;
   business: {
@@ -268,17 +270,15 @@ function isWideEnough(src: string): boolean {
   return /(hero|cover|banner|main|header|splash|1920|2400|1600|1200)/i.test(src);
 }
 
-// Pinned brand palette for roofing templates. We intentionally ignore the
-// scraped palette because it frequently produces muddy/off-brand colors that
-// make generated sites look unprofessional.
+// Fallback palette when the scraped site offers no usable brand colors.
 const ROOFING_PALETTE: RoofingSiteData["palette"] = {
   base: "#0f172a",
   accent: "#b45309",
   trust: "#0f766e",
 };
 
-function derivePalette(_colors: string[]): RoofingSiteData["palette"] {
-  return ROOFING_PALETTE;
+function derivePalette(colors: string[]): RoofingSiteData["palette"] {
+  return pickBrandPalette(colors) ?? ROOFING_PALETTE;
 }
 
 function buildServiceArea(city: string | null, state: string | null): string[] {

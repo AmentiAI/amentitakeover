@@ -18,16 +18,22 @@ export async function POST(req: NextRequest) {
     const data = await scrapeSite(parsed.data.url);
     // Prepend detected logo + og:image so downstream consumers can find them
     // via the existing images-array contract.
-    const mergedImages: { src: string; alt: string }[] = [];
+    type MediaOut = { src: string; alt: string; kind?: "image" | "video"; poster?: string | null };
+    const mergedImages: MediaOut[] = [];
     if (data.logoUrl) {
-      mergedImages.push({ src: data.logoUrl, alt: "logo" });
+      mergedImages.push({ src: data.logoUrl, alt: "logo", kind: "image" });
     }
     if (data.ogImage && data.ogImage !== data.logoUrl) {
-      mergedImages.push({ src: data.ogImage, alt: "hero" });
+      mergedImages.push({ src: data.ogImage, alt: "hero", kind: "image" });
     }
     for (const img of data.images) {
       if (mergedImages.some((m) => m.src === img.src)) continue;
-      mergedImages.push({ src: img.src, alt: img.alt ?? "" });
+      mergedImages.push({
+        src: img.src,
+        alt: img.alt ?? "",
+        kind: img.kind ?? "image",
+        poster: img.poster ?? null,
+      });
     }
 
     const site = await prisma.site.create({

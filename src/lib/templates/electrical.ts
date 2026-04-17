@@ -2,6 +2,8 @@
  * Electrical contractor template — data contract + adapter.
  */
 
+import { pickBrandPalette } from "@/lib/color-pick";
+
 export type ElectricalSiteData = {
   slug: string;
   business: {
@@ -58,11 +60,17 @@ export type ElectricalIcon =
   | "emergency"
   | "surge";
 
-// Pinned, tasteful palette. Scraped hexes never leak in.
+// Fallback when the scraped site offers no usable brand colors.
 const ELECTRICAL_PALETTE: ElectricalSiteData["palette"] = {
   base: "#0f172a",
   accent: "#0369a1",
 };
+
+function derivePalette(colors: string[]): ElectricalSiteData["palette"] {
+  const picked = pickBrandPalette(colors);
+  if (!picked) return ELECTRICAL_PALETTE;
+  return { base: picked.base, accent: picked.accent };
+}
 
 const FALLBACK_HERO =
   "https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=2400&q=80";
@@ -248,7 +256,7 @@ export function buildElectricalFromScrape(
       tiktok: b.tiktok,
       youtube: null,
     },
-    palette: ELECTRICAL_PALETTE,
+    palette: derivePalette(site?.palette ?? []),
     about,
   };
 }

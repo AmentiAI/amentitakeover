@@ -1,5 +1,12 @@
 import * as cheerio from "cheerio";
 
+export type ScrapeMedia = {
+  src: string;
+  alt: string | null;
+  kind?: "image" | "video";
+  poster?: string | null;
+};
+
 export type ScrapeResult = {
   url: string;
   title: string | null;
@@ -10,18 +17,59 @@ export type ScrapeResult = {
   rawHtml: string;
   textContent: string;
   headings: { tag: string; text: string }[];
-  images: { src: string; alt: string | null }[];
+  images: ScrapeMedia[];
   links: { href: string; text: string }[];
   palette: string[];
   fonts: string[];
 };
+
+// Hosts we never want to pull imagery from — these are always social-brand
+// logos, follow-us buttons, or embeds we don't want polluting a business's
+// "recent work" gallery.
+const SOCIAL_HOSTS = [
+  "facebook.com",
+  "fbcdn.net",
+  "instagram.com",
+  "cdninstagram.com",
+  "twitter.com",
+  "x.com",
+  "twimg.com",
+  "tiktok.com",
+  "tiktokcdn.com",
+  "linkedin.com",
+  "licdn.com",
+  "pinterest.com",
+  "pinimg.com",
+  "yelp.com",
+  "yelpcdn.com",
+  "nextdoor.com",
+  "angi.com",
+  "bbb.org",
+];
+
+// Filename patterns that are almost always social-share buttons / brand icons.
+const SOCIAL_FILE_RE =
+  /(facebook|instagram|twitter|x-?logo|tiktok|linkedin|pinterest|youtube|yelp|whatsapp|nextdoor|bbb|google-?(plus|my-?business|review))[-_\s]?(icon|logo|badge|btn|button|share)?\.(png|jpe?g|svg|webp|gif)/i;
+
+function isSocialAsset(src: string, alt: string | null): boolean {
+  let host = "";
+  try {
+    host = new URL(src).host.toLowerCase().replace(/^www\./, "");
+  } catch {
+    // non-URL (e.g. data:) — skip host check, fall through to filename
+  }
+  if (host && SOCIAL_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) return true;
+  if (SOCIAL_FILE_RE.test(src)) return true;
+  if (alt && /^(facebook|instagram|twitter|x|tiktok|linkedin|pinterest|youtube|yelp|bbb|google)$/i.test(alt.trim())) return true;
+  return false;
+}
 
 export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
   const url = normalizeUrl(inputUrl);
   const res = await fetch(url, {
     headers: {
       "User-Agent":
-        "Mozilla/5.0 (compatible; AmentiBot/1.0; +https://amenti.app/bot)",
+        "Mozilla/5.0 (compatible; SignullBot/1.0; +https://signulldev.com/bot)",
       Accept:
         "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     },
@@ -61,13 +109,21 @@ export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
   });
 
   const imageSet = new Set<string>();
-  const images: { src: string; alt: string | null }[] = [];
+  const images: ScrapeMedia[] = [];
   const pushImg = (rawSrc: string | undefined, alt: string | null) => {
     if (!rawSrc) return;
     const abs = absolutize(rawSrc.trim(), url);
     if (!abs || imageSet.has(abs)) return;
+    if (isSocialAsset(abs, alt)) return;
     imageSet.add(abs);
-    images.push({ src: abs, alt });
+    images.push({ src: abs, alt, kind: "image" });
+  };
+  const pushVideo = (rawSrc: string | undefined, poster: string | null, alt: string | null) => {
+    if (!rawSrc) return;
+    const abs = absolutize(rawSrc.trim(), url);
+    if (!abs || imageSet.has(abs)) return;
+    imageSet.add(abs);
+    images.push({ src: abs, alt, kind: "video", poster: poster ?? null });
   };
 
   $("img").each((_i, el) => {
@@ -108,6 +164,26 @@ export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
     const style = $(el).attr("style") ?? "";
     const m = style.match(/background-image\s*:\s*url\(["']?([^"')]+)["']?\)/i);
     if (m) pushImg(m[1], null);
+  });
+
+  // <video src> / <video><source src>
+  $("video").each((_i, el) => {
+    const poster = $(el).attr("poster") ?? null;
+    const alt = $(el).attr("aria-label") ?? $(el).attr("title") ?? null;
+    const direct = $(el).attr("src");
+    if (direct) pushVideo(direct, poster, alt);
+    $(el).find("source").each((_j, srcEl) => {
+      pushVideo($(srcEl).attr("src"), poster, alt);
+    });
+  });
+
+  // YouTube / Vimeo / Wistia embeds
+  $("iframe[src]").each((_i, el) => {
+    const src = $(el).attr("src") ?? "";
+    if (/(youtube\.com\/embed|youtu\.be|vimeo\.com|wistia\.com|wistia\.net)/i.test(src)) {
+      const alt = $(el).attr("title") ?? null;
+      pushVideo(src, null, alt);
+    }
   });
 
   // Background-image in stylesheets / inline <style>
