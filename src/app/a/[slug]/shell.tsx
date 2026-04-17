@@ -3,11 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Phone, Wallet, Tag, Menu, X, Map } from "lucide-react";
+import { LogOut, Phone, Wallet, Tag, Menu, X, Map, BookOpen } from "lucide-react";
 
 const TABS = [
   { label: "Opportunities", href: "", icon: Phone },
   { label: "Map", href: "/map", icon: Map },
+  { label: "Scripts", href: "/scripts", icon: BookOpen },
   { label: "Pricing", href: "/pricing", icon: Tag },
   { label: "Earnings", href: "/earnings", icon: Wallet },
 ];

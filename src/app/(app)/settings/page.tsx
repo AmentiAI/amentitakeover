@@ -1,7 +1,9 @@
 import { Topbar } from "@/components/topbar";
 
+export const dynamic = "force-dynamic";
+
 export default function SettingsPage() {
-  const hasAi = Boolean(process.env.OPENAI_API_KEY);
+  const hasAi = Boolean(process.env.OPENAI_API_KEY?.trim());
   return (
     <>
       <Topbar title="Settings" />
