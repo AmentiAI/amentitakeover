@@ -131,60 +131,6 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <div className="relative mt-14 w-full max-w-4xl">
-            <div className="absolute inset-0 -z-10 blur-3xl">
-              <div className="mx-auto h-56 w-56 rounded-full bg-cyan-400/20" />
-            </div>
-
-            <div className="relative mx-auto max-w-3xl rounded-[2rem] border border-white/10 bg-white/5 p-4 shadow-[0_0_60px_rgba(34,211,238,0.12)] backdrop-blur-2xl">
-              <div className="absolute -left-8 top-12 hidden rounded-2xl border border-pink-400/30 bg-[#0a102f]/80 p-4 shadow-[0_0_30px_rgba(255,60,172,0.22)] backdrop-blur-xl md:block">
-                <div className="space-y-2 text-left">
-                  <div className="h-2 w-16 rounded-full bg-pink-400/80" />
-                  <div className="h-2 w-12 rounded-full bg-cyan-300/70" />
-                  <div className="h-2 w-20 rounded-full bg-white/30" />
-                </div>
-              </div>
-
-              <div className="absolute -right-8 top-20 hidden rounded-2xl border border-cyan-300/30 bg-[#0a102f]/80 p-4 shadow-[0_0_30px_rgba(34,211,238,0.22)] backdrop-blur-xl md:block">
-                <div className="space-y-2 text-left">
-                  <div className="h-2 w-14 rounded-full bg-cyan-300/80" />
-                  <div className="h-2 w-16 rounded-full bg-pink-400/70" />
-                  <div className="h-2 w-10 rounded-full bg-white/30" />
-                </div>
-              </div>
-
-              <div className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#081028]">
-                <div className="flex items-center gap-2 border-b border-white/10 px-5 py-3">
-                  <span className="h-3 w-3 rounded-full bg-pink-400/80" />
-                  <span className="h-3 w-3 rounded-full bg-cyan-300/80" />
-                  <span className="h-3 w-3 rounded-full bg-white/40" />
-                </div>
-
-                <div className="relative flex min-h-[320px] items-center justify-center overflow-hidden px-6 py-12 sm:min-h-[380px]">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.18),transparent_28%),radial-gradient(circle_at_60%_40%,rgba(255,60,172,0.15),transparent_20%)]" />
-
-                  <div className="absolute h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" />
-                  <div className="absolute h-56 w-56 rounded-full bg-pink-500/15 blur-3xl" />
-
-                  <div className="relative flex flex-col items-center">
-                    <div className="mb-6 flex h-28 w-28 items-center justify-center rounded-[2rem] border border-white/10 bg-white/5 p-4 shadow-[0_0_45px_rgba(255,60,172,0.2)] backdrop-blur-xl">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src="/amenti-logo.png"
-                        alt="Amenti AI glowing logo"
-                        className="h-full w-full object-contain drop-shadow-[0_0_25px_rgba(34,211,238,0.45)]"
-                      />
-                    </div>
-                    <div className="h-24 w-24 rounded-full bg-gradient-to-r from-cyan-300/80 to-pink-400/80 blur-2xl" />
-                    <p className="mt-6 max-w-md text-sm uppercase tracking-[0.5em] text-white/60 sm:text-base">
-                      Innovate • Earn • Empower
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <ProgramInfo />
 
           <div className="mt-12 flex flex-col items-center gap-5">
