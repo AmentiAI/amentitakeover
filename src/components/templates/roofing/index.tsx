@@ -236,7 +236,7 @@ function Hero({
       <GridBackdrop />
 
       <div className="relative mx-auto max-w-7xl px-4 pt-10 pb-24 sm:px-6 sm:pt-16 sm:pb-28 lg:pt-24 lg:pb-32">
-        <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_1fr]">
+        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
           <div>
             <div
               className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white shadow-sm"
@@ -648,7 +648,7 @@ function Process({ steps, palette }: { steps: RoofingSiteData["process"]; palett
           title={<>Four steps. <em className="italic" style={{ color: palette.accent }}>Zero surprises.</em></>}
           kicker="We don't sell roofs — we document damage, explain options, and let you decide."
         />
-        <ol className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <ol className="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((s, i) => (
             <li
               key={s.step}
@@ -854,7 +854,7 @@ function Testimonials({ testimonials, palette }: { testimonials: RoofingSiteData
               <Star key={r} className="h-5 w-5 fill-amber-400 text-amber-400" />
             ))}
           </div>
-          <blockquote className={`${serif} mt-5 text-2xl font-medium leading-[1.3] tracking-tight text-slate-900 md:text-[2rem]`}>
+          <blockquote className={`${serif} mt-5 text-lg font-medium leading-[1.3] tracking-tight text-slate-900 sm:text-2xl md:text-[2rem]`}>
             "<em className="italic">{featured.quote}</em>"
           </blockquote>
           <figcaption className="mt-8 flex items-center gap-4">

@@ -52,11 +52,11 @@ export default async function AffiliateMapPage({
       <div className="mb-3">
         <h1 className="text-xl font-semibold text-white">Lead map</h1>
         <p className="mt-1 text-xs text-slate-400">
-          {rows.length.toLocaleString()} prospects available to call. Click a dot
-          for business details.
+          {rows.length.toLocaleString()} prospects available to call. Tap a state
+          to drill in.
         </p>
       </div>
-      <div className="h-[calc(100vh-150px)] min-h-[480px] overflow-hidden rounded-lg border border-slate-800 bg-slate-900/40">
+      <div className="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/40 lg:h-[calc(100vh-150px)] lg:min-h-[480px]">
         <UsaMap
           points={rows}
           stateCounts={stateCounts}

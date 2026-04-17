@@ -297,7 +297,7 @@ function StatsStrip({ business }: { business: RoofingSiteData["business"] }) {
   ];
   return (
     <section className="border-b border-slate-200 bg-white">
-      <div className="mx-auto grid max-w-[1300px] grid-cols-2 gap-px bg-slate-200 md:grid-cols-5">
+      <div className="mx-auto grid max-w-[1300px] grid-cols-2 gap-px bg-slate-200 sm:grid-cols-3 md:grid-cols-5">
         {stats.map((s) => (
           <div key={s.label} className="bg-white px-5 py-6 sm:px-8 sm:py-10">
             <div className={`${serif} text-4xl font-[400] tracking-tight text-slate-950 md:text-[2.75rem]`}>
@@ -406,7 +406,7 @@ function CaseStudy({ data }: { data: RoofingSiteData }) {
             Old asphalt down, synthetic underlayment, architectural shingle laid, ice &amp; water shield
             at every penetration. Magnet sweep of the driveway before we left.
           </p>
-          <dl className="mt-8 grid grid-cols-3 gap-px overflow-hidden rounded-[2px] border border-slate-200 bg-slate-200 text-sm">
+          <dl className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-[2px] border border-slate-200 bg-slate-200 text-sm sm:grid-cols-3">
             <StatCell label="Scope" value="Full replacement" />
             <StatCell label="Timeline" value="36 hrs" />
             <StatCell label="Warranty" value="Lifetime" />
@@ -446,7 +446,7 @@ function ProcessRail({ steps, palette }: { steps: RoofingSiteData["process"]; pa
           eyebrow="Our process"
           title={<>Four steps. <em className="italic font-[400] r2-accent-em">Every project.</em></>}
         />
-        <div className="mt-16 grid gap-px overflow-hidden border border-slate-200 bg-slate-200 md:grid-cols-4">
+        <div className="mt-16 grid grid-cols-2 gap-px overflow-hidden border border-slate-200 bg-slate-200 md:grid-cols-4">
           {steps.map((s, i) => (
             <div key={s.step} className="relative bg-white p-8">
               <div className="flex items-baseline justify-between">
@@ -664,7 +664,7 @@ function Coverage({
           eyebrow="Coverage"
           title={<>We work throughout <em className="italic font-[400] r2-accent-em">{business.state ?? "the region"}.</em></>}
         />
-        <div className="mt-16 grid gap-px overflow-hidden border border-slate-200 bg-slate-200 md:grid-cols-4">
+        <div className="mt-16 grid grid-cols-2 gap-px overflow-hidden border border-slate-200 bg-slate-200 md:grid-cols-4">
           {cities.map((c, i) => (
             <div key={c} className="group flex items-baseline justify-between bg-white px-6 py-7">
               <div>

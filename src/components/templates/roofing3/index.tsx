@@ -153,7 +153,7 @@ function Hero({
         />
       )}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0b0b0c]/30 via-[#0b0b0c]/60 to-[#0b0b0c]" />
-      <div className="relative mx-auto grid max-w-7xl gap-10 px-6 py-28 md:py-40 lg:grid-cols-12">
+      <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 sm:py-24 md:py-40 lg:grid-cols-12">
         <div className="lg:col-span-8">
           <div
             className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-white/80"
@@ -166,7 +166,7 @@ function Hero({
             {business.city ? `Serving ${business.city}` : "Local roofing crew"}
           </div>
           <h1
-            className={`${display.className} mt-7 text-[64px] leading-[0.92] tracking-[-0.01em] text-white sm:text-[88px] lg:text-[112px]`}
+            className={`${display.className} mt-7 text-[clamp(2.5rem,10vw,4rem)] leading-[0.95] tracking-[-0.01em] text-white sm:text-[88px] sm:leading-[0.92] lg:text-[112px]`}
           >
             {hero.title}
           </h1>
@@ -276,7 +276,7 @@ function ServicesBold({
               What we do
             </div>
             <h2
-              className={`${display.className} mt-4 text-5xl leading-none tracking-tight text-white sm:text-6xl`}
+              className={`${display.className} mt-4 text-3xl leading-tight tracking-tight text-white sm:text-5xl sm:leading-none md:text-6xl`}
             >
               Every shingle, every seam, every flash.
             </h2>
@@ -335,7 +335,7 @@ function ShowcaseSplit({ data, accent }: { data: RoofingSiteData; accent: string
             Featured project
           </div>
           <h3
-            className={`${display.className} mt-4 text-5xl leading-[0.95] tracking-tight text-white sm:text-6xl`}
+            className={`${display.className} mt-4 text-3xl leading-tight tracking-tight text-white sm:text-5xl sm:leading-[0.95] md:text-6xl`}
           >
             A roof that doesn't fail when it matters.
           </h3>
@@ -388,11 +388,11 @@ function ProcessTimeline({
           How it works
         </div>
         <h2
-          className={`${display.className} mt-4 text-5xl leading-none tracking-tight text-white sm:text-6xl`}
+          className={`${display.className} mt-4 text-3xl leading-tight tracking-tight text-white sm:text-5xl sm:leading-none md:text-6xl`}
         >
           Four steps. No surprises.
         </h2>
-        <div className="mt-14 grid gap-px bg-white/10 md:grid-cols-4">
+        <div className="mt-14 grid grid-cols-1 gap-px bg-white/10 sm:grid-cols-2 md:grid-cols-4">
           {steps.map((s, i) => (
             <div key={i} className="relative bg-[#0b0b0c] p-8">
               <div
@@ -426,7 +426,7 @@ function GalleryMasonry({ images }: { images: RoofingSiteData["gallery"] }) {
               Recent work
             </div>
             <h2
-              className={`${display.className} mt-4 text-5xl leading-none tracking-tight text-white sm:text-6xl`}
+              className={`${display.className} mt-4 text-3xl leading-tight tracking-tight text-white sm:text-5xl sm:leading-none md:text-6xl`}
             >
               Unfiltered. No stock photos.
             </h2>
@@ -513,7 +513,7 @@ function Philosophy({
             The philosophy
           </div>
           <h2
-            className={`${display.className} mt-4 text-5xl leading-none tracking-tight text-white sm:text-6xl`}
+            className={`${display.className} mt-4 text-3xl leading-tight tracking-tight text-white sm:text-5xl sm:leading-none md:text-6xl`}
           >
             Built on referrals.
             <br />
@@ -581,7 +581,7 @@ function FAQBold({ faqs }: { faqs: RoofingSiteData["faqs"] }) {
             Questions
           </div>
           <h2
-            className={`${display.className} mt-4 text-5xl leading-none tracking-tight text-white sm:text-6xl`}
+            className={`${display.className} mt-4 text-3xl leading-tight tracking-tight text-white sm:text-5xl sm:leading-none md:text-6xl`}
           >
             Answered.
           </h2>
@@ -623,7 +623,7 @@ function Consult({
             Free consultation
           </div>
           <h2
-            className={`${display.className} mt-4 text-5xl leading-none tracking-tight text-white sm:text-6xl`}
+            className={`${display.className} mt-4 text-3xl leading-tight tracking-tight text-white sm:text-5xl sm:leading-none md:text-6xl`}
           >
             Your roof, assessed.
             <br />

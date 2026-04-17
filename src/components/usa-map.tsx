@@ -113,41 +113,42 @@ export function UsaMap({ points, stateCounts, topoUrl }: Props) {
     : null;
 
   return (
-    <div className="flex h-full gap-4">
-      <div className="relative flex-1 overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-b from-white via-slate-50 to-slate-100">
-        <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur">
-          <MapPin className="h-3.5 w-3.5 text-slate-500" />
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            {totalPoints.toLocaleString()} businesses · {totalStates} states
+    <div className="flex h-full flex-col gap-3 lg:flex-row lg:gap-4">
+      <div className="relative h-[55vh] min-h-[340px] overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-b from-white via-slate-50 to-slate-100 lg:h-full lg:flex-1">
+        <div className="absolute left-2 top-2 z-10 flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white/95 px-2 py-1.5 shadow-sm backdrop-blur sm:left-4 sm:top-4 sm:gap-2 sm:px-3 sm:py-2">
+          <MapPin className="h-3 w-3 text-slate-500 sm:h-3.5 sm:w-3.5" />
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:text-[11px]">
+            {totalPoints.toLocaleString()} <span className="hidden sm:inline">businesses · {totalStates} states</span>
+            <span className="sm:hidden">leads</span>
           </div>
         </div>
 
-        <div className="absolute right-4 top-4 z-10 flex flex-col gap-1 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-sm backdrop-blur">
+        <div className="absolute right-2 top-2 z-10 flex flex-col gap-1 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-sm backdrop-blur sm:right-4 sm:top-4">
           <button
             onClick={handleZoomIn}
             aria-label="Zoom in"
-            className="grid h-7 w-7 place-items-center rounded text-slate-600 hover:bg-slate-100"
+            className="grid h-8 w-8 place-items-center rounded text-slate-600 hover:bg-slate-100 sm:h-7 sm:w-7"
           >
             <Plus className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={handleZoomOut}
             aria-label="Zoom out"
-            className="grid h-7 w-7 place-items-center rounded text-slate-600 hover:bg-slate-100"
+            className="grid h-8 w-8 place-items-center rounded text-slate-600 hover:bg-slate-100 sm:h-7 sm:w-7"
           >
             <Minus className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={handleReset}
             aria-label="Reset view"
-            className="grid h-7 w-7 place-items-center rounded text-slate-600 hover:bg-slate-100"
+            className="grid h-8 w-8 place-items-center rounded text-slate-600 hover:bg-slate-100 sm:h-7 sm:w-7"
           >
             <RefreshCw className="h-3.5 w-3.5" />
           </button>
         </div>
 
         {hoverCode && !selectedCode ? (
-          <div className="pointer-events-none absolute bottom-4 left-4 z-10 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur">
+          <div className="pointer-events-none absolute bottom-2 left-2 z-10 hidden rounded-lg border border-slate-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur sm:block sm:bottom-4 sm:left-4">
             <div className="text-[13px] font-semibold text-slate-900">
               {Object.values(STATE_BY_FIPS).find((s) => s.code === hoverCode)?.name}
             </div>
@@ -157,7 +158,7 @@ export function UsaMap({ points, stateCounts, topoUrl }: Props) {
           </div>
         ) : null}
 
-        <div className="absolute bottom-4 right-4 z-10 flex items-center gap-2 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur">
+        <div className="absolute bottom-2 right-2 z-10 hidden items-center gap-2 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur sm:bottom-4 sm:right-4 sm:flex">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
             Density
           </span>
@@ -250,7 +251,7 @@ export function UsaMap({ points, stateCounts, topoUrl }: Props) {
         </ComposableMap>
       </div>
 
-      <div className="flex w-80 shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="flex h-[40vh] min-h-[240px] shrink-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white lg:h-full lg:w-80">
         {selectedCode ? (
           <>
             <div className="border-b border-slate-200 px-4 py-3">
