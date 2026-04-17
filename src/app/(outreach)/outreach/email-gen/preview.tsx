@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Check,
   CheckCircle2,
+  Copy,
   ExternalLink,
   Globe,
   Loader2,
@@ -135,6 +136,46 @@ export function DraftPreview({
         </div>
       </div>
 
+      {siteUrl && (
+        <div className="mt-5 overflow-hidden rounded-lg border border-emerald-900/60 bg-gradient-to-br from-emerald-950/50 to-slate-950">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-emerald-600/20 text-emerald-300">
+                <Globe className="h-4 w-4" />
+              </span>
+              <div className="min-w-0">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300">
+                  Public mockup URL
+                </div>
+                <a
+                  href={siteUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block truncate font-mono text-[12px] text-emerald-100 underline-offset-2 hover:underline"
+                >
+                  {siteUrl}
+                </a>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <CopyUrlButton url={siteUrl} />
+              <a
+                href={siteUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-500"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                View site
+              </a>
+            </div>
+          </div>
+          <div className="border-t border-emerald-900/60 bg-black/20 px-4 py-2 text-[11px] text-emerald-300/80">
+            Auto-appended as a P.S. when you send this email.
+          </div>
+        </div>
+      )}
+
       {editing ? (
         <textarea
           value={body}
@@ -145,28 +186,6 @@ export function DraftPreview({
       ) : (
         <div className="mt-5 whitespace-pre-wrap rounded-md border border-slate-800 bg-slate-900/40 p-4 text-sm leading-relaxed text-slate-300">
           {draft.body}
-        </div>
-      )}
-
-      {siteUrl && (
-        <div className="mt-4 rounded-md border border-emerald-900/60 bg-emerald-950/30 p-3 text-[12px] leading-snug text-emerald-200">
-          <div className="flex items-center gap-1.5 font-semibold">
-            <Globe className="h-3.5 w-3.5" />
-            Auto-appends on send
-          </div>
-          <p className="mt-1 text-emerald-300/80">
-            The mockup we built for {draft.scrapedBusiness?.name ?? "this business"} will be
-            attached as a P.S. with a live preview link.
-          </p>
-          <a
-            href={siteUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 inline-flex items-center gap-1 font-mono text-[11px] text-emerald-300 underline-offset-2 hover:underline"
-          >
-            {siteUrl}
-            <ExternalLink className="h-3 w-3" />
-          </a>
         </div>
       )}
 
@@ -188,5 +207,27 @@ export function DraftPreview({
         )}
       </div>
     </article>
+  );
+}
+
+function CopyUrlButton({ url }: { url: string }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard blocked — ignore */
+    }
+  }
+  return (
+    <button
+      onClick={copy}
+      className="flex items-center gap-1.5 rounded-md border border-emerald-900/60 bg-emerald-950/30 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-900/40"
+    >
+      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? "Copied" : "Copy"}
+    </button>
   );
 }
