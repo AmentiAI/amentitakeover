@@ -13,7 +13,8 @@
       "WebFetch(domain:www.framer.com)",
       "WebFetch(domain:hookagency.com)",
       "WebFetch(domain:roofingseo.services)",
-      "Bash(echo \"EXIT $?\")"
+      "Bash(echo \"EXIT $?\")",
+      "Bash(npx next *)"
     ]
   }
 }

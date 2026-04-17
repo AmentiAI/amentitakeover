@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendEmail, textToHtml } from "@/lib/email";
-import { getTemplatePreviewUrl } from "@/lib/site-url";
+import { getTemplatePreviewUrl, normalizeTemplateChoice } from "@/lib/site-url";
 
 export const maxDuration = 60;
 
@@ -34,8 +34,12 @@ export async function POST(
     data: { status: "sending" },
   });
 
+  const template = normalizeTemplateChoice(draft.scrapedBusiness?.templateChoice);
   const siteUrl = draft.scrapedBusinessId
-    ? getTemplatePreviewUrl(draft.scrapedBusinessId, { trackingToken: draft.id })
+    ? getTemplatePreviewUrl(draft.scrapedBusinessId, {
+        trackingToken: draft.id,
+        template,
+      })
     : null;
   const businessName = draft.scrapedBusiness?.name ?? "your business";
   const cleanedBody = stripStaleMockupUrls(draft.body, draft.scrapedBusinessId);
@@ -108,7 +112,7 @@ function stripStaleMockupUrls(body: string, scrapedBusinessId: string | null): s
   // Our own mockup paths — remove so the tracked P.S. is the only link.
   const idFragment = scrapedBusinessId ? `/${scrapedBusinessId}` : "";
   const pathRe = new RegExp(
-    `https?:\\/\\/[^\\s<>"')]*\\/p\\/(roofing2?|electrical)${idFragment}(?:\\/v\\/[^\\s<>"')]*)?`,
+    `https?:\\/\\/[^\\s<>"')]*\\/p\\/(roofing[23]?|electrical)${idFragment}(?:\\/v\\/[^\\s<>"')]*)?`,
     "gi",
   );
   cleaned = cleaned.replace(pathRe, "");

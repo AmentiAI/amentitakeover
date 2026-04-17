@@ -60,9 +60,10 @@ const HIRING_RE =
 const VENDOR_BADGE_RE =
   /(visa|mastercard|amex|american[-_\s]?express|discover|paypal|apple[-_\s]?pay|google[-_\s]?pay|venmo|stripe|square|homeadvisor|home[-_\s]?advisor|angies?[-_\s]?list|thumbtack|porch\.com|houzz|trustpilot|trulia|zillow|realtor|energystar|energy[-_\s]?star|powered[-_\s]?by|built[-_\s]?with|wix[-_\s]?logo|squarespace[-_\s]?logo|wordpress[-_\s]?logo|godaddy|wp[-_\s]?logo)/i;
 
-// Common banner/promo/advert filename patterns.
+// Common promo/advert filename patterns. Deliberately excludes "banner"
+// because legitimate hero images are frequently named "hero-banner.jpg".
 const AD_BANNER_RE =
-  /(\b|[-_/])(ad|ads|banner|promo|sale|coupon|discount|offer|deal|placeholder|stock|default|mock)([-_0-9]|\.[a-z]{3,4}(?:$|\?))/i;
+  /(\b|[-_/])(ads?|promo|sale|coupon|discount|offer|deal|placeholder|default-image|mock-up|mockup)([-_0-9]|\.[a-z]{3,4}(?:$|\?))/i;
 
 function isSocialAsset(src: string, alt: string | null): boolean {
   let host = "";
@@ -99,6 +100,10 @@ export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
   if (!res.ok) throw new Error(`Fetch failed (${res.status})`);
   const rawHtml = await res.text();
   const $ = cheerio.load(rawHtml);
+
+  // Fetch a few same-origin stylesheets so we actually see the site's real
+  // colors instead of just inline hex codes in the HTML.
+  const cssBlob = await fetchSameOriginStylesheets($, url);
 
   const title = $("title").first().text().trim() || null;
   const description =
@@ -225,8 +230,8 @@ export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
   $("script, style, noscript, svg").remove();
   const textContent = $("body").text().replace(/\s+/g, " ").trim().slice(0, 20000);
 
-  const palette = extractPalette(rawHtml);
-  const fonts = extractFonts(rawHtml);
+  const palette = extractPalette(rawHtml + "\n" + cssBlob);
+  const fonts = extractFonts(rawHtml + "\n" + cssBlob);
 
   return {
     url,
@@ -314,12 +319,127 @@ function absolutize(href: string, base: string): string {
   }
 }
 
-function extractPalette(html: string): string[] {
+function extractPalette(source: string): string[] {
   const hexes = new Set<string>();
+
+  // 1. literal hex: #rgb or #rrggbb
   const hexRe = /#([0-9a-f]{6}|[0-9a-f]{3})\b/gi;
   let m: RegExpExecArray | null;
-  while ((m = hexRe.exec(html))) hexes.add(`#${m[1].toLowerCase()}`);
-  return Array.from(hexes).slice(0, 12);
+  while ((m = hexRe.exec(source))) hexes.add(`#${expandShortHex(m[1].toLowerCase())}`);
+
+  // 2. rgb() / rgba()
+  const rgbRe = /rgba?\(\s*(\d{1,3})\s*[, ]\s*(\d{1,3})\s*[, ]\s*(\d{1,3})/gi;
+  while ((m = rgbRe.exec(source))) {
+    const r = clampByte(Number(m[1]));
+    const g = clampByte(Number(m[2]));
+    const b = clampByte(Number(m[3]));
+    hexes.add(rgbToHexString(r, g, b));
+  }
+
+  // 3. hsl() / hsla() — normalize to hex via HSL->RGB
+  const hslRe = /hsla?\(\s*(\d{1,3}(?:\.\d+)?)\s*[, ]\s*(\d{1,3}(?:\.\d+)?)%\s*[, ]\s*(\d{1,3}(?:\.\d+)?)%/gi;
+  while ((m = hslRe.exec(source))) {
+    const h = Number(m[1]);
+    const s = Math.min(100, Math.max(0, Number(m[2]))) / 100;
+    const l = Math.min(100, Math.max(0, Number(m[3]))) / 100;
+    hexes.add(hslToHexString(h, s, l));
+  }
+
+  // Cap — color-pick.ts tolerates plenty of input and the ranking keeps the
+  // right ones at the top.
+  return Array.from(hexes).slice(0, 32);
+}
+
+function clampByte(n: number): number {
+  return Math.max(0, Math.min(255, Math.round(n)));
+}
+
+function expandShortHex(s: string): string {
+  return s.length === 3 ? s.split("").map((c) => c + c).join("") : s;
+}
+
+function rgbToHexString(r: number, g: number, b: number): string {
+  const pad = (n: number) => n.toString(16).padStart(2, "0");
+  return `#${pad(r)}${pad(g)}${pad(b)}`;
+}
+
+function hslToHexString(h: number, s: number, l: number): string {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const hp = (((h % 360) + 360) % 360) / 60;
+  const x = c * (1 - Math.abs((hp % 2) - 1));
+  let r1 = 0, g1 = 0, b1 = 0;
+  if (hp < 1) [r1, g1, b1] = [c, x, 0];
+  else if (hp < 2) [r1, g1, b1] = [x, c, 0];
+  else if (hp < 3) [r1, g1, b1] = [0, c, x];
+  else if (hp < 4) [r1, g1, b1] = [0, x, c];
+  else if (hp < 5) [r1, g1, b1] = [x, 0, c];
+  else [r1, g1, b1] = [c, 0, x];
+  const m = l - c / 2;
+  return rgbToHexString(
+    clampByte((r1 + m) * 255),
+    clampByte((g1 + m) * 255),
+    clampByte((b1 + m) * 255),
+  );
+}
+
+const STYLESHEET_BYTE_BUDGET = 400_000; // ~400KB total across all fetched sheets
+const STYLESHEET_MAX_FILES = 4;
+const STYLESHEET_TIMEOUT_MS = 4000;
+
+async function fetchSameOriginStylesheets(
+  $: cheerio.CheerioAPI,
+  base: string,
+): Promise<string> {
+  let origin = "";
+  try {
+    origin = new URL(base).origin;
+  } catch {
+    return "";
+  }
+
+  const hrefs: string[] = [];
+  $("link[rel='stylesheet'][href], link[rel~='stylesheet'][href]").each((_i, el) => {
+    const href = $(el).attr("href");
+    if (!href) return;
+    const abs = absolutize(href, base);
+    if (!abs.startsWith(origin)) return; // same-origin only
+    if (!hrefs.includes(abs)) hrefs.push(abs);
+  });
+
+  const targets = hrefs.slice(0, STYLESHEET_MAX_FILES);
+  let remaining = STYLESHEET_BYTE_BUDGET;
+  const chunks: string[] = [];
+
+  const results = await Promise.all(
+    targets.map((href) => fetchText(href, remaining).catch(() => null)),
+  );
+  for (const body of results) {
+    if (!body) continue;
+    if (body.length > remaining) {
+      chunks.push(body.slice(0, remaining));
+      remaining = 0;
+      break;
+    }
+    chunks.push(body);
+    remaining -= body.length;
+  }
+  return chunks.join("\n");
+}
+
+async function fetchText(url: string, maxBytes: number): Promise<string> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), STYLESHEET_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; SignullBot/1.0)" },
+      signal: ctrl.signal,
+    });
+    if (!res.ok) return "";
+    const text = await res.text();
+    return text.length > maxBytes ? text.slice(0, maxBytes) : text;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function extractFonts(html: string): string[] {

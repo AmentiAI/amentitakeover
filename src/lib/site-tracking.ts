@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import type { TemplateChoice } from "@/lib/site-url";
 
 /**
  * Log a "prospect opened their mockup" event. Links in outreach emails carry
@@ -10,7 +11,7 @@ import { prisma } from "@/lib/db";
  */
 export async function recordSiteView(opts: {
   scrapedBusinessId: string;
-  template: "roofing" | "roofing2" | "electrical";
+  template: TemplateChoice;
   trackingToken: string;
 }): Promise<void> {
   try {

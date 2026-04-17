@@ -6,6 +6,7 @@ const Body = z.object({
   businessId: z.string(),
   subject: z.string().min(1).max(200),
   body: z.string().min(1).max(10_000),
+  template: z.enum(["roofing", "roofing2", "roofing3", "electrical"]).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -19,6 +20,13 @@ export async function POST(req: NextRequest) {
     where: { id: parsed.data.businessId },
   });
   if (!b) return NextResponse.json({ error: "Business not found" }, { status: 404 });
+
+  if (parsed.data.template && parsed.data.template !== b.templateChoice) {
+    await prisma.scrapedBusiness.update({
+      where: { id: b.id },
+      data: { templateChoice: parsed.data.template },
+    });
+  }
 
   const draft = await prisma.emailDraft.create({
     data: {

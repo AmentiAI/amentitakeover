@@ -186,6 +186,7 @@ export function buildElectricalFromScrape(
   const images = parseImages(site?.images);
   const galleryFromSite = images
     .filter((i) => !looksLikeLogo(i) && !isLikelyIcon(i))
+    .sort((a, b) => portfolioScore(b.src) - portfolioScore(a.src))
     .slice(0, 24);
 
   // Generated sites only use imagery scraped from the business's own website.
@@ -294,6 +295,12 @@ function isLikelyIcon(i: { src: string; alt: string }): boolean {
 
 function isWideEnough(src: string): boolean {
   return /(hero|cover|banner|main|header|splash|1920|2400|1600|1200)/i.test(src);
+}
+
+function portfolioScore(src: string): number {
+  if (/\/(gallery|portfolio|projects?|our[-_]?work|recent[-_]?work|case[-_]?stud(y|ies)|jobs|completed)\b/i.test(src)) return 3;
+  if (/(panel|wiring|outlet|ev[-_]?charg|generator|lighting|fuse|breaker|electric)/i.test(src)) return 1;
+  return 0;
 }
 
 function buildServiceArea(city: string | null, state: string | null): string[] {

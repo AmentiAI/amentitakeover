@@ -35,9 +35,23 @@ function ensureScheme(s: string): string {
  * is appended as a `/v/<token>` path segment so we can attribute opens back
  * to a specific outreach send.
  */
+export type TemplateChoice = "roofing" | "roofing2" | "roofing3" | "electrical";
+
+export const TEMPLATE_CHOICES: { value: TemplateChoice; label: string; hint: string }[] = [
+  { value: "roofing", label: "Classic", hint: "Clean card-based roofing layout" },
+  { value: "roofing2", label: "Editorial", hint: "Magazine-style long-form" },
+  { value: "roofing3", label: "Bold", hint: "Luxury-dark with oversized type" },
+  { value: "electrical", label: "Electrical", hint: "For electrical contractors" },
+];
+
+export function normalizeTemplateChoice(raw: unknown): TemplateChoice {
+  if (raw === "roofing2" || raw === "roofing3" || raw === "electrical") return raw;
+  return "roofing";
+}
+
 export function getTemplatePreviewUrl(
   scrapedBusinessId: string,
-  opts?: { trackingToken?: string | null; template?: "roofing" | "roofing2" | "electrical" },
+  opts?: { trackingToken?: string | null; template?: TemplateChoice },
 ): string {
   const template = opts?.template ?? "roofing";
   const base = `${getSiteBaseUrl()}/p/${template}/${scrapedBusinessId}`;

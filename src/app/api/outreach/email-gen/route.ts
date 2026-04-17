@@ -9,6 +9,7 @@ const Body = z.object({
   businessId: z.string(),
   tone: z.string().default("friendly-professional"),
   hook: z.string().default("website audit"),
+  template: z.enum(["roofing", "roofing2", "roofing3", "electrical"]).optional(),
 });
 
 const SYSTEM = `You write short, sharp cold emails for B2B agency outreach.
@@ -86,7 +87,12 @@ export async function POST(req: NextRequest) {
 
   await prisma.scrapedBusiness.update({
     where: { id: b.id },
-    data: { emailReady: true },
+    data: {
+      emailReady: true,
+      ...(parsed.data.template && parsed.data.template !== b.templateChoice
+        ? { templateChoice: parsed.data.template }
+        : {}),
+    },
   });
 
   return NextResponse.json(draft);

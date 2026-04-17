@@ -392,6 +392,10 @@ model ScrapedBusiness {
   site           Site?    @relation(fields: [siteId], references: [id])
   emailDrafts    EmailDraft[]
 
+  // Generated-site template (roofing | roofing2 | roofing3 | electrical).
+  // Set when drafting outreach so the /p/<tpl>/<id> link matches.
+  templateChoice String   @default("roofing")
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

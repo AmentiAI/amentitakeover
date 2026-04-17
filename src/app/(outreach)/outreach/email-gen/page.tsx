@@ -1,6 +1,6 @@
 import { OutreachTopbar } from "@/components/outreach-topbar";
 import { prisma } from "@/lib/db";
-import { getTemplatePreviewUrl } from "@/lib/site-url";
+import { getTemplatePreviewUrl, normalizeTemplateChoice } from "@/lib/site-url";
 import { EmailGenForm } from "./form";
 import { DraftPreview } from "./preview";
 
@@ -24,9 +24,16 @@ export default async function EmailGenPage({
   const selected =
     (params.draft && drafts.find((d) => d.id === params.draft)) || drafts[0] || null;
 
+  const selectedTemplate = selected?.scrapedBusiness
+    ? normalizeTemplateChoice(selected.scrapedBusiness.templateChoice)
+    : "roofing";
+
   const siteUrl =
     selected?.scrapedBusinessId != null
-      ? getTemplatePreviewUrl(selected.scrapedBusinessId, { trackingToken: selected.id })
+      ? getTemplatePreviewUrl(selected.scrapedBusinessId, {
+          trackingToken: selected.id,
+          template: selectedTemplate,
+        })
       : null;
 
   // Fan out to count mockup opens per draft. One query, group in JS.
@@ -64,7 +71,12 @@ export default async function EmailGenPage({
             New email
           </div>
           <EmailGenForm
-            candidates={candidates.map((c) => ({ id: c.id, name: c.name, email: c.email }))}
+            candidates={candidates.map((c) => ({
+              id: c.id,
+              name: c.name,
+              email: c.email,
+              templateChoice: normalizeTemplateChoice(c.templateChoice),
+            }))}
           />
 
           <div className="mt-6 text-[11px] font-semibold uppercase tracking-wider text-slate-500">

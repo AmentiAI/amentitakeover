@@ -169,6 +169,7 @@ export function buildFromScrape(b: ScrapedIn, site: SiteIn): RoofingSiteData {
   const images = parseImages(site?.images);
   const galleryFromSite = images
     .filter((i) => !looksLikeLogo(i) && !isLikelyIcon(i))
+    .sort((a, b) => portfolioScore(b.src) - portfolioScore(a.src))
     .slice(0, 24);
 
   // Generated sites only use imagery scraped from the business's own website.
@@ -278,6 +279,14 @@ function isLikelyIcon(i: { src: string; alt: string }): boolean {
 
 function isWideEnough(src: string): boolean {
   return /(hero|cover|banner|main|header|splash|1920|2400|1600|1200)/i.test(src);
+}
+
+// Rank scraped images so work/portfolio imagery rises to the top and job-site
+// shots beat generic content. Pure ordering signal — doesn't filter anything.
+function portfolioScore(src: string): number {
+  if (/\/(gallery|portfolio|projects?|our[-_]?work|recent[-_]?work|case[-_]?stud(y|ies)|jobs|completed)\b/i.test(src)) return 3;
+  if (/(roof|shingle|gutter|siding|install|repair|storm|metal[-_]?roof|tile[-_]?roof)/i.test(src)) return 1;
+  return 0;
 }
 
 // Fallback palette when the scraped site offers no usable brand colors.
