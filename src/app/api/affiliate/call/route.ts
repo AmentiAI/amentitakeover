@@ -8,6 +8,8 @@ const ALLOWED_OUTCOMES = new Set([
   "voicemail",
   "no_answer",
   "bad_number",
+  "not_interested",
+  "note",
 ]);
 
 export async function POST(req: NextRequest) {

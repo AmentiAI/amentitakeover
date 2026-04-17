@@ -56,11 +56,25 @@ export default async function AffiliatePortalPage({
   const dealedBizIds = new Set(deals.map((d) => d.scrapedBusinessId));
   const calledBizIds = new Set(calls.map((c) => c.scrapedBusinessId));
 
+  const notInterested = await prisma.affiliateCall.findMany({
+    where: { affiliateId: affiliate.id, outcome: "not_interested" },
+    select: { scrapedBusinessId: true },
+  });
+  const notInterestedIds = new Set(notInterested.map((c) => c.scrapedBusinessId));
+
+  const latestNoteByBiz = new Map<string, string>();
+  for (const c of calls) {
+    if (c.notes && !latestNoteByBiz.has(c.scrapedBusinessId)) {
+      latestNoteByBiz.set(c.scrapedBusinessId, c.notes);
+    }
+  }
+
   const businesses = await prisma.scrapedBusiness.findMany({
     where: {
       archived: false,
       phone: { not: null },
       closedWon: false,
+      id: notInterestedIds.size > 0 ? { notIn: [...notInterestedIds] } : undefined,
     },
     orderBy: [{ rating: "desc" }, { updatedAt: "desc" }],
     take: 60,
@@ -115,6 +129,7 @@ export default async function AffiliatePortalPage({
         templateChoice: b.templateChoice,
         alreadyCalled: calledBizIds.has(b.id),
         alreadyClosed: dealedBizIds.has(b.id),
+        note: latestNoteByBiz.get(b.id) ?? null,
       }))}
       recentActivity={recentActivity}
     />

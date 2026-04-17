@@ -3,7 +3,18 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Phone, DollarSign, Search, Globe, Eye } from "lucide-react";
+import {
+  Phone,
+  DollarSign,
+  Search,
+  Globe,
+  Eye,
+  StickyNote,
+  PhoneMissed,
+  Ban,
+  Loader2,
+  Check,
+} from "lucide-react";
 
 type Biz = {
   id: string;
@@ -19,6 +30,7 @@ type Biz = {
   templateChoice: string;
   alreadyCalled: boolean;
   alreadyClosed: boolean;
+  note: string | null;
 };
 
 type Activity = {
@@ -42,6 +54,10 @@ export function OpportunitiesView({
   const router = useRouter();
   const [q, setQ] = useState("");
   const [dealing, setDealing] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [notesDraft, setNotesDraft] = useState<Record<string, string>>({});
+  const [working, setWorking] = useState<string | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -53,13 +69,36 @@ export function OpportunitiesView({
     );
   }, [q, businesses]);
 
-  async function logCall(biz: Biz, outcome = "dialed") {
+  async function logCall(biz: Biz, outcome = "dialed", notes?: string) {
     await fetch("/api/affiliate/call", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scrapedBusinessId: biz.id, outcome }),
+      body: JSON.stringify({ scrapedBusinessId: biz.id, outcome, notes }),
     });
     router.refresh();
+  }
+
+  async function saveNote(biz: Biz) {
+    const body = (notesDraft[biz.id] ?? biz.note ?? "").trim();
+    if (!body) return;
+    setWorking(biz.id);
+    await logCall(biz, "note", body);
+    setWorking(null);
+    setSaved(biz.id);
+    setTimeout(() => setSaved((cur) => (cur === biz.id ? null : cur)), 1500);
+  }
+
+  async function markNoAnswer(biz: Biz) {
+    setWorking(biz.id);
+    await logCall(biz, "no_answer", notesDraft[biz.id]?.trim() || undefined);
+    setWorking(null);
+  }
+
+  async function markNotInterested(biz: Biz) {
+    if (!confirm(`Remove "${biz.name}" from your board? This can't be undone from here.`)) return;
+    setWorking(biz.id);
+    await logCall(biz, "not_interested", notesDraft[biz.id]?.trim() || undefined);
+    setWorking(null);
   }
 
   async function logDeal(biz: Biz) {
@@ -162,6 +201,12 @@ export function OpportunitiesView({
                     </span>
                   )}
                 </div>
+                {b.note && (
+                  <div className="mt-1 flex items-start gap-1 text-[11px] text-amber-200/80">
+                    <StickyNote className="mt-0.5 h-3 w-3 shrink-0" />
+                    <span className="line-clamp-2">{b.note}</span>
+                  </div>
+                )}
               </Link>
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <a
@@ -201,7 +246,75 @@ export function OpportunitiesView({
                   <DollarSign className="h-3.5 w-3.5" />
                   {dealing === b.id ? "..." : "Log deal"}
                 </button>
+                <button
+                  onClick={() =>
+                    setExpanded((cur) => (cur === b.id ? null : b.id))
+                  }
+                  className={`flex items-center justify-center gap-1.5 rounded-md border px-2.5 py-2 text-xs font-medium sm:py-1.5 ${
+                    expanded === b.id
+                      ? "border-amber-400/50 bg-amber-400/10 text-amber-200"
+                      : "border-slate-700 text-slate-300 hover:bg-slate-800"
+                  }`}
+                  title="Notes & outcome"
+                  aria-expanded={expanded === b.id}
+                >
+                  <StickyNote className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Notes</span>
+                </button>
               </div>
+              {expanded === b.id && (
+                <div className="mt-1 w-full rounded-md border border-slate-800 bg-slate-950/60 p-3 sm:basis-full">
+                  <label className="block text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                    Notes
+                  </label>
+                  <textarea
+                    value={notesDraft[b.id] ?? b.note ?? ""}
+                    onChange={(e) =>
+                      setNotesDraft((d) => ({ ...d, [b.id]: e.target.value }))
+                    }
+                    placeholder="What happened on the call?"
+                    rows={2}
+                    maxLength={500}
+                    className="mt-1 w-full resize-y rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-100 outline-none placeholder:text-slate-500 focus:border-slate-500"
+                  />
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <button
+                      onClick={() => saveNote(b)}
+                      disabled={working === b.id}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-sky-500/40 bg-sky-500/10 px-2.5 py-1.5 text-xs font-medium text-sky-200 hover:bg-sky-500/20 disabled:opacity-50"
+                    >
+                      {working === b.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : saved === b.id ? (
+                        <Check className="h-3.5 w-3.5" />
+                      ) : (
+                        <StickyNote className="h-3.5 w-3.5" />
+                      )}
+                      {saved === b.id ? "Saved" : "Save note"}
+                    </button>
+                    <button
+                      onClick={() => markNoAnswer(b)}
+                      disabled={working === b.id}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+                    >
+                      <PhoneMissed className="h-3.5 w-3.5" />
+                      No answer
+                    </button>
+                    <button
+                      onClick={() => markNotInterested(b)}
+                      disabled={working === b.id}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-rose-500/40 bg-rose-500/10 px-2.5 py-1.5 text-xs font-medium text-rose-200 hover:bg-rose-500/20 disabled:opacity-50"
+                    >
+                      <Ban className="h-3.5 w-3.5" />
+                      Not interested
+                    </button>
+                  </div>
+                  <p className="mt-1.5 text-[10px] text-slate-500">
+                    &quot;No answer&quot; keeps this business on your board.
+                    &quot;Not interested&quot; removes it.
+                  </p>
+                </div>
+              )}
             </div>
           ))
         )}
