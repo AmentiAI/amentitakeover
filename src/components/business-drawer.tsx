@@ -18,7 +18,11 @@ import {
   X,
 } from "lucide-react";
 import { LIFECYCLE, type LifecycleStep } from "@/lib/lifecycle";
-import { TEMPLATE_CHOICES, type TemplateChoice } from "@/lib/site-url";
+import {
+  TEMPLATE_CHOICES,
+  getTemplatePreviewUrl,
+  type TemplateChoice,
+} from "@/lib/site-url";
 
 type DetailData = {
   id: string;
@@ -501,7 +505,7 @@ function GenerateWizard({
           </button>
           {(previewUrl || business.siteGenerated) && (
             <a
-              href={previewUrl ?? `/p/${template}/${business.id}`}
+              href={previewUrl ?? getTemplatePreviewUrl(business.id, { template })}
               target="_blank"
               rel="noreferrer"
               className="flex w-full items-center justify-center gap-1.5 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20"

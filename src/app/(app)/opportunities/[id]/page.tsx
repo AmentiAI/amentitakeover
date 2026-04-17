@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { Topbar } from "@/components/topbar";
+import { getTemplatePreviewUrl } from "@/lib/site-url";
 import { NextStepsPanel } from "./next-steps";
 import {
   ArrowLeft,
@@ -70,7 +71,7 @@ export default async function OpportunityDetailPage({
       })
     : [];
 
-  const templateUrl = scraped ? `/p/roofing/${scraped.id}` : null;
+  const templateUrl = scraped ? getTemplatePreviewUrl(scraped.id) : null;
   const liveSite = opp.business?.sites?.[0];
 
   const stages = opp.pipeline.stages;

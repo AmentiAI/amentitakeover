@@ -10,6 +10,15 @@
  */
 export const PRODUCTION_SITE_URL = "https://amentiaiaffiliates.online";
 
+/**
+ * Domain specifically for generated site previews (the /p/... pages we share
+ * with prospects). Kept separate from the app domain so marketing links and
+ * cold outreach go to a clean, client-facing URL.
+ *
+ * Override with NEXT_PUBLIC_PREVIEW_BASE_URL.
+ */
+export const PRODUCTION_PREVIEW_URL = "https://amentiaiaffiliates.com";
+
 export function getSiteBaseUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.trim();
   if (fromEnv) return ensureScheme(stripTrailingSlash(fromEnv));
@@ -22,6 +31,16 @@ export function getSiteBaseUrl(): string {
 
   if (process.env.NODE_ENV === "production") return PRODUCTION_SITE_URL;
   return "http://localhost:3000";
+}
+
+export function getPreviewBaseUrl(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_PREVIEW_BASE_URL?.trim();
+  if (fromEnv) return ensureScheme(stripTrailingSlash(fromEnv));
+
+  if (process.env.VERCEL_ENV === "production") return PRODUCTION_PREVIEW_URL;
+  if (process.env.NODE_ENV === "production") return PRODUCTION_PREVIEW_URL;
+
+  return getSiteBaseUrl();
 }
 
 function ensureScheme(s: string): string {
@@ -54,7 +73,7 @@ export function getTemplatePreviewUrl(
   opts?: { trackingToken?: string | null; template?: TemplateChoice },
 ): string {
   const template = opts?.template ?? "roofing";
-  const base = `${getSiteBaseUrl()}/p/${template}/${scrapedBusinessId}`;
+  const base = `${getPreviewBaseUrl()}/p/${template}/${scrapedBusinessId}`;
   const token = opts?.trackingToken?.trim();
   return token ? `${base}/v/${encodeURIComponent(token)}` : base;
 }
