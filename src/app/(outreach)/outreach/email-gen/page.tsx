@@ -26,7 +26,7 @@ export default async function EmailGenPage({
 
   const siteUrl =
     selected?.scrapedBusinessId != null
-      ? getTemplatePreviewUrl(selected.scrapedBusinessId)
+      ? getTemplatePreviewUrl(selected.scrapedBusinessId, { trackingToken: selected.id })
       : null;
 
   return (

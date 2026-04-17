@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Bell, Settings } from "lucide-react";
+import { SignOutButton } from "./sign-out-button";
 
 const TABS = [
   { label: "Dashboard", href: "/outreach" },
@@ -48,7 +49,8 @@ export function OutreachTopbar({ activeHref }: { activeHref: string }) {
         >
           <Settings className="h-4 w-4" />
         </Link>
-        <div className="ml-2 grid h-8 w-8 place-items-center rounded-full bg-indigo-600 text-xs font-semibold text-white">
+        <SignOutButton variant="dark" />
+        <div className="ml-1 grid h-8 w-8 place-items-center rounded-full bg-indigo-600 text-xs font-semibold text-white">
           W
         </div>
       </div>

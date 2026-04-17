@@ -35,7 +35,7 @@ export async function POST(
   });
 
   const siteUrl = draft.scrapedBusinessId
-    ? getTemplatePreviewUrl(draft.scrapedBusinessId)
+    ? getTemplatePreviewUrl(draft.scrapedBusinessId, { trackingToken: draft.id })
     : null;
   const businessName = draft.scrapedBusiness?.name ?? "your business";
   const textWithLink = siteUrl

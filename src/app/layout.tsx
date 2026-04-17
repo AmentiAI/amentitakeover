@@ -3,7 +3,7 @@ import "./globals.css";
 import { CommandPalette } from "@/components/command-palette";
 
 export const metadata: Metadata = {
-  title: "Amenti",
+  title: "Signull",
   description: "AI-native CRM with site scraping & AI rebuilds",
 };
 

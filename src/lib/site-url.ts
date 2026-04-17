@@ -30,11 +30,19 @@ function ensureScheme(s: string): string {
 }
 
 /**
- * Absolute URL for the generated roofing template preview, keyed by the
- * scraped-business id (the URL convention the app uses: /p/roofing/[id]).
+ * Absolute URL for the generated template preview, keyed by the
+ * scraped-business id. Optional `trackingToken` (typically the email-draft id)
+ * is appended as a `/v/<token>` path segment so we can attribute opens back
+ * to a specific outreach send.
  */
-export function getTemplatePreviewUrl(scrapedBusinessId: string): string {
-  return `${getSiteBaseUrl()}/p/roofing/${scrapedBusinessId}`;
+export function getTemplatePreviewUrl(
+  scrapedBusinessId: string,
+  opts?: { trackingToken?: string | null; template?: "roofing" | "roofing2" | "electrical" },
+): string {
+  const template = opts?.template ?? "roofing";
+  const base = `${getSiteBaseUrl()}/p/${template}/${scrapedBusinessId}`;
+  const token = opts?.trackingToken?.trim();
+  return token ? `${base}/v/${encodeURIComponent(token)}` : base;
 }
 
 function stripTrailingSlash(s: string): string {

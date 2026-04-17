@@ -1,4 +1,5 @@
 import { Bell, HelpCircle, MessageSquare, Sparkles } from "lucide-react";
+import { SignOutButton } from "./sign-out-button";
 
 export function Topbar({ title }: { title: string }) {
   return (
@@ -19,7 +20,8 @@ export function Topbar({ title }: { title: string }) {
         <button className="grid h-8 w-8 place-items-center rounded-md hover:bg-slate-100">
           <Bell className="h-4 w-4" />
         </button>
-        <div className="ml-2 grid h-8 w-8 place-items-center rounded-full bg-brand-700 text-xs font-semibold text-white">
+        <SignOutButton variant="light" />
+        <div className="ml-1 grid h-8 w-8 place-items-center rounded-full bg-brand-700 text-xs font-semibold text-white">
           W
         </div>
       </div>
