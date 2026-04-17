@@ -59,21 +59,21 @@ export default async function OpportunitiesPage() {
   return (
     <>
       <Topbar title="Opportunities" />
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2">
-        <div className="flex items-center gap-4 text-sm">
-          <Link href="/opportunities" className="font-semibold text-slate-900">
+      <div className="overflow-x-auto border-b border-slate-200 bg-white">
+        <div className="flex min-w-max items-center gap-4 px-4 py-2 text-sm">
+          <Link href="/opportunities" className="whitespace-nowrap font-semibold text-slate-900">
             Opportunities
           </Link>
-          <Link href="/opportunities/pipelines" className="text-slate-500 hover:text-slate-800">
+          <Link href="/opportunities/pipelines" className="whitespace-nowrap text-slate-500 hover:text-slate-800">
             Pipelines
           </Link>
-          <Link href="/opportunities/bulk" className="text-slate-500 hover:text-slate-800">
+          <Link href="/opportunities/bulk" className="whitespace-nowrap text-slate-500 hover:text-slate-800">
             Bulk Actions
           </Link>
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-2">
         <div className="flex items-center gap-2">
           <button className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
             {pipeline?.name ?? "No pipeline"}
@@ -102,7 +102,7 @@ export default async function OpportunitiesPage() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-4 py-2">
         <div className="flex items-center gap-2 text-xs">
           <button className="rounded bg-slate-100 px-2 py-1 font-medium text-slate-700">All</button>
           <button className="rounded px-2 py-1 text-slate-500 hover:bg-slate-100">Mine</button>
@@ -118,8 +118,8 @@ export default async function OpportunitiesPage() {
           <div className="flex items-center gap-1.5 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500">
             <Search className="h-3.5 w-3.5" />
             <input
-              placeholder="Search Opportunities"
-              className="w-48 bg-transparent outline-none placeholder:text-slate-400"
+              placeholder="Search"
+              className="w-28 bg-transparent outline-none placeholder:text-slate-400 sm:w-48"
             />
           </div>
           <button className="rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50">

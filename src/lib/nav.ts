@@ -15,6 +15,7 @@ import {
   Store,
   Smartphone,
   Settings,
+  Handshake,
   type LucideIcon,
 } from "lucide-react";
 
@@ -29,6 +30,7 @@ export const NAV: NavItem[] = [
   { label: "Calendars", href: "/calendars", icon: Calendar },
   { label: "Contacts", href: "/contacts", icon: Users },
   { label: "Opportunities", href: "/opportunities", icon: Target },
+  { label: "Affiliates", href: "/affiliates", icon: Handshake },
   { label: "Payments", href: "/payments", icon: CreditCard },
   { label: "AI Agents", href: "/ai-agents", icon: Bot },
   { label: "Marketing", href: "/marketing", icon: Megaphone },

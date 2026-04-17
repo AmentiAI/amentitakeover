@@ -15,7 +15,8 @@
       "WebFetch(domain:roofingseo.services)",
       "Bash(echo \"EXIT $?\")",
       "Bash(npx next *)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(wait)"
     ]
   }
 }

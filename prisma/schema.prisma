@@ -497,6 +497,53 @@ model SocialFollowJob {
   createdAt  DateTime @default(now())
 }
 
+// Affiliates are external callers who log into a trimmed portal at
+// /a/<slug> and dial businesses from the opportunities pool. Each call
+// and closed deal is tagged to the affiliate so commissions can be paid
+// out from the snapshot.
+model Affiliate {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  passcode      String   // plaintext invite code — shared once via link
+  commissionPct Int      @default(30)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  calls AffiliateCall[]
+  deals AffiliateDeal[]
+}
+
+model AffiliateCall {
+  id                String   @id @default(cuid())
+  affiliateId       String
+  affiliate         Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  scrapedBusinessId String
+  phone             String?
+  outcome           String   @default("dialed") // dialed | connected | voicemail | no_answer | bad_number
+  notes             String?
+  createdAt         DateTime @default(now())
+
+  @@index([affiliateId, createdAt])
+  @@index([scrapedBusinessId])
+}
+
+model AffiliateDeal {
+  id                String    @id @default(cuid())
+  affiliateId       String
+  affiliate         Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  scrapedBusinessId String
+  dealValue         Decimal   @db.Decimal(12, 2)
+  commissionPct     Int
+  commissionDue     Decimal   @db.Decimal(12, 2)
+  paidAt            DateTime?
+  notes             String?
+  createdAt         DateTime  @default(now())
+
+  @@index([affiliateId, createdAt])
+  @@index([paidAt])
+}
+
 // AI-generated imagery for the mockup sites. Bytes are served via
 // /api/generated-image/[id] so the template can reference them like any
 // other URL. Keyed by scrapedBusinessId so we can swap in new artwork

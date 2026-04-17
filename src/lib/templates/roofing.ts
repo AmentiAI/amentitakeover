@@ -186,9 +186,12 @@ export function buildFromScrape(
   const generatedGallery = generated?.gallery ?? [];
   const generatedHero = generated?.hero ?? null;
 
+  // Prefer AI-generated imagery when present, but fall back to curated stock
+  // so the mockup never renders with a blank hero or empty gallery — that
+  // looks broken to a prospect.
   const heroPick = generatedHero
     ? { src: generatedHero.src, alt: `${b.name} — feature image` }
-    : null;
+    : { src: FALLBACK_HERO, alt: `${b.name} — feature image` };
 
   const gallery: { src: string; alt: string }[] = [];
   const seen = new Set<string>();
@@ -197,6 +200,11 @@ export function buildFromScrape(
     seen.add(g.src);
     gallery.push({ src: g.src, alt: `${b.name} — recent work` });
     if (gallery.length >= 12) break;
+  }
+  if (gallery.length === 0) {
+    for (const f of FALLBACK_GALLERY) {
+      gallery.push(f);
+    }
   }
 
   const palette = derivePalette(site?.palette ?? []);

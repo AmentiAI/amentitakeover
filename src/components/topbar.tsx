@@ -8,13 +8,13 @@ export function Topbar({ title }: { title: string }) {
         <h1 className="text-[15px] font-semibold text-slate-800">{title}</h1>
       </div>
       <div className="flex items-center gap-2 text-slate-500">
-        <button className="grid h-8 w-8 place-items-center rounded-md hover:bg-slate-100">
+        <button className="hidden h-8 w-8 place-items-center rounded-md hover:bg-slate-100 sm:grid">
           <Sparkles className="h-4 w-4" />
         </button>
-        <button className="grid h-8 w-8 place-items-center rounded-md hover:bg-slate-100">
+        <button className="hidden h-8 w-8 place-items-center rounded-md hover:bg-slate-100 sm:grid">
           <MessageSquare className="h-4 w-4" />
         </button>
-        <button className="grid h-8 w-8 place-items-center rounded-md hover:bg-slate-100">
+        <button className="hidden h-8 w-8 place-items-center rounded-md hover:bg-slate-100 sm:grid">
           <HelpCircle className="h-4 w-4" />
         </button>
         <button className="grid h-8 w-8 place-items-center rounded-md hover:bg-slate-100">
