@@ -96,25 +96,6 @@ export default async function GoogleBusinessesPage({
               Clear
             </Link>
           </form>
-
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {INDUSTRIES.slice(0, 26).map((i) => {
-              const active = sp.industry === i;
-              return (
-                <Link
-                  key={i}
-                  href={`/outreach/scrape/google?industry=${encodeURIComponent(i)}`}
-                  className={`rounded-full border px-2 py-0.5 text-[11px] transition ${
-                    active
-                      ? "border-indigo-400 bg-indigo-500/10 text-indigo-200"
-                      : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200"
-                  }`}
-                >
-                  {i}
-                </Link>
-              );
-            })}
-          </div>
         </div>
 
         <div className="border-b border-slate-800 bg-slate-950 px-4 py-2">
