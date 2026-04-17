@@ -114,7 +114,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="mt-10 grid w-full max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-10 hidden w-full max-w-5xl gap-4 sm:grid sm:grid-cols-2 xl:grid-cols-4">
             {features.map((feature) => (
               <div
                 key={feature.title}
