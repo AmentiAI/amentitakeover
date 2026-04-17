@@ -165,35 +165,39 @@ type SiteIn = {
   description: string | null;
 } | null;
 
-export function buildFromScrape(b: ScrapedIn, site: SiteIn): RoofingSiteData {
+export type GeneratedImagesIn = {
+  hero: { src: string } | null;
+  gallery: { src: string }[];
+} | null;
+
+export function buildFromScrape(
+  b: ScrapedIn,
+  site: SiteIn,
+  generated?: GeneratedImagesIn,
+): RoofingSiteData {
   const images = parseImages(site?.images);
-  const galleryFromSite = images
-    .filter((i) => !looksLikeLogo(i) && !isLikelyIcon(i))
-    .sort((a, b) => portfolioScore(b.src) - portfolioScore(a.src))
-    .slice(0, 24);
 
-  // Generated sites only use imagery scraped from the business's own website.
-  // If nothing was scraped, hero is null and gallery is empty — the template
-  // hides those sections rather than filling them with stock photos.
-  const heroPick =
-    galleryFromSite.find((i) => isWideEnough(i.src)) ||
-    galleryFromSite[0] ||
-    null;
+  // Logo is the only scraped image we keep — shown in the nav. Hero and
+  // gallery come from AI-generated imagery so the mockup looks on-brand
+  // and consistent, not whatever random stock the business had on their
+  // old site.
+  const logoUrl = images.find((i) => looksLikeLogo(i))?.src ?? null;
 
-  const rest = heroPick
-    ? galleryFromSite.filter((i) => i.src !== heroPick.src)
-    : galleryFromSite;
+  const generatedGallery = generated?.gallery ?? [];
+  const generatedHero = generated?.hero ?? null;
+
+  const heroPick = generatedHero
+    ? { src: generatedHero.src, alt: `${b.name} — feature image` }
+    : null;
 
   const gallery: { src: string; alt: string }[] = [];
   const seen = new Set<string>();
-  for (const item of rest) {
-    if (seen.has(item.src)) continue;
-    seen.add(item.src);
-    gallery.push(item);
+  for (const g of generatedGallery) {
+    if (seen.has(g.src)) continue;
+    seen.add(g.src);
+    gallery.push({ src: g.src, alt: `${b.name} — recent work` });
     if (gallery.length >= 12) break;
   }
-
-  const logoUrl = images.find((i) => looksLikeLogo(i))?.src ?? null;
 
   const palette = derivePalette(site?.palette ?? []);
 
@@ -271,22 +275,6 @@ function isJunkImage(src: string, alt: string): boolean {
 
 function looksLikeLogo(i: { src: string; alt: string }): boolean {
   return /logo|favicon|brand/i.test(i.alt) || /logo|favicon|brand/i.test(i.src);
-}
-
-function isLikelyIcon(i: { src: string; alt: string }): boolean {
-  return /icon|sprite|pixel|tracker|1x1|badge|chevron/i.test(i.src);
-}
-
-function isWideEnough(src: string): boolean {
-  return /(hero|cover|banner|main|header|splash|1920|2400|1600|1200)/i.test(src);
-}
-
-// Rank scraped images so work/portfolio imagery rises to the top and job-site
-// shots beat generic content. Pure ordering signal — doesn't filter anything.
-function portfolioScore(src: string): number {
-  if (/\/(gallery|portfolio|projects?|our[-_]?work|recent[-_]?work|case[-_]?stud(y|ies)|jobs|completed)\b/i.test(src)) return 3;
-  if (/(roof|shingle|gutter|siding|install|repair|storm|metal[-_]?roof|tile[-_]?roof)/i.test(src)) return 1;
-  return 0;
 }
 
 // Fallback palette when the scraped site offers no usable brand colors.

@@ -496,3 +496,23 @@ model SocialFollowJob {
   unfollowed Int      @default(0)
   createdAt  DateTime @default(now())
 }
+
+// AI-generated imagery for the mockup sites. Bytes are served via
+// /api/generated-image/[id] so the template can reference them like any
+// other URL. Keyed by scrapedBusinessId so we can swap in new artwork
+// without touching anything else.
+model GeneratedImage {
+  id                  String   @id @default(cuid())
+  scrapedBusinessId   String
+  purpose             String   // hero | gallery
+  position            Int      @default(0)
+  prompt              String
+  bytes               Bytes
+  mimeType            String   @default("image/png")
+  width               Int
+  height              Int
+  model               String   @default("gpt-image-1")
+  createdAt           DateTime @default(now())
+
+  @@index([scrapedBusinessId, purpose, position])
+}

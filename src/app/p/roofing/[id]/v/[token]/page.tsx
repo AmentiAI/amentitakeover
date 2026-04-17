@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { RoofingTemplate } from "@/components/templates/roofing";
 import { buildFromScrape } from "@/lib/templates/roofing";
+import { getSiteImageSet } from "@/lib/site-image-generator";
 import { recordSiteView } from "@/lib/site-tracking";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,8 @@ export default async function RoofingBusinessTrackedPage({
     template: "roofing",
     trackingToken: token,
   });
+
+  const generated = await getSiteImageSet(business.id);
 
   const data = buildFromScrape(
     {
@@ -56,6 +59,7 @@ export default async function RoofingBusinessTrackedPage({
           description: business.site.description,
         }
       : null,
+    generated,
   );
 
   return <RoofingTemplate data={data} />;

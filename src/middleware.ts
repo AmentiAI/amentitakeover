@@ -7,6 +7,7 @@ const PUBLIC_PREFIXES = [
   "/login",
   "/p/",
   "/api/auth/",
+  "/api/generated-image/",
   "/_next/",
   "/favicon.ico",
 ];

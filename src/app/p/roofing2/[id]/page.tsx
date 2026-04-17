@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { RoofingTemplate2 } from "@/components/templates/roofing2";
 import { buildFromScrape } from "@/lib/templates/roofing";
+import { getSiteImageSet } from "@/lib/site-image-generator";
 
 export default async function RoofingBusinessPage2({
   params,
@@ -16,6 +17,8 @@ export default async function RoofingBusinessPage2({
   });
 
   if (!business) notFound();
+
+  const generated = await getSiteImageSet(business.id);
 
   const data = buildFromScrape(
     {
@@ -47,6 +50,7 @@ export default async function RoofingBusinessPage2({
           description: business.site.description,
         }
       : null,
+    generated,
   );
 
   return <RoofingTemplate2 data={data} />;

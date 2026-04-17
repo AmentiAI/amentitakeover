@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { deepScrapeSite } from "@/lib/deep-scraper";
 import { rebuildSite } from "@/lib/rebuilder";
+import { generateSiteImages } from "@/lib/site-image-generator";
 
 export const maxDuration = 300;
 
@@ -120,6 +121,16 @@ export async function POST(
           status: "ready",
         },
       });
+    }
+
+    // Generate AI imagery for the mockup — hero + gallery, styled to match
+    // the business. Best-effort; failures don't block the rest of the flow.
+    if (siteId) {
+      try {
+        await generateSiteImages(b.id);
+      } catch (err) {
+        console.error("[generate] site-image generation failed:", err);
+      }
     }
 
     const updated = await prisma.scrapedBusiness.update({

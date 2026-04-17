@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { ElectricalTemplate } from "@/components/templates/electrical";
 import { buildElectricalFromScrape } from "@/lib/templates/electrical";
+import { getSiteImageSet } from "@/lib/site-image-generator";
 import { recordSiteView } from "@/lib/site-tracking";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,8 @@ export default async function ElectricalBusinessTrackedPage({
     template: "electrical",
     trackingToken: token,
   });
+
+  const generated = await getSiteImageSet(business.id);
 
   const data = buildElectricalFromScrape(
     {
@@ -56,6 +59,7 @@ export default async function ElectricalBusinessTrackedPage({
           description: business.site.description,
         }
       : null,
+    generated,
   );
 
   return <ElectricalTemplate data={data} />;

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { ElectricalTemplate } from "@/components/templates/electrical";
 import { buildElectricalFromScrape } from "@/lib/templates/electrical";
+import { getSiteImageSet } from "@/lib/site-image-generator";
 
 export default async function ElectricalBusinessPage({
   params,
@@ -16,6 +17,8 @@ export default async function ElectricalBusinessPage({
   });
 
   if (!business) notFound();
+
+  const generated = await getSiteImageSet(business.id);
 
   const data = buildElectricalFromScrape(
     {
@@ -47,6 +50,7 @@ export default async function ElectricalBusinessPage({
           description: business.site.description,
         }
       : null,
+    generated,
   );
 
   return <ElectricalTemplate data={data} />;
