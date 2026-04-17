@@ -110,6 +110,30 @@ function fallbackBrief(ctx: BusinessContext): ImageBrief {
 }
 
 function tradeSubjects(trade: string): { hero: string; gallery: string[] } {
+  if (/locksmith|security|safe/.test(trade)) {
+    // gpt-image-1 safety filter flags "locksmith" and "lock-picking" imagery.
+    // Describe the hardware/work environment instead of the act itself.
+    return {
+      hero: "a modern matte-black smart door handle on a sleek front door at golden hour, soft shadow across the threshold",
+      gallery: [
+        "a neat row of brass and nickel door handles on a clean workbench, wood grain beneath",
+        "a close-up of a polished deadbolt installed on a stained oak door, morning light",
+        "a modern keypad entry pad glowing softly on a residential front door at dusk",
+        "a tidy hardware workshop with organized drawers of hinges and door hardware, warm light",
+      ],
+    };
+  }
+  if (/plumb|hvac|heating|cooling|ac |a\/c|boiler/.test(trade)) {
+    return {
+      hero: "a freshly installed tankless water heater on a clean utility room wall, copper supply lines gleaming",
+      gallery: [
+        "gloved hands tightening a pipe wrench on a chrome fitting, water droplets on the copper",
+        "a brand-new high-efficiency furnace installed in a clean basement, ductwork overhead",
+        "a modern thermostat mounted on a wall, warm indoor light behind it",
+        "a pressure gauge and tool roll on a neat workbench, organized plumbing parts",
+      ],
+    };
+  }
   if (/roof/.test(trade)) {
     return {
       hero: "a freshly installed asphalt shingle roof on a craftsman home, neat ridge cap, gutters in frame",

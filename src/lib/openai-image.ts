@@ -20,6 +20,13 @@ export type GeneratedImageResult = {
   model: string;
 };
 
+export class ImageModerationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ImageModerationError";
+  }
+}
+
 type OpenAIImageResponse = {
   data?: { b64_json?: string }[];
   error?: { message?: string };
@@ -64,6 +71,9 @@ export async function generateImage(opts: {
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
+      if (res.status === 400 && /moderation_blocked|safety_violations|safety system/i.test(text)) {
+        throw new ImageModerationError(`moderation_blocked: ${text.slice(0, 200)}`);
+      }
       throw new Error(`OpenAI image generation failed (${res.status}): ${text.slice(0, 400)}`);
     }
 

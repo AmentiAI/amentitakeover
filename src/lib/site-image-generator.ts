@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { buildImageBrief, type BusinessContext } from "@/lib/image-prompt";
-import { generateImage, type ImageQuality } from "@/lib/openai-image";
+import { generateImage, ImageModerationError, type ImageQuality } from "@/lib/openai-image";
 
 /**
  * Generate a matched set of mockup-site images (hero + gallery) for a
@@ -41,12 +41,12 @@ export async function generateSiteImages(
 
   const ctx = buildContext(business);
   const brief = await buildImageBrief(ctx);
+  const failures: { prompt: string; error: string }[] = [];
 
-  const hero = await safeGenerate({
-    prompt: brief.heroPrompt,
-    size: "1536x1024",
-    quality,
-  });
+  const hero = await safeGenerate(
+    { prompt: brief.heroPrompt, size: "1536x1024", quality },
+    failures,
+  );
   let heroRow: { id: string } | null = null;
   if (hero) {
     heroRow = await prisma.generatedImage.create({
@@ -68,11 +68,10 @@ export async function generateSiteImages(
   const galleryRows: { id: string }[] = [];
   const prompts = brief.galleryPrompts.slice(0, galleryCount);
   for (let i = 0; i < prompts.length; i++) {
-    const result = await safeGenerate({
-      prompt: prompts[i],
-      size: "1024x1024",
-      quality,
-    });
+    const result = await safeGenerate(
+      { prompt: prompts[i], size: "1024x1024", quality },
+      failures,
+    );
     if (!result) continue;
     const row = await prisma.generatedImage.create({
       data: {
@@ -100,6 +99,7 @@ export async function generateSiteImages(
         heroGenerated: Boolean(heroRow),
         galleryGenerated: galleryRows.length,
         styleDirection: brief.styleDirection,
+        failures: failures.slice(0, 5),
       },
     },
   });
@@ -162,12 +162,37 @@ function buildContext(
   };
 }
 
-async function safeGenerate(opts: Parameters<typeof generateImage>[0]) {
+async function safeGenerate(
+  opts: Parameters<typeof generateImage>[0],
+  failures: { prompt: string; error: string }[],
+) {
   try {
     return await generateImage(opts);
   } catch (err) {
-    // swallow & log — one failure shouldn't nuke the whole set
-    console.error("[site-image-generator] gpt-image-1 error:", err);
+    if (err instanceof ImageModerationError) {
+      console.warn("[site-image-generator] prompt blocked by safety system, retrying with generic fallback");
+      try {
+        return await generateImage({
+          ...opts,
+          prompt: genericSafePrompt(opts.size),
+        });
+      } catch (retryErr) {
+        const msg = retryErr instanceof Error ? retryErr.message : String(retryErr);
+        console.error("[site-image-generator] fallback also failed:", msg);
+        failures.push({ prompt: opts.prompt.slice(0, 80), error: `moderation+fallback:${msg.slice(0, 120)}` });
+        return null;
+      }
+    }
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[site-image-generator] gpt-image-1 error:", msg);
+    failures.push({ prompt: opts.prompt.slice(0, 80), error: msg.slice(0, 200) });
     return null;
   }
+}
+
+function genericSafePrompt(size: "1024x1024" | "1024x1536" | "1536x1024" | undefined): string {
+  const wide = size === "1536x1024";
+  return wide
+    ? "A clean modern storefront exterior at golden hour, warm sunlight, soft shadows, welcoming architecture, no text, no logos, no people, photorealistic editorial photography."
+    : "A tidy organized workbench with quality tools laid out neatly on warm wood, soft natural light, shallow depth of field, no text, no logos, no people, photorealistic editorial photography.";
 }

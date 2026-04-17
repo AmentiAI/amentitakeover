@@ -14,7 +14,8 @@
       "WebFetch(domain:hookagency.com)",
       "WebFetch(domain:roofingseo.services)",
       "Bash(echo \"EXIT $?\")",
-      "Bash(npx next *)"
+      "Bash(npx next *)",
+      "Bash(node *)"
     ]
   }
 }

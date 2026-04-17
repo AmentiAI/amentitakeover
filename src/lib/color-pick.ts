@@ -14,11 +14,26 @@ export type PickedPalette = {
   trust: string;
 };
 
+// Known CMS-default palettes we should NOT interpret as brand colors.
+// Each of these is enumerated in the CMS stylesheet regardless of whether
+// the site actually uses the color. Without filtering, a random Gutenberg
+// "pale pink" outranks the site's real navy.
+const CMS_DEFAULT_HEXES = new Set<string>([
+  // WordPress Gutenberg default color palette (block editor)
+  "#f78da7", "#cf2e2e", "#ff6900", "#fcb900", "#7bdcb5",
+  "#00d084", "#8ed1fc", "#0693e3", "#9b51e0", "#abb8c3",
+  "#32373c",
+  // Wix editor default theme swatches (common Thunderbird blue family)
+  "#116dff", "#ff4040", "#7fccf7", "#3899ec", "#0f2ccf",
+  "#2f5dff", "#597dff", "#acbeff", "#d5dfff", "#eaefff", "#f5f7ff",
+]);
+
 export function pickBrandPalette(hexes: string[]): PickedPalette | null {
   const parsed = hexes
     .map(parseHex)
     .filter((x): x is RGB => x != null)
-    .map((rgb) => ({ rgb, hsl: rgbToHsl(rgb), hex: rgbToHex(rgb) }));
+    .map((rgb) => ({ rgb, hsl: rgbToHsl(rgb), hex: rgbToHex(rgb) }))
+    .filter(({ hex }) => !CMS_DEFAULT_HEXES.has(hex.toLowerCase()));
 
   const usable = parsed.filter(({ hsl }) => isUsableBrand(hsl));
   if (usable.length === 0) return null;
