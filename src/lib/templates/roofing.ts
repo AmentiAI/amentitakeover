@@ -250,12 +250,22 @@ function parseImages(raw: unknown): { src: string; alt: string }[] {
   const out: { src: string; alt: string }[] = [];
   for (const x of raw) {
     if (!x || typeof x !== "object") continue;
-    const src = (x as { src?: unknown }).src;
+    const rec = x as { src?: unknown; alt?: unknown; kind?: unknown };
+    if (rec.kind === "video") continue;
+    const src = rec.src;
     if (typeof src !== "string" || !src.startsWith("http")) continue;
-    const alt = (x as { alt?: unknown }).alt;
-    out.push({ src, alt: typeof alt === "string" ? alt : "" });
+    const alt = typeof rec.alt === "string" ? rec.alt : "";
+    if (isJunkImage(src, alt)) continue;
+    out.push({ src, alt });
   }
   return out;
+}
+
+const TEMPLATE_JUNK_RE =
+  /(now[-_\s]?hiring|we'?re[-_\s]?hiring|hiring(?![a-z])|careers?|join[-_\s]?(our[-_\s]?)?team|apply[-_\s]?now|visa|mastercard|paypal|homeadvisor|home[-_\s]?advisor|angies?[-_\s]?list|thumbtack|houzz|trustpilot|yelp|bbb|facebook|instagram|twitter|tiktok|linkedin|pinterest|youtube)/i;
+
+function isJunkImage(src: string, alt: string): boolean {
+  return TEMPLATE_JUNK_RE.test(`${src} ${alt}`);
 }
 
 function looksLikeLogo(i: { src: string; alt: string }): boolean {

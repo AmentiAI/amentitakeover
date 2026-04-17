@@ -29,6 +29,32 @@ export default async function EmailGenPage({
       ? getTemplatePreviewUrl(selected.scrapedBusinessId, { trackingToken: selected.id })
       : null;
 
+  // Fan out to count mockup opens per draft. One query, group in JS.
+  const draftIds = drafts.map((d) => d.id);
+  const viewEvents = draftIds.length
+    ? await prisma.activityEvent.findMany({
+        where: {
+          type: "template.viewed",
+          OR: draftIds.map((id) => ({
+            details: { path: ["draftId"], equals: id },
+          })),
+        },
+        select: { details: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
+
+  const viewsByDraft = new Map<string, { count: number; lastAt: Date }>();
+  for (const ev of viewEvents) {
+    const detail = ev.details as { draftId?: unknown } | null;
+    const did = typeof detail?.draftId === "string" ? detail.draftId : null;
+    if (!did) continue;
+    const cur = viewsByDraft.get(did);
+    if (cur) cur.count += 1;
+    else viewsByDraft.set(did, { count: 1, lastAt: ev.createdAt });
+  }
+  const selectedViews = selected ? viewsByDraft.get(selected.id) ?? null : null;
+
   return (
     <>
       <OutreachTopbar activeHref="/outreach/email-gen" />
@@ -55,6 +81,7 @@ export default async function EmailGenPage({
                     : d.status === "sending"
                       ? "border-sky-900 text-sky-400"
                       : "border-slate-700 text-slate-400";
+              const v = viewsByDraft.get(d.id);
               return (
                 <a
                   key={d.id}
@@ -75,8 +102,18 @@ export default async function EmailGenPage({
                       {d.status}
                     </span>
                   </div>
-                  <div className="truncate text-[11px] text-slate-500">
-                    {d.scrapedBusiness?.name ?? "—"}
+                  <div className="mt-0.5 flex items-center justify-between gap-2">
+                    <div className="truncate text-[11px] text-slate-500">
+                      {d.scrapedBusiness?.name ?? "—"}
+                    </div>
+                    {v && (
+                      <span
+                        className="shrink-0 rounded border border-emerald-900/70 bg-emerald-950/40 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-300"
+                        title={`Last opened ${v.lastAt.toLocaleString()}`}
+                      >
+                        {v.count} {v.count === 1 ? "open" : "opens"}
+                      </span>
+                    )}
                   </div>
                 </a>
               );
@@ -106,6 +143,7 @@ export default async function EmailGenPage({
                   : null,
               }}
               siteUrl={siteUrl}
+              views={selectedViews ? { count: selectedViews.count, lastAt: selectedViews.lastAt.toISOString() } : null}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-slate-500">

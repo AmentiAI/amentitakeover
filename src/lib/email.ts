@@ -44,6 +44,46 @@ export type SendEmailResult =
   | { ok: false; skipped: true; reason: "no_api_key" }
   | { ok: false; skipped: false; error: string };
 
+// Resend requires the sender's domain to be verified in their dashboard.
+// Freemail providers (gmail.com, outlook.com, etc.) can never be verified
+// because the domains aren't ours to prove ownership of — catch these before
+// we waste a Resend round-trip and show a clear error to the user.
+const FREEMAIL_DOMAINS = new Set([
+  "gmail.com",
+  "googlemail.com",
+  "yahoo.com",
+  "ymail.com",
+  "outlook.com",
+  "hotmail.com",
+  "live.com",
+  "msn.com",
+  "aol.com",
+  "icloud.com",
+  "me.com",
+  "protonmail.com",
+  "proton.me",
+  "pm.me",
+  "gmx.com",
+  "mail.com",
+]);
+
+function extractEmailAddress(from: string): string {
+  // Accept either "Name <addr@host>" or "addr@host".
+  const m = from.match(/<([^>]+)>/);
+  return (m ? m[1] : from).trim().toLowerCase();
+}
+
+function validateFromAddress(from: string): string | null {
+  const addr = extractEmailAddress(from);
+  const at = addr.lastIndexOf("@");
+  if (at < 0) return `RESEND_FROM="${from}" is not a valid email address.`;
+  const domain = addr.slice(at + 1);
+  if (FREEMAIL_DOMAINS.has(domain)) {
+    return `Cannot send from "${addr}" — "${domain}" is a consumer email provider and can't be verified in Resend. Add a domain you own at https://resend.com/domains and set RESEND_FROM to an address on that domain (e.g. "Wilson <wilson@signulldev.com>").`;
+  }
+  return null;
+}
+
 export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
   const resend = getClient();
   if (!resend) {
@@ -52,6 +92,11 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
 
   const from = input.from ?? process.env.RESEND_FROM ?? "onboarding@resend.dev";
   const replyTo = input.replyTo ?? process.env.RESEND_REPLY_TO ?? undefined;
+
+  const fromError = validateFromAddress(from);
+  if (fromError) {
+    return { ok: false, skipped: false, error: fromError };
+  }
 
   if (!input.text && !input.html) {
     return { ok: false, skipped: false, error: "Either text or html body is required." };

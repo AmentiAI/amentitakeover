@@ -38,12 +38,13 @@ export async function POST(
     ? getTemplatePreviewUrl(draft.scrapedBusinessId, { trackingToken: draft.id })
     : null;
   const businessName = draft.scrapedBusiness?.name ?? "your business";
+  const cleanedBody = stripStaleMockupUrls(draft.body, draft.scrapedBusinessId);
   const textWithLink = siteUrl
-    ? appendSiteLinkText(draft.body, siteUrl, businessName)
-    : draft.body;
+    ? appendSiteLinkText(cleanedBody, siteUrl, businessName)
+    : cleanedBody;
   const htmlWithLink = siteUrl
-    ? appendSiteLinkHtml(textToHtml(draft.body), siteUrl, businessName)
-    : textToHtml(draft.body);
+    ? appendSiteLinkHtml(textToHtml(cleanedBody), siteUrl, businessName)
+    : textToHtml(cleanedBody);
 
   const result = await sendEmail({
     to,
@@ -94,6 +95,26 @@ export async function POST(
   });
 
   return NextResponse.json({ ok: true, draft: updated, messageId: result.id });
+}
+
+// Drafts authored before the signulldev.com rollout (or manually pasted) may
+// contain stale preview URLs — old amentitakeover.vercel.app links or the
+// untracked /p/<tpl>/<id> form. Strip them so we don't double-up with the
+// new tracked P.S. block.
+function stripStaleMockupUrls(body: string, scrapedBusinessId: string | null): string {
+  let cleaned = body;
+  // Old Vercel preview hostnames.
+  cleaned = cleaned.replace(/https?:\/\/[^\s<>"')]*amentitakeover[^\s<>"')]*/gi, "");
+  // Our own mockup paths — remove so the tracked P.S. is the only link.
+  const idFragment = scrapedBusinessId ? `/${scrapedBusinessId}` : "";
+  const pathRe = new RegExp(
+    `https?:\\/\\/[^\\s<>"')]*\\/p\\/(roofing2?|electrical)${idFragment}(?:\\/v\\/[^\\s<>"')]*)?`,
+    "gi",
+  );
+  cleaned = cleaned.replace(pathRe, "");
+  // Collapse the blank lines we just left behind.
+  cleaned = cleaned.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  return cleaned;
 }
 
 function appendSiteLinkText(body: string, url: string, businessName: string): string {

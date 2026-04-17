@@ -51,6 +51,19 @@ const SOCIAL_HOSTS = [
 const SOCIAL_FILE_RE =
   /(facebook|instagram|twitter|x-?logo|tiktok|linkedin|pinterest|youtube|yelp|whatsapp|nextdoor|bbb|google-?(plus|my-?business|review))[-_\s]?(icon|logo|badge|btn|button|share)?\.(png|jpe?g|svg|webp|gif)/i;
 
+// Hiring / careers / "join our team" banners and generic ads — these never
+// belong in a business's "recent work" gallery.
+const HIRING_RE =
+  /(now[-_\s]?hiring|we'?re[-_\s]?hiring|hiring(?![a-z])|careers?|join[-_\s]?(our[-_\s]?)?team|apply[-_\s]?now|job[-_\s]?(opening|board)|we'?re[-_\s]?growing|work[-_\s]?with[-_\s]?us)/i;
+
+// Payment-method logos, review-network badges, site-builder credits, ad units.
+const VENDOR_BADGE_RE =
+  /(visa|mastercard|amex|american[-_\s]?express|discover|paypal|apple[-_\s]?pay|google[-_\s]?pay|venmo|stripe|square|homeadvisor|home[-_\s]?advisor|angies?[-_\s]?list|thumbtack|porch\.com|houzz|trustpilot|trulia|zillow|realtor|energystar|energy[-_\s]?star|powered[-_\s]?by|built[-_\s]?with|wix[-_\s]?logo|squarespace[-_\s]?logo|wordpress[-_\s]?logo|godaddy|wp[-_\s]?logo)/i;
+
+// Common banner/promo/advert filename patterns.
+const AD_BANNER_RE =
+  /(\b|[-_/])(ad|ads|banner|promo|sale|coupon|discount|offer|deal|placeholder|stock|default|mock)([-_0-9]|\.[a-z]{3,4}(?:$|\?))/i;
+
 function isSocialAsset(src: string, alt: string | null): boolean {
   let host = "";
   try {
@@ -61,6 +74,14 @@ function isSocialAsset(src: string, alt: string | null): boolean {
   if (host && SOCIAL_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) return true;
   if (SOCIAL_FILE_RE.test(src)) return true;
   if (alt && /^(facebook|instagram|twitter|x|tiktok|linkedin|pinterest|youtube|yelp|bbb|google)$/i.test(alt.trim())) return true;
+  return false;
+}
+
+function isIrrelevantAsset(src: string, alt: string | null): boolean {
+  const haystack = `${src} ${alt ?? ""}`;
+  if (HIRING_RE.test(haystack)) return true;
+  if (VENDOR_BADGE_RE.test(haystack)) return true;
+  if (AD_BANNER_RE.test(src)) return true;
   return false;
 }
 
@@ -115,6 +136,7 @@ export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
     const abs = absolutize(rawSrc.trim(), url);
     if (!abs || imageSet.has(abs)) return;
     if (isSocialAsset(abs, alt)) return;
+    if (isIrrelevantAsset(abs, alt)) return;
     imageSet.add(abs);
     images.push({ src: abs, alt, kind: "image" });
   };

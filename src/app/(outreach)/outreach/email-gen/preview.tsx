@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Copy,
   ExternalLink,
+  Eye,
   Globe,
   Loader2,
   Pencil,
@@ -17,6 +18,7 @@ import { SendDraftButton } from "./send-button";
 export function DraftPreview({
   draft,
   siteUrl,
+  views,
 }: {
   draft: {
     id: string;
@@ -33,6 +35,7 @@ export function DraftPreview({
     } | null;
   };
   siteUrl: string | null;
+  views: { count: number; lastAt: string } | null;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -170,8 +173,22 @@ export function DraftPreview({
               </a>
             </div>
           </div>
-          <div className="border-t border-emerald-900/60 bg-black/20 px-4 py-2 text-[11px] text-emerald-300/80">
-            Auto-appended as a P.S. when you send this email.
+          <div className="flex items-center justify-between gap-3 border-t border-emerald-900/60 bg-black/20 px-4 py-2 text-[11px] text-emerald-300/80">
+            <span>Auto-appended as a P.S. when you send this email.</span>
+            {views && views.count > 0 ? (
+              <span
+                className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-semibold text-emerald-200"
+                title={`Last opened ${new Date(views.lastAt).toLocaleString()}`}
+              >
+                <Eye className="h-3 w-3" />
+                {views.count} {views.count === 1 ? "open" : "opens"}
+              </span>
+            ) : draft.status === "sent" ? (
+              <span className="inline-flex items-center gap-1 text-emerald-300/60">
+                <Eye className="h-3 w-3" />
+                No opens yet
+              </span>
+            ) : null}
           </div>
         </div>
       )}
