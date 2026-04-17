@@ -78,6 +78,18 @@ export default function LoginPage() {
           </svg>
         </div>
 
+        <div className="relative z-10 mx-auto flex max-w-7xl items-center justify-end px-6 pt-6 sm:px-8 lg:px-12">
+          <a
+            href="https://amentiai.com"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-white/80 backdrop-blur-xl transition hover:border-cyan-300/40 hover:bg-white/10 hover:text-white"
+          >
+            Visit Amentiai.com
+            <span aria-hidden>→</span>
+          </a>
+        </div>
+
         <main className="relative mx-auto flex min-h-screen max-w-7xl flex-col items-center justify-center px-6 py-12 text-center sm:px-8 lg:px-12">
           <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 shadow-[0_0_30px_rgba(255,255,255,0.05)] backdrop-blur-xl">
             <div className="relative h-12 w-12 rounded-xl bg-gradient-to-br from-cyan-400/20 to-pink-500/20 p-2 shadow-[0_0_30px_rgba(34,211,238,0.25)]">

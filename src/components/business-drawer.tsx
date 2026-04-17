@@ -7,14 +7,18 @@ import {
   Eye,
   Loader2,
   MapPin,
+  Palette,
   Phone,
   Plus,
   RefreshCcw,
+  Sparkles,
   Star,
   Trash2,
+  Wand2,
   X,
 } from "lucide-react";
 import { LIFECYCLE, type LifecycleStep } from "@/lib/lifecycle";
+import { TEMPLATE_CHOICES, type TemplateChoice } from "@/lib/site-url";
 
 type DetailData = {
   id: string;
@@ -50,7 +54,6 @@ export function BusinessDrawer({
 }) {
   const [data, setData] = useState<DetailData | null>(null);
   const [tab, setTab] = useState<"overview" | "notes">("overview");
-  const [generating, setGenerating] = useState(false);
   const [syncState, setSyncState] = useState<"idle" | "syncing" | "synced" | "error">("idle");
   const [syncedOppId, setSyncedOppId] = useState<string | null>(null);
 
@@ -63,20 +66,6 @@ export function BusinessDrawer({
       .then((r) => r.json())
       .then(setData);
   }, [businessId]);
-
-  async function runGenerate() {
-    if (!data) return;
-    setGenerating(true);
-    try {
-      const res = await fetch(`/api/outreach/businesses/${data.id}/generate`, {
-        method: "POST",
-      });
-      const j = await res.json();
-      setData(j);
-    } finally {
-      setGenerating(false);
-    }
-  }
 
   async function syncToCrm() {
     if (!data || syncState === "syncing") return;
@@ -227,58 +216,356 @@ export function BusinessDrawer({
               )}
             </div>
 
-            <div className="space-y-2 border-t border-slate-800 bg-slate-950 p-4">
-              {generating ? (
-                <div className="overflow-hidden rounded-md bg-gradient-to-r from-purple-600 via-fuchsia-500 to-rose-500 p-3 text-center text-xs font-medium text-white">
-                  <div className="inline-flex items-center gap-2">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Generating…
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={runGenerate}
-                  disabled={!data.website}
-                  className="w-full rounded-md bg-gradient-to-r from-indigo-600 via-fuchsia-600 to-rose-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
-                >
-                  {data.website ? "Audit + Generate rebuild" : "No website available to scrape"}
-                </button>
-              )}
-              <div className="grid grid-cols-3 gap-2">
-                <a
-                  href={`/p/roofing/${data.id}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-2 py-2 text-[11px] font-medium text-slate-300 hover:border-slate-600 hover:text-white"
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  Bold
-                </a>
-                <a
-                  href={`/p/roofing2/${data.id}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-2 py-2 text-[11px] font-medium text-slate-300 hover:border-slate-600 hover:text-white"
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  Editorial
-                </a>
-                <a
-                  href={`/p/electrical/${data.id}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-2 py-2 text-[11px] font-medium text-slate-300 hover:border-slate-600 hover:text-white"
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  Electrical
-                </a>
-              </div>
-            </div>
-          </>
+            <GenerateWizard
+              business={data}
+              onChange={(patch) => setData({ ...data, ...patch })}
+            />
+            </>
         )}
       </div>
     </div>
   );
+}
+
+type EnrichResult = {
+  logo: string | null;
+  ogImage: string | null;
+  palette: string[];
+  imagesCount: number;
+  pagesScraped: number;
+};
+
+type ImageSet = {
+  hero: { id: string; src: string } | null;
+  gallery: { id: string; src: string }[];
+};
+
+function GenerateWizard({
+  business,
+  onChange,
+}: {
+  business: DetailData;
+  onChange: (patch: Partial<DetailData>) => void;
+}) {
+  const [step, setStep] = useState<1 | 2 | 3>(business.audited ? (business.siteGenerated ? 3 : 2) : 1);
+  const [enrichBusy, setEnrichBusy] = useState(false);
+  const [enrichResult, setEnrichResult] = useState<EnrichResult | null>(null);
+  const [imagesBusy, setImagesBusy] = useState(false);
+  const [imageSet, setImageSet] = useState<ImageSet | null>(null);
+  const [buildBusy, setBuildBusy] = useState(false);
+  const [template, setTemplate] = useState<TemplateChoice>("roofing");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (business.audited) {
+      fetch(`/api/outreach/businesses/${business.id}/images`)
+        .then((r) => r.json())
+        .then((j) => {
+          if (j && (j.hero || j.gallery?.length)) setImageSet(j);
+        })
+        .catch(() => {});
+    }
+  }, [business.id, business.audited]);
+
+  async function runEnrich() {
+    setEnrichBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/outreach/businesses/${business.id}/enrich`, {
+        method: "POST",
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || "Enrich failed");
+      setEnrichResult(j);
+      onChange({ audited: true, hasWebsite: true });
+      setStep(2);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Enrich failed");
+    } finally {
+      setEnrichBusy(false);
+    }
+  }
+
+  async function runImages(force = false) {
+    setImagesBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/outreach/businesses/${business.id}/images`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ force }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || "Image generation failed");
+      setImageSet({ hero: j.hero, gallery: j.gallery });
+      setStep(3);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Image generation failed");
+    } finally {
+      setImagesBusy(false);
+    }
+  }
+
+  async function runBuild() {
+    setBuildBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/outreach/businesses/${business.id}/build`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ templateChoice: template }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || "Build failed");
+      setPreviewUrl(j.previewUrl);
+      onChange({ siteGenerated: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Build failed");
+    } finally {
+      setBuildBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3 border-t border-slate-800 bg-slate-950 p-4">
+      <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        <StepDot n={1} active={step === 1} done={business.audited} label="Enrich" />
+        <StepSep />
+        <StepDot n={2} active={step === 2} done={Boolean(imageSet?.hero)} label="Images" />
+        <StepSep />
+        <StepDot n={3} active={step === 3} done={business.siteGenerated} label="Build" />
+      </div>
+
+      {error && (
+        <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+          {error}
+        </div>
+      )}
+
+      {step === 1 && (
+        <div className="space-y-2">
+          <p className="text-xs text-slate-400">
+            Scrape the prospect&apos;s site for logo, colors, and imagery. Required before we can style the mockup.
+          </p>
+          <button
+            onClick={runEnrich}
+            disabled={enrichBusy || !business.website}
+            className="flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {enrichBusy ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Scraping site…
+              </>
+            ) : (
+              <>
+                <Palette className="h-3.5 w-3.5" />
+                {business.website ? "Scrape site for brand" : "No website to scrape"}
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="space-y-2">
+          {enrichResult && (
+            <div className="flex items-center gap-2 rounded-md border border-slate-800 bg-slate-900/50 p-2">
+              {enrichResult.logo && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={enrichResult.logo}
+                  alt="logo"
+                  className="h-8 w-8 shrink-0 rounded bg-white object-contain"
+                />
+              )}
+              <div className="flex flex-1 flex-wrap gap-1">
+                {enrichResult.palette.slice(0, 8).map((c) => (
+                  <span
+                    key={c}
+                    className="h-4 w-4 rounded border border-slate-700"
+                    style={{ backgroundColor: c }}
+                    title={c}
+                  />
+                ))}
+              </div>
+              <div className="text-[10px] text-slate-500">
+                {enrichResult.imagesCount} imgs · {enrichResult.pagesScraped} pages
+              </div>
+            </div>
+          )}
+          <p className="text-xs text-slate-400">
+            AI generates 1 hero + 4 gallery images styled to this business (takes ~30-60s).
+          </p>
+          <button
+            onClick={() => runImages(false)}
+            disabled={imagesBusy}
+            className="flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-fuchsia-600 to-rose-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {imagesBusy ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Generating images…
+              </>
+            ) : imageSet?.hero ? (
+              <>
+                <Sparkles className="h-3.5 w-3.5" />
+                Continue to template
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-3.5 w-3.5" />
+                Generate site images
+              </>
+            )}
+          </button>
+          {imageSet?.hero && (
+            <div className="mt-1 flex gap-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imageSet.hero.src}
+                alt="hero"
+                className="h-14 w-20 rounded border border-slate-800 object-cover"
+              />
+              {imageSet.gallery.slice(0, 3).map((g) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={g.id}
+                  src={g.src}
+                  alt="gallery"
+                  className="h-14 w-14 rounded border border-slate-800 object-cover"
+                />
+              ))}
+              <button
+                onClick={() => runImages(true)}
+                disabled={imagesBusy}
+                className="ml-auto inline-flex items-center gap-1 rounded border border-slate-700 px-2 text-[10px] text-slate-400 hover:bg-slate-800 hover:text-white"
+              >
+                <RefreshCcw className="h-3 w-3" /> Regenerate
+              </button>
+            </div>
+          )}
+          {imageSet?.hero && step === 2 && (
+            <button
+              onClick={() => setStep(3)}
+              className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800"
+            >
+              Skip to template →
+            </button>
+          )}
+        </div>
+      )}
+
+      {step === 3 && (
+        <div className="space-y-2">
+          <div className="rounded-md border border-slate-800 bg-slate-900/50 p-2">
+            <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <Wand2 className="h-3 w-3" /> Choose template
+            </div>
+            <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
+              {TEMPLATE_CHOICES.map((t) => {
+                const selected = template === t.value;
+                return (
+                  <button
+                    key={t.value}
+                    onClick={() => setTemplate(t.value)}
+                    className={`rounded px-2 py-1.5 text-[11px] font-semibold transition ${
+                      selected
+                        ? "bg-indigo-600 text-white"
+                        : "bg-slate-900 text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-1.5 text-[10px] leading-snug text-slate-500">
+              {TEMPLATE_CHOICES.find((t) => t.value === template)?.hint}
+            </div>
+          </div>
+          <button
+            onClick={runBuild}
+            disabled={buildBusy}
+            className="flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-emerald-600 to-cyan-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {buildBusy ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Building…
+              </>
+            ) : (
+              <>
+                <Wand2 className="h-3.5 w-3.5" />
+                Build mockup
+              </>
+            )}
+          </button>
+          {(previewUrl || business.siteGenerated) && (
+            <a
+              href={previewUrl ?? `/p/${template}/${business.id}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex w-full items-center justify-center gap-1.5 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20"
+            >
+              <Eye className="h-3.5 w-3.5" /> Open preview
+            </a>
+          )}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setStep(2)}
+              className="text-[10px] text-slate-500 hover:text-slate-300"
+            >
+              ← Back to images
+            </button>
+            <button
+              onClick={() => setStep(1)}
+              className="inline-flex items-center gap-1 text-[10px] text-slate-500 hover:text-slate-300"
+            >
+              <RefreshCcw className="h-3 w-3" /> Re-scrape
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StepDot({
+  n,
+  active,
+  done,
+  label,
+}: {
+  n: number;
+  active: boolean;
+  done: boolean;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <span
+        className={`grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold ${
+          done
+            ? "bg-emerald-500/20 text-emerald-300"
+            : active
+              ? "bg-indigo-600 text-white"
+              : "bg-slate-800 text-slate-500"
+        }`}
+      >
+        {done ? "✓" : n}
+      </span>
+      <span
+        className={`text-[10px] ${
+          active ? "text-white" : done ? "text-emerald-300" : "text-slate-500"
+        }`}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function StepSep() {
+  return <span className="h-px w-3 bg-slate-700" />;
 }
 
 function Overview({ data }: { data: DetailData }) {

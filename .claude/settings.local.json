@@ -22,7 +22,8 @@
       "Bash(git *)",
       "Bash(python3 -c \"from PIL import Image; i=Image.open\\('/mnt/c/Users/Wilso/amentitakeover/public/splash-bg.png'\\); print\\(i.size\\)\")",
       "Bash(python3 -c \"import struct; f=open\\('/mnt/c/Users/Wilso/amentitakeover/public/splash-bg.png','rb'\\); f.read\\(16\\); w,h=struct.unpack\\('>II', f.read\\(8\\)\\); print\\(\\(w,h\\)\\)\")",
-      "Bash(grep -v \"^$\")"
+      "Bash(grep -v \"^$\")",
+      "Bash(grep -E \"\\\\.ts$\")"
     ]
   }
 }
