@@ -16,7 +16,10 @@
       "Bash(echo \"EXIT $?\")",
       "Bash(npx next *)",
       "Bash(node *)",
-      "Bash(wait)"
+      "Bash(wait)",
+      "Bash(git -C /mnt/c/Users/Wilso/amentitakeover diff prisma/schema.prisma)",
+      "Bash(git -C /mnt/c/Users/Wilso/amentitakeover diff HEAD -- prisma/schema.prisma)",
+      "Bash(git *)"
     ]
   }
 }

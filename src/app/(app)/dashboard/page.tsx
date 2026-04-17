@@ -34,8 +34,8 @@ export default async function DashboardPage() {
   return (
     <>
       <Topbar title="Dashboard" />
-      <div className="flex-1 overflow-auto bg-slate-50 p-6">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="flex-1 overflow-auto bg-slate-50 p-3 sm:p-4 md:p-6">
+        <div className="grid gap-3 grid-cols-2 md:gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Stat icon={Target} label="Opportunities" value={opps.length} />
           <Stat icon={DollarSign} label="Pipeline value" value={`$${totalValue.toFixed(2)}`} />
           <Stat icon={TrendingUp} label="Closed won" value={wonCount} />
@@ -122,14 +122,14 @@ function Stat({
   value: string | number;
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="truncate text-[10px] font-medium uppercase tracking-wide text-slate-500 sm:text-xs">
           {label}
         </div>
-        <Icon className="h-4 w-4 text-slate-400" />
+        <Icon className="h-4 w-4 shrink-0 text-slate-400" />
       </div>
-      <div className="mt-2 text-2xl font-bold text-slate-900">{value}</div>
+      <div className="mt-1.5 text-lg font-bold text-slate-900 sm:mt-2 sm:text-2xl">{value}</div>
     </div>
   );
 }

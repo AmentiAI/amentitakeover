@@ -22,33 +22,33 @@ export default async function ContactsPage() {
       <Topbar title="Contacts" />
       <ContactsSubnav />
 
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500">
-            <Search className="h-3.5 w-3.5" />
+      <div className="flex flex-col gap-2 border-b border-slate-200 bg-white px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500 sm:flex-none">
+            <Search className="h-3.5 w-3.5 shrink-0" />
             <input
               placeholder="Search by name, email, phone, tag"
-              className="w-72 bg-transparent outline-none placeholder:text-slate-400"
+              className="w-full bg-transparent outline-none placeholder:text-slate-400 sm:w-72"
             />
           </div>
-          <span className="text-[11px] text-slate-500">{contacts.length} contacts</span>
+          <span className="shrink-0 text-[11px] text-slate-500">{contacts.length}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="rounded-md border border-slate-200 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
+        <div className="flex items-center gap-1.5 overflow-x-auto sm:gap-2">
+          <button className="shrink-0 rounded-md border border-slate-200 px-2 py-1.5 text-[11px] text-slate-700 hover:bg-slate-50 sm:px-2.5 sm:text-xs">
             Import
           </button>
-          <button className="rounded-md border border-slate-200 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
+          <button className="shrink-0 rounded-md border border-slate-200 px-2 py-1.5 text-[11px] text-slate-700 hover:bg-slate-50 sm:px-2.5 sm:text-xs">
             Export
           </button>
-          <button className="flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">
-            <Plus className="h-3.5 w-3.5" /> Add contact
+          <button className="flex shrink-0 items-center gap-1 rounded-md bg-emerald-600 px-2 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-700 sm:px-2.5 sm:text-xs">
+            <Plus className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Add contact</span><span className="sm:hidden">Add</span>
           </button>
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        <aside className="w-56 shrink-0 overflow-auto border-r border-slate-200 bg-slate-50 p-3 text-sm">
-          <div className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+      <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
+        <aside className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50 p-2 text-sm md:w-56 md:shrink-0 md:flex-col md:overflow-x-hidden md:overflow-y-auto md:border-b-0 md:border-r md:p-3">
+          <div className="hidden items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-500 md:mb-2 md:flex">
             <span>Smart Lists</span>
             <button className="text-slate-400 hover:text-slate-700">+</button>
           </div>
@@ -168,7 +168,7 @@ function SmartListItem({ label, href, count, active = false }: { label: string; 
   return (
     <Link
       href={href}
-      className={`flex items-center justify-between rounded px-2 py-1 text-[13px] ${
+      className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded px-2 py-1 text-[12px] md:w-full md:justify-between md:text-[13px] ${
         active ? "bg-white font-medium text-slate-900 shadow-sm" : "text-slate-700 hover:bg-white"
       }`}
     >

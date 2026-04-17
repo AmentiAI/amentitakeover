@@ -21,7 +21,7 @@ export default function LaunchpadPage() {
   return (
     <>
       <Topbar title="Launchpad" />
-      <div className="flex-1 overflow-auto bg-slate-50 p-8">
+      <div className="flex-1 overflow-auto bg-slate-50 p-4 sm:p-6 md:p-8">
         <div className="mb-6 flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-lg bg-brand-700 text-white">
             <Rocket className="h-5 w-5" />
@@ -35,7 +35,7 @@ export default function LaunchpadPage() {
             </div>
           </div>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {TILES.map((t) => {
             const Icon = t.icon;
             return (

@@ -1,4 +1,4 @@
-import { getAnthropic, MODEL } from "./anthropic";
+import { getOpenAI, MODEL, callOpenAI } from "./openai";
 import type { ScrapeResult } from "./scraper";
 
 export type RebuildInput = {
@@ -38,12 +38,11 @@ Return ONLY JSON matching:
 {"html":"<!doctype html>...</html>","notes":"<concise bullet-style rationale>"}`;
 
 export async function rebuildSite(input: RebuildInput): Promise<RebuildOutput> {
-  const client = getAnthropic();
-  if (!client) {
+  if (!getOpenAI()) {
     return {
       html: fallbackHtml(input),
       notes:
-        "ANTHROPIC_API_KEY not set — returned a template fallback. Add the key to .env and try again for a real AI rebuild.",
+        "OPENAI_API_KEY not set — returned a template fallback. Add the key to .env and try again for a real AI rebuild.",
       model: "fallback",
     };
   }
@@ -63,17 +62,12 @@ export async function rebuildSite(input: RebuildInput): Promise<RebuildOutput> {
     `\nProduce the improved rebuild now. Return JSON only.`,
   ].join("\n");
 
-  const resp = await client.messages.create({
-    model: MODEL,
-    max_tokens: 16000,
+  const { text } = await callOpenAI({
     system: SYSTEM,
-    messages: [{ role: "user", content: userPrompt }],
+    user: userPrompt,
+    maxTokens: 16000,
+    jsonMode: true,
   });
-
-  const text = resp.content
-    .map((c) => ("text" in c ? c.text : ""))
-    .join("\n")
-    .trim();
 
   const parsed = extractJson(text);
   if (!parsed || typeof parsed.html !== "string") {

@@ -82,26 +82,26 @@ export default async function OpportunityDetailPage({
     <>
       <Topbar title="Opportunity" />
 
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2">
-        <div className="flex items-center gap-3 text-sm">
+      <div className="flex flex-col gap-2 border-b border-slate-200 bg-white px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+        <div className="flex min-w-0 items-center gap-2 text-sm sm:gap-3">
           <Link
             href="/opportunities"
-            className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-900"
+            className="inline-flex shrink-0 items-center gap-1 text-slate-500 hover:text-slate-900"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to pipeline
+            <ArrowLeft className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Back to pipeline</span><span className="sm:hidden">Back</span>
           </Link>
-          <span className="text-slate-300">/</span>
-          <span className="font-semibold text-slate-900">{opp.title}</span>
+          <span className="hidden text-slate-300 sm:inline">/</span>
+          <span className="truncate font-semibold text-slate-900">{opp.title}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto">
           {templateUrl && (
             <Link
               href={templateUrl}
               target="_blank"
-              className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 sm:px-3"
             >
               <Eye className="h-3.5 w-3.5" />
-              Preview template
+              <span className="hidden sm:inline">Preview template</span><span className="sm:hidden">Preview</span>
             </Link>
           )}
           {opp.business?.website && (
@@ -109,29 +109,29 @@ export default async function OpportunityDetailPage({
               href={opp.business.website}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 sm:px-3"
             >
               <Globe className="h-3.5 w-3.5" />
-              Open website
+              <span className="hidden sm:inline">Open website</span><span className="sm:hidden">Site</span>
             </a>
           )}
         </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden bg-slate-50">
-        <div className="flex-1 overflow-auto p-6">
-          <div className="mx-auto max-w-5xl space-y-5">
+        <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
+          <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5">
             {/* Top summary */}
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
+                <div className="min-w-0">
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                     Opportunity
                   </div>
-                  <div className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+                  <div className="mt-1 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
                     {opp.title}
                   </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-slate-600 sm:gap-x-4">
                     <span className="inline-flex items-center gap-1.5">
                       <span
                         className="h-2 w-2 rounded-full"
@@ -151,19 +151,19 @@ export default async function OpportunityDetailPage({
                     )}
                   </div>
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-5 py-3 text-right">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-right sm:px-5 sm:py-3">
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                     Value
                   </div>
-                  <div className="mt-1 text-xl font-semibold text-emerald-600">
+                  <div className="mt-1 text-lg font-semibold text-emerald-600 sm:text-xl">
                     ${Number(opp.value).toFixed(2)}
                   </div>
                 </div>
               </div>
 
               {/* Stage progress bar */}
-              <div className="mt-6">
-                <div className="flex items-center gap-1 overflow-x-auto">
+              <div className="mt-5 sm:mt-6">
+                <div className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 pb-1">
                   {opp.pipeline.stages.map((s, i) => {
                     const isActive = s.id === opp.stage.id;
                     const currentIdx = opp.pipeline.stages.findIndex((x) => x.id === opp.stage.id);
@@ -171,7 +171,7 @@ export default async function OpportunityDetailPage({
                     return (
                       <div
                         key={s.id}
-                        className={`flex-1 rounded-md px-2 py-1.5 text-center text-[10.5px] font-medium uppercase tracking-wide ${
+                        className={`min-w-[88px] shrink-0 flex-1 rounded-md px-2 py-1.5 text-center text-[10.5px] font-medium uppercase tracking-wide ${
                           isActive
                             ? "text-white"
                             : passed
@@ -514,11 +514,11 @@ function Card({
   action?: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <header className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-          {icon && <span className="text-slate-500">{icon}</span>}
-          {title}
+    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <header className="mb-3 flex items-center justify-between gap-2 sm:mb-4">
+        <div className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-900">
+          {icon && <span className="shrink-0 text-slate-500">{icon}</span>}
+          <span className="truncate">{title}</span>
         </div>
         {action}
       </header>

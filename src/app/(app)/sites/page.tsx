@@ -13,8 +13,8 @@ export default async function SitesPage() {
   return (
     <>
       <Topbar title="Sites" />
-      <div className="flex min-h-0 flex-1">
-        <div className="w-80 shrink-0 border-r border-slate-200 bg-white p-4">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+        <div className="w-full shrink-0 border-b border-slate-200 bg-white p-3 sm:p-4 md:w-80 md:border-b-0 md:border-r">
           <div className="mb-2 text-sm font-semibold text-slate-800">
             Scrape a new site
           </div>
@@ -24,13 +24,13 @@ export default async function SitesPage() {
           </p>
           <NewSiteForm />
         </div>
-        <div className="flex-1 overflow-auto bg-slate-50 p-4">
+        <div className="flex-1 overflow-auto bg-slate-50 p-3 sm:p-4">
           {sites.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-slate-300 bg-white p-12 text-center text-sm text-slate-400">
-              No sites scraped yet. Start on the left.
+            <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-400 sm:p-12">
+              No sites scraped yet. Start above.
             </div>
           ) : (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {sites.map((s) => (
                 <Link
                   key={s.id}

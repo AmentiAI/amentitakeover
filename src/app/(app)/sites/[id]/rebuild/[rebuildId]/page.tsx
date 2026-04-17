@@ -39,8 +39,8 @@ export default async function RebuildView({
           </a>
         </div>
       </div>
-      <div className="flex min-h-0 flex-1">
-        <div className="w-80 shrink-0 overflow-y-auto border-r border-slate-200 bg-white p-4">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+        <div className="max-h-[30vh] shrink-0 overflow-y-auto border-b border-slate-200 bg-white p-3 sm:p-4 md:max-h-none md:w-80 md:border-b-0 md:border-r">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
             Direction
           </div>
@@ -54,7 +54,7 @@ export default async function RebuildView({
             {rebuild.notes}
           </div>
         </div>
-        <div className="flex-1 bg-slate-50">
+        <div className="min-h-[60vh] flex-1 bg-slate-50 md:min-h-0">
           <iframe
             srcDoc={rebuild.html}
             className="h-full w-full bg-white"

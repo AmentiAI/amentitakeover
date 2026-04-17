@@ -22,8 +22,8 @@ export default async function SiteDetail({
   return (
     <>
       <Topbar title={site.title ?? "Site"} />
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="w-96 shrink-0 overflow-y-auto border-r border-slate-200 bg-white p-4">
+      <div className="flex min-h-0 flex-1 flex-col overflow-auto md:flex-row md:overflow-hidden">
+        <div className="shrink-0 overflow-y-auto border-b border-slate-200 bg-white p-3 sm:p-4 md:w-96 md:border-b-0 md:border-r">
           <div className="mb-2 flex items-center gap-2">
             {site.favicon && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -105,13 +105,13 @@ export default async function SiteDetail({
           <div className="border-b border-slate-200 bg-white p-3">
             <RebuildForm siteId={site.id} />
           </div>
-          <div className="flex-1 overflow-auto p-4">
+          <div className="flex-1 overflow-auto p-3 sm:p-4">
             {site.rebuilds.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-400">
+              <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-400 sm:p-8">
                 No rebuilds yet. Generate one above.
               </div>
             ) : (
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {site.rebuilds.map((r) => (
                   <Link
                     key={r.id}

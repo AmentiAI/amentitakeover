@@ -320,12 +320,15 @@ function absolutize(href: string, base: string): string {
 }
 
 function extractPalette(source: string): string[] {
-  const hexes = new Set<string>();
+  // Count occurrences so the picker can prefer colors the site actually uses
+  // a lot (primary brand color) over single-mention values (borders, tokens).
+  const counts = new Map<string, number>();
+  const bump = (hex: string) => counts.set(hex, (counts.get(hex) ?? 0) + 1);
 
   // 1. literal hex: #rgb or #rrggbb
   const hexRe = /#([0-9a-f]{6}|[0-9a-f]{3})\b/gi;
   let m: RegExpExecArray | null;
-  while ((m = hexRe.exec(source))) hexes.add(`#${expandShortHex(m[1].toLowerCase())}`);
+  while ((m = hexRe.exec(source))) bump(`#${expandShortHex(m[1].toLowerCase())}`);
 
   // 2. rgb() / rgba()
   const rgbRe = /rgba?\(\s*(\d{1,3})\s*[, ]\s*(\d{1,3})\s*[, ]\s*(\d{1,3})/gi;
@@ -333,7 +336,7 @@ function extractPalette(source: string): string[] {
     const r = clampByte(Number(m[1]));
     const g = clampByte(Number(m[2]));
     const b = clampByte(Number(m[3]));
-    hexes.add(rgbToHexString(r, g, b));
+    bump(rgbToHexString(r, g, b));
   }
 
   // 3. hsl() / hsla() — normalize to hex via HSL->RGB
@@ -342,12 +345,14 @@ function extractPalette(source: string): string[] {
     const h = Number(m[1]);
     const s = Math.min(100, Math.max(0, Number(m[2]))) / 100;
     const l = Math.min(100, Math.max(0, Number(m[3]))) / 100;
-    hexes.add(hslToHexString(h, s, l));
+    bump(hslToHexString(h, s, l));
   }
 
-  // Cap — color-pick.ts tolerates plenty of input and the ranking keeps the
-  // right ones at the top.
-  return Array.from(hexes).slice(0, 32);
+  // Order by frequency desc — color-pick.ts uses position as a usage signal.
+  return Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([hex]) => hex)
+    .slice(0, 48);
 }
 
 function clampByte(n: number): number {

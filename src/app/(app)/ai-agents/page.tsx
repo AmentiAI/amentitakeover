@@ -5,22 +5,22 @@ export default function AiAgentsPage() {
   return (
     <>
       <Topbar title="AI Agents" />
-      <div className="flex min-h-0 flex-1">
-        <div className="w-64 shrink-0 border-r border-slate-200 bg-white p-3">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+        <div className="shrink-0 border-b border-slate-200 bg-white p-2 md:w-64 md:border-b-0 md:border-r md:p-3">
+          <div className="mb-2 hidden text-[11px] font-semibold uppercase tracking-wide text-slate-400 md:block">
             Agents
           </div>
-          <div className="space-y-1 text-sm">
-            <div className="rounded bg-brand-50 px-2 py-1.5 font-medium text-brand-900">
+          <div className="flex gap-1 overflow-x-auto text-sm md:flex-col md:space-y-1 md:overflow-visible">
+            <div className="shrink-0 rounded bg-brand-50 px-2 py-1.5 font-medium text-brand-900 whitespace-nowrap">
               Outreach Strategist
             </div>
-            <div className="rounded px-2 py-1.5 text-slate-600 hover:bg-slate-50">
+            <div className="shrink-0 rounded px-2 py-1.5 text-slate-600 hover:bg-slate-50 whitespace-nowrap">
               Site Critique
             </div>
-            <div className="rounded px-2 py-1.5 text-slate-600 hover:bg-slate-50">
+            <div className="shrink-0 rounded px-2 py-1.5 text-slate-600 hover:bg-slate-50 whitespace-nowrap">
               Reply Drafter
             </div>
-            <div className="rounded px-2 py-1.5 text-slate-600 hover:bg-slate-50">
+            <div className="shrink-0 rounded px-2 py-1.5 text-slate-600 hover:bg-slate-50 whitespace-nowrap">
               Lead Researcher
             </div>
           </div>

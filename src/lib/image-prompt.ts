@@ -1,4 +1,4 @@
-import { getAnthropic, MODEL } from "@/lib/anthropic";
+import { getOpenAI, callOpenAI } from "@/lib/openai";
 
 /**
  * Build an image-generation brief from scraped business context. The brief
@@ -6,10 +6,10 @@ import { getAnthropic, MODEL } from "@/lib/anthropic";
  *   - one landscape hero
  *   - N square gallery images
  *
- * Uses Claude to read the scrape (name, category, description, headings,
+ * Uses OpenAI to read the scrape (name, category, description, headings,
  * palette) and produce a style direction + 5 visual prompts that all look
  * like they belong to the same brand. Falls back to a deterministic
- * template-based brief if Anthropic isn't configured.
+ * template-based brief if OpenAI isn't configured.
  */
 
 export type BusinessContext = {
@@ -48,8 +48,7 @@ Rules for every prompt:
 - 60-100 words per prompt, no markdown.`;
 
 export async function buildImageBrief(ctx: BusinessContext): Promise<ImageBrief> {
-  const client = getAnthropic();
-  if (!client) return fallbackBrief(ctx);
+  if (!getOpenAI()) return fallbackBrief(ctx);
 
   const userInput = [
     `Business name: ${ctx.name}`,
@@ -61,13 +60,12 @@ export async function buildImageBrief(ctx: BusinessContext): Promise<ImageBrief>
   ].join("\n");
 
   try {
-    const resp = await client.messages.create({
-      model: MODEL,
-      max_tokens: 1200,
+    const { text } = await callOpenAI({
       system: SYSTEM,
-      messages: [{ role: "user", content: userInput }],
+      user: userInput,
+      maxTokens: 1200,
+      jsonMode: true,
     });
-    const text = resp.content.map((c) => ("text" in c ? c.text : "")).join("\n");
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) return fallbackBrief(ctx);
     const parsed = JSON.parse(match[0]) as Partial<ImageBrief>;

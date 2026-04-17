@@ -20,14 +20,14 @@ export default async function BulkActionsPage() {
       <Topbar title="Bulk Actions" />
       <ContactsSubnav />
 
-      <div className="flex-1 overflow-auto bg-slate-50 p-6">
+      <div className="flex-1 overflow-auto bg-slate-50 p-3 sm:p-4 md:p-6">
         <div className="mx-auto max-w-4xl">
-          <div className="mb-4 rounded-lg border border-slate-200 bg-white p-4">
+          <div className="mb-4 rounded-lg border border-slate-200 bg-white p-3 sm:p-4">
             <div className="text-sm font-semibold text-slate-800">Target audience</div>
             <div className="mt-1 text-[13px] text-slate-600">
               {total.toLocaleString()} total contacts in workspace. Apply a Smart List or filter before running an action.
             </div>
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <select className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700">
                 <option>All contacts</option>
                 <option>Leads only</option>
@@ -38,7 +38,7 @@ export default async function BulkActionsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {actions.map((a) => {
               const Icon = a.icon;
               return (

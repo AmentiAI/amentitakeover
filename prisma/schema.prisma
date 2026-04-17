@@ -544,6 +544,24 @@ model AffiliateDeal {
   @@index([paidAt])
 }
 
+model AffiliateApplication {
+  id            String   @id @default(cuid())
+  name          String
+  email         String
+  phone         String?
+  company       String?
+  city          String?
+  state         String?
+  experience    String?  // free-text: "what experience do you have with sales / outreach?"
+  why           String?  // "why do you want to join?"
+  status        String   @default("pending") // pending | approved | rejected
+  reviewedAt    DateTime?
+  affiliateId   String?  // set once approved — points to the created Affiliate
+  createdAt     DateTime @default(now())
+
+  @@index([status, createdAt])
+}
+
 // AI-generated imagery for the mockup sites. Bytes are served via
 // /api/generated-image/[id] so the template can reference them like any
 // other URL. Keyed by scrapedBusinessId so we can swap in new artwork

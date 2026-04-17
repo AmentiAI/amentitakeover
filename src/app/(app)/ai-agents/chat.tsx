@@ -44,7 +44,7 @@ export function AgentChat() {
         {messages.map((m, i) => (
           <div
             key={i}
-            className={`max-w-[75%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm shadow-sm ${
+            className={`max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm shadow-sm sm:max-w-[75%] ${
               m.role === "user"
                 ? "ml-auto bg-brand-700 text-white"
                 : "bg-white text-slate-800"

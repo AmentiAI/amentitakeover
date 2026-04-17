@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAnthropic, MODEL } from "@/lib/anthropic";
+import { getOpenAI, callOpenAI } from "@/lib/openai";
 import { z } from "zod";
 
 export const maxDuration = 120;
@@ -23,28 +23,22 @@ export async function POST(req: NextRequest) {
   if (!parsed.success)
     return NextResponse.json({ error: parsed.error.format() }, { status: 400 });
 
-  const client = getAnthropic();
-  if (!client) {
+  if (!getOpenAI()) {
     return NextResponse.json({
       reply:
-        "ANTHROPIC_API_KEY isn't set. Add it to .env to enable real AI responses.",
+        "OPENAI_API_KEY isn't set. Add it to .env to enable real AI responses.",
     });
   }
   try {
-    const resp = await client.messages.create({
-      model: MODEL,
-      max_tokens: 1500,
+    const transcript = parsed.data.messages
+      .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+      .join("\n\n");
+    const { text } = await callOpenAI({
       system: SYSTEM,
-      messages: parsed.data.messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
+      user: transcript,
+      maxTokens: 1500,
     });
-    const reply = resp.content
-      .map((c) => ("text" in c ? c.text : ""))
-      .join("\n")
-      .trim();
-    return NextResponse.json({ reply });
+    return NextResponse.json({ reply: text.trim() });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "unknown error";
     return NextResponse.json({ error: msg }, { status: 500 });

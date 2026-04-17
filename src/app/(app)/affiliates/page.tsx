@@ -2,10 +2,28 @@ import { prisma } from "@/lib/db";
 import { Topbar } from "@/components/topbar";
 import { AffiliateAdmin } from "./affiliate-admin";
 import { UnpaidDeals } from "./unpaid-deals";
+import { ApplicationsPanel } from "./applications-panel";
 
 export const dynamic = "force-dynamic";
 
 export default async function AffiliatesPage() {
+  const applications = await prisma.affiliateApplication.findMany({
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+  });
+  const appRows = applications.map((a) => ({
+    id: a.id,
+    name: a.name,
+    email: a.email,
+    phone: a.phone,
+    company: a.company,
+    city: a.city,
+    state: a.state,
+    experience: a.experience,
+    why: a.why,
+    status: a.status,
+    createdAt: a.createdAt.toISOString(),
+  }));
+
   const affiliates = await prisma.affiliate.findMany({
     orderBy: { createdAt: "desc" },
     include: {
@@ -70,6 +88,7 @@ export default async function AffiliatesPage() {
       <Topbar title="Affiliates" />
       <div className="flex-1 overflow-auto bg-slate-50 p-4 sm:p-6">
         <div className="mx-auto max-w-5xl space-y-6">
+          <ApplicationsPanel initial={appRows} />
           <AffiliateAdmin initial={rows} />
           <UnpaidDeals initial={unpaidDeals} />
         </div>

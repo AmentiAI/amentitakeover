@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getAnthropic, MODEL } from "@/lib/anthropic";
+import { getOpenAI, MODEL, callOpenAI } from "@/lib/openai";
 import { z } from "zod";
 
 export const maxDuration = 120;
@@ -31,12 +31,11 @@ export async function POST(req: NextRequest) {
   });
   if (!b) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const client = getAnthropic();
   let subject = `Quick idea for ${b.name}`;
   let body = `Hey — I looked at ${b.website ?? "your Google listing"} and wanted to share a quick thought.\n\nHappy to send a 2-minute Loom. Worth a look?`;
   let model = "fallback";
 
-  if (client) {
+  if (getOpenAI()) {
     const userPrompt = [
       `Business: ${b.name}`,
       `Category: ${b.category ?? b.industry ?? ""}`,
@@ -47,13 +46,12 @@ export async function POST(req: NextRequest) {
       `Hook/angle: ${parsed.data.hook}`,
     ].join("\n");
     try {
-      const resp = await client.messages.create({
-        model: MODEL,
-        max_tokens: 500,
+      const { text, inputTokens, outputTokens } = await callOpenAI({
         system: SYSTEM,
-        messages: [{ role: "user", content: userPrompt }],
+        user: userPrompt,
+        maxTokens: 500,
+        jsonMode: true,
       });
-      const text = resp.content.map((c) => ("text" in c ? c.text : "")).join("\n");
       const m = text.match(/\{[\s\S]*\}/);
       if (m) {
         const obj = JSON.parse(m[0]);
@@ -65,8 +63,8 @@ export async function POST(req: NextRequest) {
         data: {
           model: MODEL,
           purpose: "email_generation",
-          inputTokens: resp.usage?.input_tokens ?? 0,
-          outputTokens: resp.usage?.output_tokens ?? 0,
+          inputTokens,
+          outputTokens,
         },
       });
     } catch {

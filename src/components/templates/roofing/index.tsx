@@ -55,27 +55,19 @@ export function RoofingTemplate({ data }: { data: RoofingSiteData }) {
 
   return (
     <div className={`${body.className} min-h-screen bg-white text-slate-900 antialiased`}>
-      {/* Keyframes for the trust marquee. Plain style tag keeps the template self-contained. */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          @keyframes roof-marquee {
-            from { transform: translateX(0); }
-            to { transform: translateX(-50%); }
-          }
-          .roof-marquee-track { animation: roof-marquee 38s linear infinite; }
-        `,
-      }} />
+      <AccentBar palette={palette} />
 
       {hero.alertBanner && (
-        <div className="flex items-center justify-center gap-2 bg-amber-500 px-4 py-2 text-center text-xs font-semibold text-amber-950">
+        <div
+          className="flex items-center justify-center gap-2 px-4 py-2 text-center text-xs font-semibold text-white"
+          style={{ background: palette.base }}
+        >
           <CloudLightning className="h-3.5 w-3.5" />
           {hero.alertBanner}
         </div>
       )}
 
       <StickyNav business={business} palette={palette} phoneHref={phoneHref} />
-
-      <MarqueeStrip palette={palette} />
 
       <Hero data={data} phoneHref={phoneHref} />
 
@@ -115,6 +107,27 @@ export function RoofingTemplate({ data }: { data: RoofingSiteData }) {
 /* ---------- Shared display-text helper ---------- */
 
 const serif = display.className;
+
+/* ---------- Accent top bar ---------- */
+
+function AccentBar({ palette }: { palette: RoofingSiteData["palette"] }) {
+  return (
+    <div
+      className="h-1.5 w-full"
+      style={{
+        background: `linear-gradient(90deg, ${palette.accent} 0%, ${palette.accent} 60%, ${palette.trust} 100%)`,
+      }}
+    />
+  );
+}
+
+function hexWithAlpha(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 /* ---------- Nav ---------- */
 
@@ -188,34 +201,6 @@ function StickyNav({
   );
 }
 
-/* ---------- Marquee ---------- */
-
-function MarqueeStrip({ palette }: { palette: RoofingSiteData["palette"] }) {
-  const items = [
-    "Licensed & Insured",
-    "Lifetime Workmanship Warranty",
-    "Manufacturer-Certified Installers",
-    "4.9★ Google Rating",
-    "Free Roof Inspection",
-    "0% APR Financing Available",
-    "Same-Week Scheduling",
-    "Insurance-Claim Specialists",
-  ];
-  const doubled = [...items, ...items];
-  return (
-    <div className="relative overflow-hidden border-b border-slate-200 bg-slate-950 py-3 text-white">
-      <div className="roof-marquee-track flex whitespace-nowrap">
-        {doubled.map((it, i) => (
-          <span key={i} className="flex items-center gap-8 px-8 text-[12px] font-medium uppercase tracking-[0.22em] text-white/80">
-            <Sparkles className="h-3.5 w-3.5" style={{ color: palette.accent }} />
-            {it}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 /* ---------- Hero ---------- */
 
 function Hero({
@@ -233,22 +218,31 @@ function Hero({
   const headAccent = words.slice(pivot).join(" ");
 
   return (
-    <section id="top" className="relative overflow-hidden bg-white">
+    <section
+      id="top"
+      className="relative overflow-hidden"
+      style={{
+        background: `linear-gradient(180deg, ${hexWithAlpha(palette.accent, 0.08)} 0%, #ffffff 55%)`,
+      }}
+    >
       <div
-        className="pointer-events-none absolute -right-40 -top-20 h-[560px] w-[560px] rounded-full opacity-25 blur-3xl"
+        className="pointer-events-none absolute -right-40 -top-20 h-[560px] w-[560px] rounded-full opacity-30 blur-3xl"
         style={{ background: palette.accent }}
       />
       <div
-        className="pointer-events-none absolute -left-60 bottom-0 h-[480px] w-[480px] rounded-full opacity-15 blur-3xl"
+        className="pointer-events-none absolute -left-60 bottom-0 h-[480px] w-[480px] rounded-full opacity-20 blur-3xl"
         style={{ background: palette.trust }}
       />
       <GridBackdrop />
 
-      <div className="relative mx-auto max-w-7xl px-6 pt-16 pb-28 lg:pt-24 lg:pb-32">
+      <div className="relative mx-auto max-w-7xl px-4 pt-10 pb-24 sm:px-6 sm:pt-16 sm:pb-28 lg:pt-24 lg:pb-32">
         <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_1fr]">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 shadow-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <div
+              className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white shadow-sm"
+              style={{ background: palette.accent }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-white" />
               Licensed · Bonded · Insured in {business.state ?? "your state"}
             </div>
 
@@ -435,12 +429,15 @@ function StatsBand({
     { value: "100%", label: "Workmanship warranty" },
   ];
   return (
-    <section className="relative isolate overflow-hidden bg-slate-950 text-white">
+    <section
+      className="relative isolate overflow-hidden text-white"
+      style={{ background: palette.base }}
+    >
       <div
-        className="pointer-events-none absolute -top-40 right-0 h-[420px] w-[520px] rounded-full opacity-40 blur-3xl"
+        className="pointer-events-none absolute -top-40 right-0 h-[420px] w-[520px] rounded-full opacity-50 blur-3xl"
         style={{ background: palette.accent }}
       />
-      <div className="relative mx-auto max-w-7xl px-6 py-20 lg:py-24">
+      <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:py-24">
         <div className="grid items-end gap-10 lg:grid-cols-2">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Numbers that matter</div>
@@ -453,14 +450,17 @@ function StatsBand({
           </p>
         </div>
 
-        <div className="mt-12 grid gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10 sm:mt-12 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((s) => (
-            <div key={s.label} className="bg-slate-950 p-8">
-              <div className={`${serif} text-5xl font-semibold leading-none tracking-tight text-white lg:text-6xl`}>
+            <div key={s.label} className="p-6 sm:p-8" style={{ background: palette.base }}>
+              <div
+                className={`${serif} text-4xl font-semibold leading-none tracking-tight text-white sm:text-5xl lg:text-6xl`}
+                style={{ color: palette.accent }}
+              >
                 {s.value}
               </div>
               {s.sub && <div className="mt-2 text-sm text-amber-400">{s.sub}</div>}
-              <div className="mt-3 text-sm uppercase tracking-[0.16em] text-white/50">{s.label}</div>
+              <div className="mt-3 text-xs uppercase tracking-[0.16em] text-white/60 sm:text-sm">{s.label}</div>
             </div>
           ))}
         </div>
@@ -795,7 +795,10 @@ function WhyUs({ palette }: { palette: RoofingSiteData["palette"] }) {
           kicker="Ask any of our crew what makes the job different — they'll tell you it starts with doing it right the first time."
         />
         <div className="mt-14 grid gap-4 md:grid-cols-2">
-          <div className="relative overflow-hidden rounded-3xl border border-slate-900 bg-slate-950 p-8 text-white">
+          <div
+            className="relative overflow-hidden rounded-3xl border p-8 text-white"
+            style={{ background: palette.base, borderColor: hexWithAlpha(palette.accent, 0.4) }}
+          >
             <div className="absolute right-6 top-6 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white" style={{ background: palette.accent }}>
               Our crew
             </div>
@@ -987,43 +990,49 @@ function CTABand({
   businessName: string;
 }) {
   return (
-    <section className="relative overflow-hidden bg-slate-950 text-white">
-      <div
-        className="absolute inset-0 opacity-70 blur-3xl"
-        style={{ background: `radial-gradient(circle at 20% 50%, ${palette.accent}, transparent 55%), radial-gradient(circle at 80% 80%, ${palette.trust}, transparent 60%)` }}
-      />
+    <section
+      className="relative overflow-hidden text-white"
+      style={{ background: palette.accent }}
+    >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.06]"
+        className="pointer-events-none absolute inset-0 opacity-[0.08]"
         style={{
           backgroundImage:
             "linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)",
           backgroundSize: "56px 56px",
         }}
       />
-      <div className="relative mx-auto max-w-5xl px-6 py-24 text-center lg:py-32">
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
-          <Sparkles className="h-3.5 w-3.5" style={{ color: palette.accent }} />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `radial-gradient(ellipse at 80% 100%, ${hexWithAlpha(palette.base, 0.6)}, transparent 55%)`,
+        }}
+      />
+      <div className="relative mx-auto max-w-5xl px-4 py-20 text-center sm:px-6 sm:py-24 lg:py-32">
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
+          <Sparkles className="h-3.5 w-3.5 text-white" />
           Ready when you are
         </div>
-        <h2 className={`${serif} mt-6 text-5xl font-medium leading-[1.02] tracking-tight text-white sm:text-6xl`}>
-          Ready for a roof you won't <em className="italic" style={{ color: palette.accent }}>have to think about?</em>
+        <h2 className={`${serif} mt-6 text-4xl font-medium leading-[1.02] tracking-tight text-white sm:text-5xl lg:text-6xl`}>
+          Ready for a roof you won't <em className="italic text-white/90">have to think about?</em>
         </h2>
-        <p className="mx-auto mt-6 max-w-xl text-lg text-white/75">
+        <p className="mx-auto mt-6 max-w-xl text-base text-white/90 sm:text-lg">
           {businessName} offers a no-pressure free inspection with a written report and clear options — usually the same day you call.
         </p>
-        <div className="mt-10 flex flex-wrap justify-center gap-3">
+        <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:mt-10 sm:flex-row sm:items-center">
           <a
             href="#quote"
-            className="group inline-flex items-center gap-2 rounded-xl px-7 py-4 text-sm font-semibold text-white shadow-2xl shadow-black/40 transition hover:brightness-110"
-            style={{ background: palette.accent }}
+            className="group inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-4 text-sm font-semibold shadow-2xl shadow-black/20 transition hover:bg-slate-50 sm:px-7"
+            style={{ color: palette.base }}
           >
             Book free inspection
             <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
           </a>
           <a
             href={phoneHref}
-            className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-7 py-4 text-sm font-semibold text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-white/15"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 px-6 py-4 text-sm font-semibold text-white ring-1 ring-white/30 backdrop-blur transition hover:bg-white/15 sm:px-7"
           >
             <Phone className="h-4 w-4" />
             Or call now

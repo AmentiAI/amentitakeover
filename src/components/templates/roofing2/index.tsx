@@ -38,12 +38,31 @@ const body = Inter({
 
 const serif = display.className;
 
+function hexWithAlpha(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export function RoofingTemplate2({ data }: { data: RoofingSiteData }) {
   const { business, hero, services, process, gallery, testimonials, serviceArea, faqs, socials, palette, about } = data;
   const phoneHref = business.phone ? `tel:${business.phone.replace(/[^\d+]/g, "")}` : "#quote";
 
   return (
-    <div className={`${body.className} min-h-screen bg-white text-slate-900 antialiased`}>
+    <div
+      className={`${body.className} min-h-screen bg-white text-slate-900 antialiased`}
+      style={{ ["--r2-accent" as string]: palette.accent }}
+    >
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          .r2-accent-em { color: var(--r2-accent); }
+          .r2-numeral { color: var(--r2-accent); }
+          .r2-rule { background: var(--r2-accent); }
+        `,
+      }} />
+      <div className="h-1 w-full" style={{ background: palette.accent }} />
       <TopBar business={business} phoneHref={phoneHref} />
       <Nav business={business} palette={palette} />
 
@@ -118,7 +137,7 @@ function TopBar({ business, phoneHref }: { business: RoofingSiteData["business"]
 function Nav({ business, palette }: { business: RoofingSiteData["business"]; palette: RoofingSiteData["palette"] }) {
   return (
     <div className="sticky top-0 z-40 border-b border-slate-200 bg-white/85 backdrop-blur-xl">
-      <div className="mx-auto flex h-20 max-w-[1300px] items-center justify-between px-8">
+      <div className="mx-auto flex h-16 max-w-[1300px] items-center justify-between px-4 sm:px-6 md:h-20 md:px-8">
         <a href="#top" className="flex items-center gap-3">
           {business.logoUrl ? (
             <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-sm border border-slate-200 bg-white">
@@ -154,9 +173,11 @@ function Nav({ business, palette }: { business: RoofingSiteData["business"]; pal
         </nav>
         <a
           href="#consult"
-          className="group inline-flex items-center gap-1.5 rounded-full border border-slate-900 bg-slate-900 px-5 py-2.5 text-[12px] font-medium text-white transition hover:bg-slate-800"
+          className="group inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-medium text-white transition hover:brightness-110 sm:px-5 sm:py-2.5"
+          style={{ background: palette.accent }}
         >
-          Request consult
+          <span className="hidden sm:inline">Request consult</span>
+          <span className="sm:hidden">Consult</span>
           <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </a>
       </div>
@@ -169,11 +190,17 @@ function Nav({ business, palette }: { business: RoofingSiteData["business"]; pal
 function Hero({ data, phoneHref }: { data: RoofingSiteData; phoneHref: string }) {
   const { hero, business, palette } = data;
   return (
-    <section id="top" className="relative border-b border-slate-200 bg-white">
-      <div className="mx-auto max-w-[1300px] px-8 pb-20 pt-16 lg:pb-28 lg:pt-24">
-        <div className="mb-12 flex items-baseline justify-between gap-6">
+    <section
+      id="top"
+      className="relative border-b border-slate-200 bg-white"
+      style={{
+        backgroundImage: `linear-gradient(180deg, ${hexWithAlpha(palette.accent, 0.06)} 0%, #ffffff 60%)`,
+      }}
+    >
+      <div className="mx-auto max-w-[1300px] px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-16 md:px-8 lg:pb-28 lg:pt-24">
+        <div className="mb-8 flex items-baseline justify-between gap-6 sm:mb-12">
           <div className="flex items-center gap-3 text-[10.5px] font-medium uppercase tracking-[0.24em] text-slate-500">
-            <span className="h-px w-8 bg-slate-300" />
+            <span className="h-px w-6 sm:w-8" style={{ background: palette.accent }} />
             A {(business.state ?? "local").toString()} roofing practice
           </div>
           <div className="hidden text-[10.5px] font-medium uppercase tracking-[0.24em] text-slate-400 sm:block">
@@ -181,21 +208,22 @@ function Hero({ data, phoneHref }: { data: RoofingSiteData; phoneHref: string })
           </div>
         </div>
 
-        <h1 className={`${serif} max-w-5xl text-[clamp(2.75rem,7.2vw,6.25rem)] font-[300] leading-[0.98] tracking-[-0.03em] text-slate-950`}>
+        <h1 className={`${serif} max-w-5xl text-[clamp(2.25rem,7.2vw,6.25rem)] font-[300] leading-[0.98] tracking-[-0.03em] text-slate-950`}>
           {hero.title.split(" ").slice(0, -2).join(" ")}{" "}
-          <em className="italic font-[400]">
+          <em className="italic font-[400] r2-accent-em" style={{ color: palette.accent }}>
             {hero.title.split(" ").slice(-2).join(" ")}
           </em>
         </h1>
 
-        <div className="mt-12 grid gap-10 lg:grid-cols-[1.2fr_1fr]">
-          <p className="max-w-xl text-lg leading-[1.55] text-slate-600">
+        <div className="mt-8 grid gap-8 sm:mt-12 lg:grid-cols-[1.2fr_1fr] lg:gap-10">
+          <p className="max-w-xl text-base leading-[1.55] text-slate-600 sm:text-lg">
             {hero.subtitle}
           </p>
-          <div className="flex items-end justify-end gap-3">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-end sm:justify-end">
             <a
               href="#consult"
-              className="group inline-flex items-center gap-2 rounded-full border border-slate-900 bg-slate-900 px-7 py-4 text-[13px] font-medium text-white transition hover:bg-slate-800"
+              className="group inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-[13px] font-medium text-white transition hover:brightness-110 sm:px-7 sm:py-4"
+              style={{ background: palette.accent }}
             >
               Book inspection
               <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -203,7 +231,7 @@ function Hero({ data, phoneHref }: { data: RoofingSiteData; phoneHref: string })
             {business.phone && (
               <a
                 href={phoneHref}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-7 py-4 text-[13px] font-medium text-slate-900 transition hover:border-slate-900"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3.5 text-[13px] font-medium text-slate-900 transition hover:border-slate-900 sm:px-7 sm:py-4"
               >
                 <Phone className="h-3.5 w-3.5" />
                 {business.phone}
@@ -271,7 +299,7 @@ function StatsStrip({ business }: { business: RoofingSiteData["business"] }) {
     <section className="border-b border-slate-200 bg-white">
       <div className="mx-auto grid max-w-[1300px] grid-cols-2 gap-px bg-slate-200 md:grid-cols-5">
         {stats.map((s) => (
-          <div key={s.label} className="bg-white px-8 py-10">
+          <div key={s.label} className="bg-white px-5 py-6 sm:px-8 sm:py-10">
             <div className={`${serif} text-4xl font-[400] tracking-tight text-slate-950 md:text-[2.75rem]`}>
               {s.value}
             </div>
@@ -296,14 +324,14 @@ function ServicesEditorial({
 }) {
   return (
     <section id="services" className="relative border-b border-slate-200 bg-white">
-      <div className="mx-auto max-w-[1300px] px-8 py-24 lg:py-32">
+      <div className="mx-auto max-w-[1300px] px-4 py-16 sm:px-6 sm:py-20 md:px-8 md:py-24 lg:py-32">
         <SectionTitle
           numeral="01"
           eyebrow="Services"
           title={
             <>
               A complete practice<br />
-              <em className="italic font-[400]">for every kind of roof.</em>
+              <em className="italic font-[400] r2-accent-em">for every kind of roof.</em>
             </>
           }
         />
@@ -354,7 +382,7 @@ function CaseStudy({ data }: { data: RoofingSiteData }) {
       : null;
   return (
     <section className="relative border-b border-slate-200 bg-slate-50">
-      <div className="mx-auto grid max-w-[1300px] gap-12 px-8 py-24 lg:grid-cols-[1fr_1fr] lg:py-28">
+      <div className="mx-auto grid max-w-[1300px] gap-10 px-4 py-16 sm:px-6 sm:py-20 md:px-8 md:py-24 lg:grid-cols-[1fr_1fr] lg:py-28">
         <div className="relative overflow-hidden rounded-[4px] border border-slate-200 bg-white">
           {pair ? (
             <BeforeAfterSlider pair={pair} accent={data.palette.accent} label="Drag" />
@@ -412,11 +440,11 @@ function StatCell({ label, value }: { label: string; value: string }) {
 function ProcessRail({ steps, palette }: { steps: RoofingSiteData["process"]; palette: RoofingSiteData["palette"] }) {
   return (
     <section id="process" className="border-b border-slate-200 bg-white">
-      <div className="mx-auto max-w-[1300px] px-8 py-24 lg:py-32">
+      <div className="mx-auto max-w-[1300px] px-4 py-16 sm:px-6 sm:py-20 md:px-8 md:py-24 lg:py-32">
         <SectionTitle
           numeral="02"
           eyebrow="Our process"
-          title={<>Four steps. <em className="italic font-[400]">Every project.</em></>}
+          title={<>Four steps. <em className="italic font-[400] r2-accent-em">Every project.</em></>}
         />
         <div className="mt-16 grid gap-px overflow-hidden border border-slate-200 bg-slate-200 md:grid-cols-4">
           {steps.map((s, i) => (
@@ -448,11 +476,11 @@ function GalleryEditorial({ images }: { images: RoofingSiteData["gallery"] }) {
   if (items.length === 0) return null;
   return (
     <section id="work" className="border-b border-slate-200 bg-slate-50">
-      <div className="mx-auto max-w-[1300px] px-8 py-24 lg:py-28">
+      <div className="mx-auto max-w-[1300px] px-4 py-16 sm:px-6 sm:py-20 md:px-8 md:py-24 lg:py-28">
         <SectionTitle
           numeral="03"
           eyebrow="Selected work"
-          title={<>Documented, delivered, <em className="italic font-[400]">warrantied.</em></>}
+          title={<>Documented, delivered, <em className="italic font-[400] r2-accent-em">warrantied.</em></>}
         />
         <div className="mt-16 grid gap-6 md:grid-cols-12">
           {items[0] && (
@@ -509,14 +537,14 @@ function Philosophy({
 }) {
   return (
     <section className="border-b border-slate-200 bg-white">
-      <div className="mx-auto grid max-w-[1300px] gap-16 px-8 py-24 lg:grid-cols-[1fr_1.4fr] lg:py-32">
+      <div className="mx-auto grid max-w-[1300px] gap-10 px-4 py-16 sm:px-6 sm:py-20 md:gap-16 md:px-8 md:py-24 lg:grid-cols-[1fr_1.4fr] lg:py-32">
         <div>
           <div className="text-[10.5px] font-medium uppercase tracking-[0.24em] text-slate-500">
             Philosophy
           </div>
           <h2 className={`${serif} mt-5 text-[clamp(2rem,4vw,3.25rem)] font-[300] leading-[1.02] tracking-[-0.025em] text-slate-950`}>
             We don't sell roofs &mdash;<br />
-            <em className="italic font-[400]">we document damage.</em>
+            <em className="italic font-[400] r2-accent-em">we document damage.</em>
           </h2>
         </div>
         <div>
@@ -547,15 +575,15 @@ function Credentials({ palette }: { palette: RoofingSiteData["palette"] }) {
   ];
   return (
     <section className="border-b border-slate-200 bg-slate-50">
-      <div className="mx-auto max-w-[1300px] px-8 py-14">
+      <div className="mx-auto max-w-[1300px] px-4 py-10 sm:px-6 md:px-8 md:py-14">
         <div className="grid items-center gap-8 md:grid-cols-[auto_1fr]">
           <div className="text-[10.5px] font-medium uppercase tracking-[0.24em] text-slate-500">
             Certifications
           </div>
-          <div className="flex flex-wrap items-center gap-x-10 gap-y-4">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-3 sm:gap-x-10 sm:gap-y-4">
             {items.map((it) => (
               <div key={it} className="flex items-center gap-2 text-[13px] font-medium text-slate-700">
-                <Award className="h-3.5 w-3.5 text-slate-400" />
+                <Award className="h-3.5 w-3.5" style={{ color: palette.accent }} />
                 {it}
               </div>
             ))}
@@ -578,11 +606,11 @@ function TestimonialsEditorial({
   const [featured, ...rest] = testimonials;
   return (
     <section id="reviews" className="border-b border-slate-200 bg-white">
-      <div className="mx-auto max-w-[1300px] px-8 py-24 lg:py-32">
+      <div className="mx-auto max-w-[1300px] px-4 py-16 sm:px-6 sm:py-20 md:px-8 md:py-24 lg:py-32">
         <SectionTitle
           numeral="04"
           eyebrow="Clients"
-          title={<>The reviews, <em className="italic font-[400]">in their words.</em></>}
+          title={<>The reviews, <em className="italic font-[400] r2-accent-em">in their words.</em></>}
         />
 
         <figure className="mt-16 border-y border-slate-200 py-16">
@@ -630,11 +658,11 @@ function Coverage({
 }) {
   return (
     <section id="coverage" className="border-b border-slate-200 bg-slate-50">
-      <div className="mx-auto max-w-[1300px] px-8 py-24 lg:py-28">
+      <div className="mx-auto max-w-[1300px] px-4 py-16 sm:px-6 sm:py-20 md:px-8 md:py-24 lg:py-28">
         <SectionTitle
           numeral="05"
           eyebrow="Coverage"
-          title={<>We work throughout <em className="italic font-[400]">{business.state ?? "the region"}.</em></>}
+          title={<>We work throughout <em className="italic font-[400] r2-accent-em">{business.state ?? "the region"}.</em></>}
         />
         <div className="mt-16 grid gap-px overflow-hidden border border-slate-200 bg-slate-200 md:grid-cols-4">
           {cities.map((c, i) => (
@@ -661,11 +689,11 @@ function Coverage({
 function FAQEditorial({ faqs }: { faqs: RoofingSiteData["faqs"] }) {
   return (
     <section id="faq" className="border-b border-slate-200 bg-white">
-      <div className="mx-auto max-w-[1300px] px-8 py-24 lg:py-28">
+      <div className="mx-auto max-w-[1300px] px-4 py-16 sm:px-6 sm:py-20 md:px-8 md:py-24 lg:py-28">
         <SectionTitle
           numeral="06"
           eyebrow="Frequently asked"
-          title={<>Questions, <em className="italic font-[400]">answered plainly.</em></>}
+          title={<>Questions, <em className="italic font-[400] r2-accent-em">answered plainly.</em></>}
         />
         <div className="mt-14 divide-y divide-slate-200 border-y border-slate-200">
           {faqs.map((f, i) => (
@@ -697,14 +725,14 @@ function FAQEditorial({ faqs }: { faqs: RoofingSiteData["faqs"] }) {
 function Consult({ data }: { data: RoofingSiteData }) {
   return (
     <section id="consult" className="border-b border-slate-200 bg-slate-50">
-      <div className="mx-auto grid max-w-[1300px] gap-12 px-8 py-24 lg:grid-cols-[1fr_1fr] lg:py-32">
+      <div className="mx-auto grid max-w-[1300px] gap-10 px-4 py-16 sm:px-6 sm:py-20 md:px-8 md:py-24 lg:grid-cols-[1fr_1fr] lg:py-32">
         <div>
           <SectionTitle
             numeral="07"
             eyebrow="Request a consultation"
             title={
               <>
-                Let's look at <em className="italic font-[400]">your roof together.</em>
+                Let's look at <em className="italic font-[400] r2-accent-em">your roof together.</em>
               </>
             }
           />
@@ -768,7 +796,7 @@ function FooterEditorial({
 }) {
   return (
     <footer className="bg-white">
-      <div className="mx-auto max-w-[1300px] px-8 py-20">
+      <div className="mx-auto max-w-[1300px] px-4 py-14 sm:px-6 md:px-8 md:py-20">
         <div className="grid gap-12 md:grid-cols-[1.3fr_1fr_1fr_1fr]">
           <div>
             <div className="flex items-center gap-3">
@@ -879,8 +907,8 @@ function SectionTitle({
     <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
       <div className="max-w-3xl">
         <div className="flex items-center gap-3 text-[10.5px] font-medium uppercase tracking-[0.24em] text-slate-500">
-          <span>{numeral}</span>
-          <span className="h-px w-10 bg-slate-300" />
+          <span className="r2-numeral font-semibold">{numeral}</span>
+          <span className="r2-rule h-px w-10" />
           <span>{eyebrow}</span>
         </div>
         <h2 className={`${serif} mt-5 text-[clamp(2rem,4vw,3.5rem)] font-[300] leading-[1.02] tracking-[-0.02em] text-slate-950`}>

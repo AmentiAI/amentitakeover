@@ -91,13 +91,13 @@ export default async function OpportunitiesPage() {
             <List className="h-4 w-4 text-slate-500" />
           </button>
           <button className="flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
-            <Upload className="h-3.5 w-3.5" /> Import
+            <Upload className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Import</span>
           </button>
           <button className="flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
-            <Download className="h-3.5 w-3.5" /> Export
+            <Download className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Export</span>
           </button>
           <button className="flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">
-            <Plus className="h-3.5 w-3.5" /> Add opportunity
+            <Plus className="h-3.5 w-3.5" /> <span className="hidden xs:inline sm:inline">Add opportunity</span><span className="xs:hidden sm:hidden">Add</span>
           </button>
         </div>
       </div>
@@ -108,10 +108,10 @@ export default async function OpportunitiesPage() {
           <button className="rounded px-2 py-1 text-slate-500 hover:bg-slate-100">Mine</button>
           <span className="mx-1 text-slate-300">|</span>
           <button className="flex items-center gap-1 text-slate-500 hover:text-slate-700">
-            <Filter className="h-3.5 w-3.5" /> Advanced Filters
+            <Filter className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Advanced Filters</span><span className="sm:hidden">Filters</span>
           </button>
           <button className="flex items-center gap-1 text-slate-500 hover:text-slate-700">
-            <SlidersHorizontal className="h-3.5 w-3.5" /> Sort By
+            <SlidersHorizontal className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Sort By</span><span className="sm:hidden">Sort</span>
           </button>
         </div>
         <div className="flex items-center gap-2">
@@ -122,7 +122,7 @@ export default async function OpportunitiesPage() {
               className="w-28 bg-transparent outline-none placeholder:text-slate-400 sm:w-48"
             />
           </div>
-          <button className="rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50">
+          <button className="hidden rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 sm:inline-block">
             Manage Fields
           </button>
         </div>

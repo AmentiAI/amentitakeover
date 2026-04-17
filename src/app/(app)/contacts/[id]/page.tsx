@@ -45,20 +45,21 @@ export default async function ContactDetailPage({
       <Topbar title={fullName} />
       <ContactsSubnav />
 
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2">
+      <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-2 sm:px-4">
         <Link
           href="/contacts"
-          className="inline-flex items-center gap-1 text-[12px] text-slate-500 hover:text-slate-800"
+          className="inline-flex shrink-0 items-center gap-1 text-[12px] text-slate-500 hover:text-slate-800"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          Back to contacts
+          <span className="hidden sm:inline">Back to contacts</span>
+          <span className="sm:hidden">Back</span>
         </Link>
-        <div className="flex items-center gap-2">
-          <button className="rounded-md border border-slate-200 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
-            Send email
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <button className="rounded-md border border-slate-200 px-2 py-1.5 text-[11px] text-slate-700 hover:bg-slate-50 sm:px-2.5 sm:text-xs">
+            Email
           </button>
-          <button className="rounded-md border border-slate-200 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
-            Send SMS
+          <button className="rounded-md border border-slate-200 px-2 py-1.5 text-[11px] text-slate-700 hover:bg-slate-50 sm:px-2.5 sm:text-xs">
+            SMS
           </button>
           <button className="rounded-md border border-slate-200 p-1.5 text-slate-700 hover:bg-slate-50">
             <MoreHorizontal className="h-4 w-4" />
@@ -66,8 +67,8 @@ export default async function ContactDetailPage({
         </div>
       </div>
 
-      <div className="grid flex-1 grid-cols-[340px_1fr_300px] overflow-hidden">
-        <aside className="flex flex-col overflow-hidden border-r border-slate-200 bg-white">
+      <div className="flex flex-1 flex-col overflow-auto md:overflow-hidden lg:grid lg:grid-cols-[320px_1fr_280px] xl:grid-cols-[340px_1fr_300px]">
+        <aside className="flex flex-col border-b border-slate-200 bg-white lg:overflow-hidden lg:border-b-0 lg:border-r">
           <div className="border-b border-slate-200 p-4">
             <div className="flex items-start gap-3">
               <div className="grid h-12 w-12 place-items-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
@@ -131,7 +132,7 @@ export default async function ContactDetailPage({
           <FieldSections contact={contact} />
         </aside>
 
-        <section className="flex min-w-0 flex-col overflow-hidden">
+        <section className="flex min-w-0 flex-col border-b border-slate-200 lg:overflow-hidden lg:border-b-0">
           <ActivityTimeline
             contactId={contact.id}
             activities={contact.activities.map((a) => ({
@@ -157,7 +158,7 @@ export default async function ContactDetailPage({
           />
         </section>
 
-        <aside className="flex flex-col gap-3 overflow-auto border-l border-slate-200 bg-slate-50 p-4">
+        <aside className="flex flex-col gap-3 bg-slate-50 p-3 sm:p-4 lg:overflow-auto lg:border-l lg:border-slate-200">
           <Panel title="Owner" icon={<UserIcon className="h-3 w-3" />}>
             <div className="text-[13px] text-slate-700">
               {contact.owner?.name ?? contact.owner?.email ?? <span className="text-slate-400">Unassigned</span>}

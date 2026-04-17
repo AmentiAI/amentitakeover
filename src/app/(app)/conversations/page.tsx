@@ -23,8 +23,8 @@ export default async function ConversationsPage() {
   return (
     <>
       <Topbar title="Conversations" />
-      <div className="flex min-h-0 flex-1">
-        <div className="w-80 shrink-0 border-r border-slate-200 bg-white">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+        <div className="max-h-[40vh] w-full shrink-0 overflow-y-auto border-b border-slate-200 bg-white md:max-h-none md:w-80 md:border-b-0 md:border-r">
           <div className="border-b border-slate-200 px-3 py-2">
             <div className="flex items-center gap-2 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-500">
               <Search className="h-3.5 w-3.5" />

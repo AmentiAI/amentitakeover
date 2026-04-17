@@ -13,8 +13,8 @@ export function Placeholder({
   return (
     <>
       <Topbar title={title} />
-      <div className="flex flex-1 items-center justify-center bg-slate-50 p-8">
-        <div className="max-w-md rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <div className="flex flex-1 items-center justify-center bg-slate-50 p-4 sm:p-6 md:p-8">
+        <div className="max-w-md rounded-xl border border-slate-200 bg-white p-5 text-center shadow-sm sm:p-8">
           {Icon && (
             <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-brand-50 text-brand-700">
               <Icon className="h-6 w-6" />

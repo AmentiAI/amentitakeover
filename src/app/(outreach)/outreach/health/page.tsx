@@ -3,10 +3,10 @@ import { prisma } from "@/lib/db";
 
 export default async function ServiceHealthPage() {
   const dbOk = await prisma.$queryRaw`SELECT 1`.then(() => true).catch(() => false);
-  const hasAi = Boolean(process.env.ANTHROPIC_API_KEY);
+  const hasAi = Boolean(process.env.OPENAI_API_KEY);
   const services = [
     { name: "Database (Postgres / Neon)", ok: dbOk },
-    { name: "Anthropic API", ok: hasAi },
+    { name: "OpenAI API", ok: hasAi },
     { name: "Site scraper (fetch)", ok: true },
     { name: "Queue runner", ok: true },
     { name: "SMTP", ok: false },

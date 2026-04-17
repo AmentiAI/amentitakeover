@@ -1,8 +1,14 @@
 /**
  * Brand color picker. Takes the raw hex soup scraped from a site and tries to
- * pick colors that actually look like brand colors (saturated, not
- * near-black/white, not greyscale). Returns null when nothing usable is found
- * so callers can fall back to a pinned default palette.
+ * pick colors that actually look like brand colors.
+ *
+ * Input `hexes` should be ordered by frequency (most-used first). The scraper
+ * provides this ordering. Position in the list is used as a usage signal —
+ * a color the site uses 40 times is much more likely to be the brand color
+ * than one that appears once.
+ *
+ * Returns null when nothing usable is found so callers can fall back to a
+ * pinned default palette.
  */
 
 type RGB = { r: number; g: number; b: number };
@@ -29,36 +35,55 @@ const CMS_DEFAULT_HEXES = new Set<string>([
 ]);
 
 export function pickBrandPalette(hexes: string[]): PickedPalette | null {
+  // Parse + preserve order (order == frequency rank from the scraper).
   const parsed = hexes
-    .map(parseHex)
-    .filter((x): x is RGB => x != null)
-    .map((rgb) => ({ rgb, hsl: rgbToHsl(rgb), hex: rgbToHex(rgb) }))
-    .filter(({ hex }) => !CMS_DEFAULT_HEXES.has(hex.toLowerCase()));
+    .map((hex, rank) => ({ hex, rank, rgb: parseHex(hex) }))
+    .filter((x): x is { hex: string; rank: number; rgb: RGB } => x.rgb != null)
+    .map(({ rgb, rank, hex }) => ({
+      rgb,
+      hsl: rgbToHsl(rgb),
+      hex: rgbToHex(rgb).toLowerCase(),
+      rank,
+    }))
+    .filter(({ hex }) => !CMS_DEFAULT_HEXES.has(hex));
 
   const usable = parsed.filter(({ hsl }) => isUsableBrand(hsl));
   if (usable.length === 0) return null;
 
-  // Rank by saturation, but break ties toward mid-range lightness so we don't
-  // pick a neon highlight or a near-black.
-  usable.sort((a, b) => {
-    const ad = Math.abs(a.hsl.l - 0.5);
-    const bd = Math.abs(b.hsl.l - 0.5);
-    if (Math.abs(b.hsl.s - a.hsl.s) > 0.05) return b.hsl.s - a.hsl.s;
-    return ad - bd;
-  });
+  // Score each candidate: combine frequency rank (usage) + saturation
+  // (brandness) + mid-lightness preference. Colors the site uses a lot
+  // should win even if a one-off neon is more saturated.
+  const scored = usable
+    .map((c) => {
+      // rank 0 → 1.0, rank 10 → ~0.45, rank 30+ → small — smooth decay.
+      const freq = 1 / Math.sqrt(1 + c.rank);
+      const sat = c.hsl.s; // 0..1
+      const midLight = 1 - Math.abs(c.hsl.l - 0.5) * 2; // peaks at 0.5
+      return {
+        ...c,
+        score: freq * 1.6 + sat * 0.9 + midLight * 0.25,
+      };
+    })
+    .sort((a, b) => b.score - a.score);
 
-  const accentPick = usable[0];
-  const accent = rgbToHex(hslToRgb(clampLightness(accentPick.hsl, 0.38, 0.58)));
+  const accentPick = scored[0];
+  const accent = rgbToHex(hslToRgb(clampLightness(accentPick.hsl, 0.36, 0.58)));
 
   // Base: a dark, low-saturation cousin of the accent — not pure black.
-  const baseHsl: HSL = { h: accentPick.hsl.h, s: Math.min(accentPick.hsl.s, 0.35), l: 0.12 };
+  const baseHsl: HSL = {
+    h: accentPick.hsl.h,
+    s: Math.min(accentPick.hsl.s, 0.32),
+    l: 0.11,
+  };
   const base = rgbToHex(hslToRgb(baseHsl));
 
-  // Trust: pick the next usable hue at least 40° off the accent, else
+  // Trust: pick the next usable hue at least 35° off the accent, else
   // complement the accent hue.
-  const second = usable.slice(1).find((c) => hueDistance(c.hsl.h, accentPick.hsl.h) >= 40);
+  const second = scored
+    .slice(1)
+    .find((c) => hueDistance(c.hsl.h, accentPick.hsl.h) >= 35);
   const trustHsl: HSL = second
-    ? clampLightness(second.hsl, 0.35, 0.55)
+    ? clampLightness(second.hsl, 0.32, 0.55)
     : { h: (accentPick.hsl.h + 180) % 360, s: 0.45, l: 0.42 };
   const trust = rgbToHex(hslToRgb(trustHsl));
 
@@ -66,9 +91,10 @@ export function pickBrandPalette(hexes: string[]): PickedPalette | null {
 }
 
 function isUsableBrand(hsl: HSL): boolean {
-  // Drop greyscale / near-white / near-black.
-  if (hsl.s < 0.18) return false;
-  if (hsl.l < 0.12 || hsl.l > 0.88) return false;
+  // Loosened vs prior: dark navies (l≈0.10) and muted greens (s≈0.12) should
+  // survive — those are often real brand colors.
+  if (hsl.s < 0.12) return false;
+  if (hsl.l < 0.08 || hsl.l > 0.92) return false;
   return true;
 }
 

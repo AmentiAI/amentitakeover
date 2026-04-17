@@ -43,7 +43,7 @@ export default async function ContactTasksPage() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-auto bg-slate-50 p-6">
+      <div className="flex-1 overflow-auto bg-slate-50 p-3 sm:p-4 md:p-6">
         <div className="mx-auto max-w-4xl space-y-6">
           <TaskGroup title="Overdue" tone="rose" tasks={groups.overdue} />
           <TaskGroup title="Today" tone="amber" tasks={groups.today} />
@@ -83,37 +83,39 @@ function TaskGroup({
       </div>
       <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
         {tasks.map((t: any) => (
-          <div key={t.id} className="flex items-center gap-3 px-3 py-2 text-sm">
+          <div key={t.id} className="flex items-start gap-2 px-3 py-2 text-sm sm:items-center sm:gap-3">
             {t.done ? (
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500 sm:mt-0" />
             ) : (
-              <Circle className="h-4 w-4 shrink-0 text-slate-400" />
+              <Circle className="mt-0.5 h-4 w-4 shrink-0 text-slate-400 sm:mt-0" />
             )}
-            <div className="flex-1">
-              <div className={`${t.done ? "text-slate-400 line-through" : "text-slate-800"}`}>
+            <div className="min-w-0 flex-1">
+              <div className={`truncate ${t.done ? "text-slate-400 line-through" : "text-slate-800"}`}>
                 {t.title}
               </div>
-              {t.contact && (
-                <Link
-                  href={`/contacts/${t.contact.id}`}
-                  className="text-[11px] text-slate-500 hover:text-brand-700"
-                >
-                  {[t.contact.firstName, t.contact.lastName].filter(Boolean).join(" ") || "(no name)"}
-                </Link>
-              )}
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                {t.contact && (
+                  <Link
+                    href={`/contacts/${t.contact.id}`}
+                    className="truncate text-[11px] text-slate-500 hover:text-brand-700"
+                  >
+                    {[t.contact.firstName, t.contact.lastName].filter(Boolean).join(" ") || "(no name)"}
+                  </Link>
+                )}
+                {t.dueAt && (
+                  <div className="inline-flex items-center gap-1 text-[11px] text-slate-500">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(t.dueAt).toLocaleDateString()}
+                  </div>
+                )}
+                {t.assignee && (
+                  <div className="inline-flex items-center gap-1 text-[11px] text-slate-500">
+                    <User className="h-3 w-3" />
+                    <span className="truncate">{t.assignee.name ?? t.assignee.email}</span>
+                  </div>
+                )}
+              </div>
             </div>
-            {t.dueAt && (
-              <div className="inline-flex items-center gap-1 text-[11px] text-slate-500">
-                <Calendar className="h-3 w-3" />
-                {new Date(t.dueAt).toLocaleDateString()}
-              </div>
-            )}
-            {t.assignee && (
-              <div className="inline-flex items-center gap-1 text-[11px] text-slate-500">
-                <User className="h-3 w-3" />
-                {t.assignee.name ?? t.assignee.email}
-              </div>
-            )}
           </div>
         ))}
       </div>

@@ -14,13 +14,13 @@ export default function MarketplacePage() {
   return (
     <>
       <Topbar title="App Marketplace" />
-      <div className="flex-1 overflow-auto bg-slate-50 p-6">
+      <div className="flex-1 overflow-auto bg-slate-50 p-3 sm:p-4 md:p-6">
         <div className="mb-4 flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-lg bg-brand-700 text-white">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-700 text-white">
             <Store className="h-5 w-5" />
           </div>
-          <div>
-            <div className="text-base font-semibold text-slate-900">
+          <div className="min-w-0">
+            <div className="truncate text-base font-semibold text-slate-900">
               App Marketplace
             </div>
             <div className="text-xs text-slate-500">
@@ -28,7 +28,7 @@ export default function MarketplacePage() {
             </div>
           </div>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {APPS.map((a) => (
             <div
               key={a.name}
