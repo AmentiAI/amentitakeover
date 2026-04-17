@@ -41,19 +41,13 @@ export default function SignInPage() {
           <div className="absolute -inset-[2px] rounded-3xl bg-gradient-to-br from-fuchsia-500/50 via-purple-500/40 to-indigo-500/50 opacity-80 blur-[3px]" />
           <div className="relative rounded-3xl border border-white/10 bg-[#120c28]/85 p-7 shadow-[0_50px_120px_-40px_rgba(139,92,246,0.7)] backdrop-blur-xl sm:p-10">
             <div className="mb-7 flex items-center gap-3 sm:mb-8">
-              <span className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-fuchsia-500 via-purple-500 to-indigo-500 shadow-[0_0_40px_-5px_rgba(217,70,239,0.65)] sm:h-14 sm:w-14">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-6 w-6 text-white sm:h-7 sm:w-7"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 3 L21 20 L3 20 Z" />
-                  <path d="M12 9 L16 17 L8 17 Z" opacity="0.7" />
-                </svg>
+              <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-fuchsia-500 via-purple-500 to-indigo-500 p-1.5 shadow-[0_0_40px_-5px_rgba(217,70,239,0.65)] sm:h-14 sm:w-14">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/amenti-logo.png"
+                  alt="Amenti AI logo"
+                  className="h-full w-full object-contain"
+                />
               </span>
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-[0.3em] text-fuchsia-300 sm:text-xs">
