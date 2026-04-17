@@ -79,7 +79,7 @@ function validateFromAddress(from: string): string | null {
   if (at < 0) return `RESEND_FROM="${from}" is not a valid email address.`;
   const domain = addr.slice(at + 1);
   if (FREEMAIL_DOMAINS.has(domain)) {
-    return `Cannot send from "${addr}" — "${domain}" is a consumer email provider and can't be verified in Resend. Add a domain you own at https://resend.com/domains and set RESEND_FROM to an address on that domain (e.g. "Wilson <wilson@signulldev.com>").`;
+    return `Cannot send from "${addr}" — "${domain}" is a consumer email provider and can't be verified in Resend. Add a domain you own at https://resend.com/domains and set RESEND_FROM to an address on that domain (e.g. "Wilson <wilson@amentiaiaffiliates.online>").`;
   }
   return null;
 }

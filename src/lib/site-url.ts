@@ -4,11 +4,11 @@
  *
  * Resolution order:
  *   1. NEXT_PUBLIC_APP_URL (explicit override)
- *   2. Production default → https://signulldev.com
+ *   2. Production default → https://amentiaiaffiliates.online
  *   3. VERCEL_URL for preview / branch deploys
  *   4. http://localhost:3000 (dev fallback)
  */
-export const PRODUCTION_SITE_URL = "https://signulldev.com";
+export const PRODUCTION_SITE_URL = "https://amentiaiaffiliates.online";
 
 export function getSiteBaseUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.trim();

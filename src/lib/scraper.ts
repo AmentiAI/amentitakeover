@@ -91,7 +91,7 @@ export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
   const res = await fetch(url, {
     headers: {
       "User-Agent":
-        "Mozilla/5.0 (compatible; SignullBot/1.0; +https://signulldev.com/bot)",
+        "Mozilla/5.0 (compatible; AmentiAffiliateBot/1.0; +https://amentiaiaffiliates.online/bot)",
       Accept:
         "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     },
