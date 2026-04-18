@@ -123,29 +123,26 @@ export function buildSiteData(
   const headings = parseHeadings(site?.headings);
 
   const hero = generated?.hero ?? null;
-  const gallery: { src: string; alt: string }[] = [];
-  const seen = new Set<string>();
-  const pushImg = (src: string, alt: string) => {
-    if (!src || seen.has(src)) return;
-    seen.add(src);
-    gallery.push({ src, alt: alt || `${b.name} — recent work` });
+
+  // Single global set — every image slot on the page claims from here and
+  // never picks a URL that's already been used. This guarantees uniqueness
+  // across hero, banners, service cards, and gallery.
+  const usedImages = new Set<string>();
+  const claim = (src: string | null | undefined): string | null => {
+    if (!src || usedImages.has(src)) return null;
+    usedImages.add(src);
+    return src;
+  };
+  const reserve = (src: string | null | undefined) => {
+    if (src) usedImages.add(src);
   };
 
-  // Prefer real scraped photos from the business's own site — they show
-  // the business's actual work / space. Filter junk (logos, icons, tiny assets).
-  for (const img of images.filter(isGalleryCandidate)) {
-    pushImg(img.src, img.alt || `${b.name}`);
-    if (gallery.length >= 12) break;
-  }
-
-  // Fill the remaining slots with AI-generated gallery art so every site has
-  // at least 6 images even when the scrape returned few or none.
-  for (const g of generated?.gallery ?? []) {
-    if (gallery.length >= 12) break;
-    pushImg(g.src, `${b.name} — recent work`);
-  }
-
-  if (gallery.length === 0) FALLBACK_GALLERY.forEach((f) => gallery.push(f));
+  // Reserve the purpose-built AI slots first so service cards and gallery
+  // won't accidentally reuse them.
+  reserve(generated?.hero?.src);
+  reserve(generated?.aboutBanner?.src);
+  reserve(generated?.servicesBanner?.src);
+  reserve(generated?.ctaBanner?.src);
 
   const palette = pickBrandPalette(site?.palette ?? []) ?? FALLBACK_PALETTE;
 
@@ -165,26 +162,55 @@ export function buildSiteData(
   });
   const serviceBodies = buildServiceBodies(trade, serviceTitles, b);
 
-  // Build a pool of business-specific images to guarantee every service card
-  // has art: AI service cards first (matched by index), then other AI cards
-  // for rotation, then AI gallery, then scraped business photos, then hero.
-  const serviceCardPool: string[] = [];
-  for (const c of generated?.serviceCards ?? []) serviceCardPool.push(c.src);
-  for (const g of generated?.gallery ?? []) serviceCardPool.push(g.src);
-  for (const img of images.filter(isGalleryCandidate)) serviceCardPool.push(img.src);
-  if (generated?.hero) serviceCardPool.push(generated.hero.src);
+  const scrapedPhotos = images.filter(isGalleryCandidate);
+  const aiCardsByIndex = generated?.serviceCards ?? [];
+  const aiGallery = generated?.gallery ?? [];
+
+  // Services: each claims its purpose-built AI card first (index-matched),
+  // then falls back through unused AI cards → scraped photos → AI gallery.
+  const serviceFallbackOrder: string[] = [];
+  for (const c of aiCardsByIndex) serviceFallbackOrder.push(c.src);
+  for (const img of scrapedPhotos) serviceFallbackOrder.push(img.src);
+  for (const g of aiGallery) serviceFallbackOrder.push(g.src);
+
+  const pickUnused = (): string | null => {
+    for (const src of serviceFallbackOrder) {
+      const taken = claim(src);
+      if (taken) return taken;
+    }
+    return null;
+  };
 
   const services = serviceTitles.map((title, i) => {
-    const matched = generated?.serviceCards?.[i]?.src;
-    const rotated = serviceCardPool.length
-      ? serviceCardPool[i % serviceCardPool.length]
-      : null;
+    const matched = claim(aiCardsByIndex[i]?.src);
     return {
       title,
       body: serviceBodies[i] ?? defaultServiceBody(title, trade, b),
-      image: matched ?? rotated,
+      image: matched ?? pickUnused(),
     };
   });
+
+  // Gallery: scraped photos first, then remaining AI gallery, then any
+  // leftover AI service cards. Everything already used above is skipped.
+  const gallery: { src: string; alt: string }[] = [];
+  const pushGallery = (src: string | null, alt: string) => {
+    const taken = claim(src);
+    if (!taken) return;
+    gallery.push({ src: taken, alt: alt || `${b.name} — recent work` });
+  };
+  for (const img of scrapedPhotos) {
+    if (gallery.length >= 12) break;
+    pushGallery(img.src, img.alt || `${b.name}`);
+  }
+  for (const g of aiGallery) {
+    if (gallery.length >= 12) break;
+    pushGallery(g.src, `${b.name} — recent work`);
+  }
+  for (const c of aiCardsByIndex) {
+    if (gallery.length >= 12) break;
+    pushGallery(c.src, `${b.name} — recent work`);
+  }
+  if (gallery.length === 0) FALLBACK_GALLERY.forEach((f) => gallery.push(f));
 
   const headlines = deriveHeadlines({ headings, trade });
 
