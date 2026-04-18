@@ -7,6 +7,7 @@
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, Mail, MapPin, Phone, Quote, ShieldCheck, Sparkles, Star } from "lucide-react";
 import type { SiteData } from "@/lib/templates/site";
+import { SafeImg } from "@/components/safe-img";
 
 export function Hero({ data }: { data: SiteData }) {
   const { hero, business } = data;
@@ -14,11 +15,11 @@ export function Hero({ data }: { data: SiteData }) {
     <section className="relative overflow-hidden">
       <div className="absolute inset-0">
         {hero.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <SafeImg
             src={hero.image}
             alt={`${business.name} hero`}
             className="h-full w-full object-cover"
+            fallback={<div className="h-full w-full" style={{ background: "var(--site-base)" }} />}
           />
         ) : (
           <div className="h-full w-full" style={{ background: "var(--site-base)" }} />
@@ -112,8 +113,12 @@ export function AboutPreview({ data }: { data: SiteData }) {
       <div className="mx-auto grid max-w-7xl gap-10 px-5 sm:px-6 md:grid-cols-2 md:gap-12">
         <div className="relative aspect-[4/3] overflow-hidden rounded-3xl shadow-xl ring-1 ring-slate-200 md:aspect-auto">
           {banners.about ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={banners.about} alt="About us" className="absolute inset-0 h-full w-full object-cover" />
+            <SafeImg
+              src={banners.about}
+              alt="About us"
+              className="absolute inset-0 h-full w-full object-cover"
+              fallback={<div className="absolute inset-0" style={{ background: "var(--site-trust)" }} />}
+            />
           ) : (
             <div className="absolute inset-0" style={{ background: "var(--site-trust)" }} />
           )}
@@ -174,11 +179,17 @@ export function ServicesGrid({ data, compact = false }: { data: SiteData; compac
             >
               <div className="relative aspect-[5/3] w-full overflow-hidden bg-slate-200">
                 {s.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <SafeImg
                     src={s.image}
                     alt={s.title}
                     className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    fallback={
+                      <div
+                        className="absolute inset-0"
+                        style={{ background: "var(--site-trust)" }}
+                        aria-hidden
+                      />
+                    }
                   />
                 ) : (
                   <div
@@ -217,11 +228,11 @@ export function ServicesBannerStrip({ data }: { data: SiteData }) {
     <section className="relative bg-white py-8">
       <div className="mx-auto max-w-7xl px-5 sm:px-6">
         <div className="relative overflow-hidden rounded-3xl ring-1 ring-slate-200">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <SafeImg
             src={data.banners.services}
             alt="Services overview"
             className="h-64 w-full object-cover sm:h-80 md:h-[28rem]"
+            fallback={<div className="h-64 w-full sm:h-80 md:h-[28rem]" style={{ background: "var(--site-base)" }} />}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-8">
@@ -296,8 +307,12 @@ export function GalleryStrip({ data, compact = false }: { data: SiteData; compac
               key={g.src + i}
               className={`relative overflow-hidden rounded-2xl ring-1 ring-slate-200 ${i % 5 === 0 && !compact ? "md:col-span-2 md:row-span-1 aspect-[2/1]" : "aspect-square"}`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={g.src} alt={g.alt} className="absolute inset-0 h-full w-full object-cover transition hover:scale-105" />
+              <SafeImg
+                src={g.src}
+                alt={g.alt}
+                className="absolute inset-0 h-full w-full object-cover transition hover:scale-105"
+                fallback={<div className="absolute inset-0" style={{ background: "var(--site-trust)" }} aria-hidden />}
+              />
             </div>
           ))}
         </div>
@@ -385,8 +400,13 @@ export function CTASection({ data }: { data: SiteData }) {
     <section className="relative overflow-hidden">
       <div className="absolute inset-0">
         {banners.cta ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={banners.cta} alt="" className="h-full w-full object-cover" aria-hidden />
+          <SafeImg
+            src={banners.cta}
+            alt=""
+            className="h-full w-full object-cover"
+            aria-hidden
+            fallback={<div className="h-full w-full" style={{ background: "var(--site-base)" }} />}
+          />
         ) : (
           <div className="h-full w-full" style={{ background: "var(--site-base)" }} />
         )}
@@ -441,8 +461,13 @@ export function PageHeader({
     <section className="relative overflow-hidden">
       <div className="absolute inset-0">
         {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt="" className="h-full w-full object-cover" aria-hidden />
+          <SafeImg
+            src={image}
+            alt=""
+            className="h-full w-full object-cover"
+            aria-hidden
+            fallback={<div className="h-full w-full" style={{ background: "var(--site-base)" }} />}
+          />
         ) : (
           <div className="h-full w-full" style={{ background: "var(--site-base)" }} />
         )}

@@ -50,17 +50,19 @@ function ensureScheme(s: string): string {
 }
 
 /**
- * There's a single unified multi-page template now. The `TemplateChoice` type
- * is kept so downstream tracking + outreach code doesn't change shape, but it
- * always resolves to the `site` template.
+ * Available preview templates. Each `value` maps to a Next.js route segment
+ * under `/p/<value>/<id>`, so the same scraped business can be previewed in
+ * multiple visual treatments without regenerating image or content data.
  */
-export type TemplateChoice = "site";
+export type TemplateChoice = "site" | "editorial";
 
 export const TEMPLATE_CHOICES: { value: TemplateChoice; label: string; hint: string }[] = [
-  { value: "site", label: "Pro Multi-Page", hint: "Modern multi-page preview tailored to the scraped business" },
+  { value: "site", label: "Pro Multi-Page", hint: "Modern multi-page preview with services, gallery, and reviews" },
+  { value: "editorial", label: "Editorial", hint: "Magazine-style single-page layout — serif typography, big imagery" },
 ];
 
-export function normalizeTemplateChoice(_raw: unknown): TemplateChoice {
+export function normalizeTemplateChoice(raw: unknown): TemplateChoice {
+  if (raw === "editorial") return "editorial";
   return "site";
 }
 
@@ -68,15 +70,18 @@ export function normalizeTemplateChoice(_raw: unknown): TemplateChoice {
  * Absolute URL for the generated template preview, keyed by the
  * scraped-business id. Optional `trackingToken` (typically the email-draft id)
  * is appended as a `/v/<token>` path segment so we can attribute opens back
- * to a specific outreach send.
+ * to a specific outreach send. The tracking-token route only exists on the
+ * `site` template today, so the `editorial` variant skips the `/v/` suffix.
  */
 export function getTemplatePreviewUrl(
   scrapedBusinessId: string,
   opts?: { trackingToken?: string | null; template?: TemplateChoice },
 ): string {
-  const base = `${getPreviewBaseUrl()}/p/site/${scrapedBusinessId}`;
+  const template = opts?.template ?? "site";
+  const base = `${getPreviewBaseUrl()}/p/${template}/${scrapedBusinessId}`;
   const token = opts?.trackingToken?.trim();
-  return token ? `${base}/v/${encodeURIComponent(token)}` : base;
+  if (!token || template !== "site") return base;
+  return `${base}/v/${encodeURIComponent(token)}`;
 }
 
 function stripTrailingSlash(s: string): string {

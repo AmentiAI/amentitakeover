@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Mail, MapPin, Phone, Star } from "lucide-react";
 import { loadSiteData, loadSiteMetadata } from "@/lib/templates/site-loader";
 import { SocialLinks } from "@/components/templates/site/chrome";
+import { SafeImg } from "@/components/safe-img";
 
 export const dynamic = "force-dynamic";
 
@@ -54,8 +55,12 @@ export default async function EditorialHomePage({
       <section className="relative">
         <div className="relative h-[72vh] min-h-[480px] w-full overflow-hidden sm:h-[82vh]">
           {heroImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={heroImage} alt={business.name} className="h-full w-full object-cover" />
+            <SafeImg
+              src={heroImage}
+              alt={business.name}
+              className="h-full w-full object-cover"
+              fallback={<div className="h-full w-full" style={{ background: "var(--ed-base)" }} />}
+            />
           ) : (
             <div className="h-full w-full" style={{ background: "var(--ed-base)" }} />
           )}
@@ -139,11 +144,11 @@ export default async function EditorialHomePage({
                   <p className="text-[16px] leading-[1.65] text-[#1a1814]/75">{s.body}</p>
                   {s.image ? (
                     <div className="relative aspect-[4/3] w-full overflow-hidden md:w-[240px] lg:w-[280px]">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <SafeImg
                         src={s.image}
                         alt={s.title}
                         className="absolute inset-0 h-full w-full object-cover"
+                        fallback={<div className="absolute inset-0" style={{ background: "var(--ed-trust)" }} />}
                       />
                     </div>
                   ) : null}
@@ -188,11 +193,11 @@ export default async function EditorialHomePage({
                   key={g.src + i}
                   className={`relative overflow-hidden ${editorialGridSpan(i)}`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <SafeImg
                     src={g.src}
                     alt={g.alt}
                     className="absolute inset-0 h-full w-full object-cover transition duration-700 hover:scale-[1.03]"
+                    fallback={<div className="absolute inset-0" style={{ background: "var(--ed-trust)" }} />}
                   />
                 </figure>
               ))}

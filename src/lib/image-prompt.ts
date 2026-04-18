@@ -49,13 +49,16 @@ You'll get scraped context about the business, including real page copy and the 
 }
 
 CRITICAL RULES:
+- BUSINESS RELEVANCE IS MANDATORY. Every prompt MUST open by anchoring the subject to this specific business's trade, location, and scraped copy — not a generic version of the industry. If the business is "Carter's Custom Cedar Decks" in Portland, the hero is a cedar deck in a PNW backyard — NOT a generic wood deck. If they mention "historic homes" in their copy, reference that. If they list a signature material (stone, brass, shiplap), include it by name.
 - Every image MUST feel like the same brand (same lighting, palette, mood) but depict something DIFFERENT.
 - Photorealistic, documentary / editorial commercial photography. Ultra-sharp detail. Real texture.
-- The serviceCardPrompts array MUST have one entry per service in the provided service list, in the same order. Each image should depict the SPECIFIC service, not a generic shot.
-- Use the provided real page copy to make images feel tied to the business's actual work (e.g., if they mention "custom cedar decks", show a cedar deck; if "mid-century homes", use that aesthetic).
+- The serviceCardPrompts array MUST have one entry per service in the provided service list, in the same order. Each image depicts the EXACT named service — if the service is "Chimney repair", the image is of a chimney being repaired, not generic masonry. Echo the service title's nouns in the prompt so the image can't drift.
+- Use the provided real page copy verbatim where helpful: if they say "low-slope torch-down", use "low-slope torch-down roof"; if "cedar shake siding", show cedar shake siding. Scan for concrete nouns (materials, property types, room types, architectural styles, neighborhoods) and plant them in the prompts.
+- Gallery prompts depict finished results and working moments from THIS business's actual services (pull from the service list) — NOT unrelated industry stock. Each gallery image should be identifiably connected to one service or material from the provided list.
 - NEVER include text, words, numbers, logos, signs, storefront text, price tags, license plates, screens, banners, or readable letters of any kind.
 - NEVER include human faces clearly visible — from behind / over shoulder / hands working is fine.
 - Match the business's trade literally: roofing = roof install close-ups; electrician = panels/EV chargers/breakers; salon = scissors/products/chairs; restaurant = food/kitchen; etc. Never generic stock.
+- If the location is known (city/state), include a specific environmental cue that matches the region (PNW evergreens, desert light, New England clapboard, Florida palms, etc.) — subtle, not clichéd.
 - Cover range: wide establishing hero, narrative about-banner, breadth-of-work services banner, warm CTA banner, then per-service close-ups, then gallery details (tools, process, finished results).
 - Incorporate the brand palette subtly where natural (not literal color swatches).
 - 80-140 words per prompt, no markdown, no bullet lists — plain imperative description.`;
@@ -67,7 +70,8 @@ export async function buildImageBrief(ctx: BusinessContext): Promise<ImageBrief>
     ? ctx.serviceTitles.map((t, i) => `  ${i + 1}. ${t}`).join("\n")
     : "  (none — infer from trade)";
 
-  const body = ctx.textContent?.slice(0, 2400) ?? "";
+  const body = ctx.textContent?.slice(0, 3200) ?? "";
+  const concreteNouns = extractConcreteNouns(ctx);
   const userInput = [
     `Business name: ${ctx.name}`,
     `Category: ${ctx.category ?? ctx.industry ?? "local service business"}`,
@@ -75,8 +79,12 @@ export async function buildImageBrief(ctx: BusinessContext): Promise<ImageBrief>
     `Description: ${ctx.description ?? "(none)"}`,
     `Palette (hex): ${ctx.palette.slice(0, 5).join(", ") || "(none)"}`,
     `Services to illustrate (in order):\n${serviceList}`,
+    concreteNouns.length
+      ? `Signature nouns (materials / property types / specialties found in their copy — plant these in prompts):\n${concreteNouns.map((n) => `- ${n}`).join("\n")}`
+      : "Signature nouns: (none — infer from trade)",
     `Scraped headings:\n${ctx.headings.slice(0, 20).map((h) => `- ${h}`).join("\n") || "(none)"}`,
     `Scraped page copy excerpt:\n${body || "(none)"}`,
+    `FINAL CHECK before returning: each prompt should name the business's trade and at least one concrete noun from the scraped context. If a prompt reads like generic industry stock, rewrite it.`,
   ].join("\n\n");
 
   try {
@@ -133,6 +141,42 @@ function padServiceCards(fromLLM: string[], ctx: BusinessContext, fallback: stri
 
 function str(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
+}
+
+// Surface concrete nouns the LLM should plant in prompts. We scan the scraped
+// copy for materials, architectural styles, property types, and specialty
+// phrases that typically appear in small-business marketing copy. The goal is
+// to give the prompt writer ammunition so output isn't generic industry stock.
+function extractConcreteNouns(ctx: BusinessContext): string[] {
+  const haystack = [
+    ctx.description ?? "",
+    ctx.textContent ?? "",
+    ctx.headings.join(" "),
+  ]
+    .join(" ")
+    .toLowerCase();
+  if (!haystack.trim()) return [];
+
+  const patterns: RegExp[] = [
+    // Materials + modifiers (e.g., "cedar shake", "brushed brass", "porcelain tile")
+    /\b(?:cedar|redwood|oak|walnut|maple|pine|teak|mahogany|ipe|bamboo|stone|granite|marble|quartz|quartzite|slate|limestone|travertine|concrete|stucco|brick|shiplap|clapboard|cedar shake|wood shake|asphalt shingle|metal|copper|brass|chrome|nickel|steel|stainless|aluminum|porcelain|ceramic|terrazzo|hardwood|softwood|composite|pvc|pex|tpo|epdm|torch-down|low-slope|flat roof|standing-seam|architectural shingle|leather|linen|velvet)(?:\s+\w+){0,2}/g,
+    // Property / room types
+    /\b(?:craftsman|victorian|colonial|mid-century|ranch|tudor|farmhouse|bungalow|brownstone|row house|townhome|cottage|cabin|historic home|new construction|custom home|luxury home|estate|condo|loft|studio|kitchen|bathroom|master bath|ensuite|walk-in closet|basement|attic|garage|deck|patio|pergola|gazebo|driveway|walkway|backyard|front yard|porch|foyer|mudroom|laundry room|utility room|rooftop|chimney|fireplace|siding|soffit|fascia|gutter|trim)\b/g,
+    // Specialty phrases commonly used in trade copy
+    /\b(?:commercial|residential|new construction|remodel|renovation|restoration|repair|install|replacement|custom|bespoke|same-day|emergency|24\/7)\s+\w+(?:\s+\w+)?/g,
+  ];
+
+  const found = new Set<string>();
+  for (const re of patterns) {
+    for (const m of haystack.matchAll(re)) {
+      const token = m[0].trim();
+      if (token.length < 4 || token.length > 48) continue;
+      found.add(token);
+      if (found.size >= 14) break;
+    }
+    if (found.size >= 14) break;
+  }
+  return Array.from(found);
 }
 
 function withStyle(prompt: string, style: string): string {

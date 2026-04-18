@@ -64,7 +64,8 @@ export default async function AffiliateBusinessDetailPage({
   ]);
 
   const liveSiteUrl = biz.website ?? biz.site?.url ?? null;
-  const templateUrl = `/p/site/${biz.id}`;
+  const currentTemplate = biz.templateChoice === "editorial" ? "editorial" : "site";
+  const templateUrl = `/p/${currentTemplate}/${biz.id}`;
 
   return (
     <div className="px-4 py-5 sm:px-6 sm:py-6">
