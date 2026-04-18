@@ -20,6 +20,7 @@ import { loadSiteData, loadSiteMetadata } from "@/lib/templates/site-loader";
 import { SocialLinks } from "@/components/templates/site/chrome";
 import { SafeImg } from "@/components/safe-img";
 import { BugCrawlCanvas } from "@/components/templates/pest/bug-crawl-canvas";
+import { HeroBugBanner } from "@/components/templates/pest/hero-bug-banner";
 import { RadarSweepCanvas } from "@/components/templates/pest/radar-sweep-canvas";
 import { BarrierShieldCanvas } from "@/components/templates/pest/barrier-shield-canvas";
 import { PestCounter } from "@/components/templates/pest/pest-counter";
@@ -117,26 +118,30 @@ export default async function PestHomePage({
         </div>
       </header>
 
-      {/* Hero — serif headline + radar + muted image + dual-CTA */}
+      {/* Hero — animated bug-swarm banner as the primary visual. A muted hero
+          image + radial glow sit behind it for depth; a faint radar sweeps
+          from the right corner to reinforce the detection theme. The bug
+          banner catches the cursor for scatter interaction and periodically
+          "zaps" a random bug with a targeting reticle + flash. */}
       <section className="relative z-10 overflow-hidden">
         <div className="relative h-[94vh] min-h-[600px] w-full">
-          {/* Background: muted hero image with vignette and radial glow */}
+          {/* Layer 1: muted hero image with vignette and emerald glow */}
           <div className="absolute inset-0">
             {hero.image ? (
               <SafeImg
                 src={hero.image}
                 alt={business.name}
-                className="h-full w-full object-cover opacity-30"
+                className="h-full w-full object-cover opacity-20"
                 fallback={<div className="h-full w-full bg-[#060c09]" />}
               />
             ) : (
               <div className="h-full w-full bg-[#060c09]" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-b from-[#060c09]/40 via-[#060c09]/80 to-[#060c09]" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_72%_58%,rgba(16,185,129,0.28),transparent_58%)]" />
-            {/* Subtle horizontal scanlines to evoke CRT/monitor feel */}
+            <div className="absolute inset-0 bg-gradient-to-b from-[#060c09]/55 via-[#060c09]/80 to-[#060c09]" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_78%_62%,rgba(16,185,129,0.22),transparent_58%)]" />
+            {/* Subtle scanlines for CRT/monitor feel */}
             <div
-              className="absolute inset-0 opacity-[0.07] mix-blend-overlay"
+              className="absolute inset-0 opacity-[0.06] mix-blend-overlay"
               style={{
                 backgroundImage:
                   "repeating-linear-gradient(0deg, rgba(255,255,255,0.4) 0 1px, transparent 1px 3px)",
@@ -145,15 +150,25 @@ export default async function PestHomePage({
             />
           </div>
 
-          {/* Radar sweep */}
-          <RadarSweepCanvas
-            color="rgba(134, 239, 172, 0.9)"
-            gridColor="rgba(134, 239, 172, 0.14)"
+          {/* Layer 2: faint background radar (detection context, not the focus) */}
+          <div className="pointer-events-none absolute inset-0 opacity-45">
+            <RadarSweepCanvas
+              color="rgba(134, 239, 172, 0.75)"
+              gridColor="rgba(134, 239, 172, 0.1)"
+            />
+          </div>
+
+          {/* Layer 3: the main event — bug-swarm banner with cursor scatter + zap events */}
+          <HeroBugBanner
+            color="rgba(22, 13, 7, 0.94)"
+            accent="rgba(134, 239, 172, 0.95)"
+            count={32}
+            scatterRadius={170}
           />
 
-          {/* Hero content */}
-          <div className="relative z-10 mx-auto flex h-full max-w-7xl items-end px-5 pb-16 sm:px-8 sm:pb-24">
-            <div className="max-w-3xl">
+          {/* Hero content (sits above every canvas layer and remains clickable) */}
+          <div className="pointer-events-none relative z-10 mx-auto flex h-full max-w-7xl items-end px-5 pb-16 sm:px-8 sm:pb-24">
+            <div className="pointer-events-auto max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.26em] text-emerald-300 backdrop-blur">
                 <Radar className="h-3 w-3" />
                 Detect · Treat · Protect
