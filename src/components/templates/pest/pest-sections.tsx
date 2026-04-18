@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { SafeImg } from "@/components/safe-img";
 import { BarrierShieldCanvas } from "@/components/templates/pest/barrier-shield-canvas";
+import { HeroBugBanner } from "@/components/templates/pest/hero-bug-banner";
 import { RadarSweepCanvas } from "@/components/templates/pest/radar-sweep-canvas";
 import {
   AntIcon,
@@ -595,19 +596,35 @@ export function TestimonialsSection({
 export function FinalCta({
   business,
   ctaHeadline,
+  backdrop = "radar",
 }: {
   business: SiteData["business"];
   ctaHeadline: string;
+  // "radar" is the default look for Home/Services/About. "bugs" is used on
+  // Contact where the bug swarm gets top billing over the green radar.
+  backdrop?: "radar" | "bugs";
 }) {
   const { before, after } = splitHero(ctaHeadline);
   return (
     <section className="relative overflow-hidden bg-[#060c09] py-24 text-white sm:py-32">
-      <div className="pointer-events-none absolute inset-0 opacity-60">
-        <RadarSweepCanvas
-          color="rgba(134, 239, 172, 0.55)"
-          gridColor="rgba(134, 239, 172, 0.08)"
-        />
-      </div>
+      {backdrop === "radar" ? (
+        <div className="pointer-events-none absolute inset-0 opacity-60">
+          <RadarSweepCanvas
+            color="rgba(134, 239, 172, 0.55)"
+            gridColor="rgba(134, 239, 172, 0.08)"
+          />
+        </div>
+      ) : (
+        <div className="absolute inset-0 opacity-75">
+          <HeroBugBanner
+            color="rgba(8, 20, 12, 0.95)"
+            accent="rgba(134, 239, 172, 0.95)"
+            count={28}
+            reactToCursor
+            scatterRadius={140}
+          />
+        </div>
+      )}
       <div className="relative z-10 mx-auto max-w-4xl px-5 text-center sm:px-8">
         <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.26em] text-emerald-300 backdrop-blur">
           <Shield className="h-3 w-3" />

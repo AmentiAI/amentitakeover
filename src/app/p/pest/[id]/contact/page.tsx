@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
-import { ArrowRight, Mail, MapPin, Phone } from "lucide-react";
+import { Clock, Mail, MapPin, Phone } from "lucide-react";
 import { loadSiteData } from "@/lib/templates/site-loader";
 import { PestBanner, PestFooter, PestNav } from "@/components/templates/pest/chrome";
+import { PestContactForm } from "@/components/templates/pest/pest-contact-form";
 import {
   CoverageSection,
   FinalCta,
@@ -40,74 +41,88 @@ export default async function PestContactPage({
         subtitle="Tell us what you're seeing. We'll walk the property, map the pressure, and send a written plan."
       />
 
-      {/* Direct contact card — phone, email, address, hours */}
-      <section className="relative bg-white py-20 sm:py-24">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 sm:px-8 md:grid-cols-3">
-          <ContactCard
-            icon={<Phone className="h-5 w-5" />}
-            title="Call or text"
-            line1={business.phone || "Call us for a free inspection."}
-            href={business.phone ? `tel:${business.phone}` : undefined}
-            cta="Call now"
-          />
-          <ContactCard
-            icon={<Mail className="h-5 w-5" />}
-            title="Email"
-            line1={business.email || "Reach us by email any time."}
-            href={business.email ? `mailto:${business.email}` : undefined}
-            cta="Send message"
-          />
-          <ContactCard
-            icon={<MapPin className="h-5 w-5" />}
-            title="Service region"
-            line1={loc || "Regional coverage"}
-            line2={business.address || undefined}
-          />
+      {/* Contact form (left) + direct-contact sidebar (right) */}
+      <section className="relative bg-slate-50 py-20 sm:py-24">
+        <div className="mx-auto grid max-w-7xl gap-10 px-5 sm:px-8 lg:grid-cols-[1.4fr_1fr] lg:gap-14">
+          <PestContactForm business={business} />
+
+          <aside className="flex flex-col gap-5">
+            <ContactRow
+              icon={<Phone className="h-5 w-5" />}
+              title="Call or text"
+              line1={business.phone || "Call for a free inspection."}
+              href={business.phone ? `tel:${business.phone}` : undefined}
+            />
+            <ContactRow
+              icon={<Mail className="h-5 w-5" />}
+              title="Email"
+              line1={business.email || "Email us any time."}
+              href={business.email ? `mailto:${business.email}` : undefined}
+            />
+            <ContactRow
+              icon={<MapPin className="h-5 w-5" />}
+              title="Service region"
+              line1={loc || "Regional coverage"}
+              line2={business.address || undefined}
+            />
+            <ContactRow
+              icon={<Clock className="h-5 w-5" />}
+              title="Hours"
+              line1={business.hoursLine || "Mon–Sat · emergency after-hours"}
+            />
+          </aside>
         </div>
       </section>
 
       <CoverageSection serviceArea={serviceArea} loc={loc} />
 
-      <FinalCta business={business} ctaHeadline={headlines.cta} />
+      <FinalCta
+        business={business}
+        ctaHeadline={headlines.cta}
+        backdrop="bugs"
+      />
       <PestFooter business={business} loc={loc} socials={data.socials} />
     </>
   );
 }
 
-function ContactCard({
+function ContactRow({
   icon,
   title,
   line1,
   line2,
   href,
-  cta,
 }: {
   icon: React.ReactNode;
   title: string;
   line1: string;
   line2?: string;
   href?: string;
-  cta?: string;
 }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-      <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+  const body = (
+    <div className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:shadow-md">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700">
         {icon}
+      </span>
+      <div className="min-w-0">
+        <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-700">
+          {title}
+        </div>
+        <div className="mt-1 truncate text-[15px] font-semibold text-slate-900">
+          {line1}
+        </div>
+        {line2 && (
+          <div className="mt-0.5 truncate text-[12.5px] text-slate-500">{line2}</div>
+        )}
       </div>
-      <div className="mt-4 text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-700">
-        {title}
-      </div>
-      <div className="mt-2 text-[16px] font-semibold text-slate-900">{line1}</div>
-      {line2 && <div className="mt-1 text-[13px] text-slate-600">{line2}</div>}
-      {href && cta && (
-        <a
-          href={href}
-          className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-bold text-emerald-700 hover:text-emerald-600"
-        >
-          {cta} <ArrowRight className="h-4 w-4" />
-        </a>
-      )}
     </div>
+  );
+  return href ? (
+    <a href={href} className="block">
+      {body}
+    </a>
+  ) : (
+    body
   );
 }
 
