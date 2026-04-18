@@ -48,6 +48,7 @@ export default async function RoofingBusinessPage2({
           headings: business.site.headings,
           textContent: business.site.textContent,
           description: business.site.description,
+          title: business.site.title,
         }
       : null,
     generated,

@@ -35,15 +35,17 @@ You'll get scraped context about the business. Return JSON ONLY, matching:
 {
   "styleDirection": "<one sentence: consistent visual style — lens, lighting, palette, mood>",
   "heroPrompt": "<landscape 3:2 hero image prompt — wide, atmospheric, on-brand>",
-  "galleryPrompts": ["<square image>", "<square image>", "<square image>", "<square image>"]
+  "galleryPrompts": ["<square image>", "<square image>", "<square image>", "<square image>", "<square image>", "<square image>"]
 }
+
+You MUST return EXACTLY 6 gallery prompts. Each must depict a DIFFERENT subject / angle / moment — no two images should feel like duplicates.
 
 Rules for every prompt:
 - Photorealistic. Documentary / editorial look unless the brand reads as artisan/craft/luxury.
 - NEVER include text, words, logos, signs, storefront text, price tags, license plates, screens, banners.
 - NEVER include human faces clearly visible — from behind / over shoulder / hands working is fine.
 - Match the business's trade: show the WORK (roofing = roof install close-ups; electrician = panels/wiring/EV chargers; salon = scissors/products/chairs; restaurant = food/kitchen). Never generic stock ideas.
-- Compose differently each frame: mix wide establishing, close-up detail, process/in-progress, finished result.
+- Cover a range across the 6 frames: wide establishing, tight detail, hands/process in progress, tools/equipment, finished result, environment/context. No repetition of subject or angle.
 - Incorporate the brand palette subtly where natural (not literal color swatches).
 - 60-100 words per prompt, no markdown.`;
 
@@ -118,6 +120,8 @@ function tradeSubjects(trade: string): { hero: string; gallery: string[] } {
         "a close-up of a polished deadbolt installed on a stained oak door, morning light",
         "a modern keypad entry pad glowing softly on a residential front door at dusk",
         "a tidy hardware workshop with organized drawers of hinges and door hardware, warm light",
+        "a service van interior with custom-built drawers of cut keys and hardware, organized",
+        "a commercial glass door with a premium electronic access reader mounted beside it",
       ],
     };
   }
@@ -129,6 +133,8 @@ function tradeSubjects(trade: string): { hero: string; gallery: string[] } {
         "a brand-new high-efficiency furnace installed in a clean basement, ductwork overhead",
         "a modern thermostat mounted on a wall, warm indoor light behind it",
         "a pressure gauge and tool roll on a neat workbench, organized plumbing parts",
+        "a rooftop HVAC condenser unit in crisp daylight with tidy refrigerant lines",
+        "PEX manifold and a floor-mounted boiler in a clean mechanical room, labeled loops",
       ],
     };
   }
@@ -140,6 +146,8 @@ function tradeSubjects(trade: string): { hero: string; gallery: string[] } {
         "a worker's boots on a steep roof pitch, tool belt slung across the waist, city skyline in distance",
         "clean new metal flashing around a brick chimney against a blue sky",
         "a rolled bundle of architectural shingles on a fresh deck, hammer resting nearby",
+        "a drone-angle overview of a two-tone architectural shingle roof after install, crisp lines",
+        "a seamless aluminum gutter run fastened along a fascia at golden hour",
       ],
     };
   }
@@ -151,6 +159,8 @@ function tradeSubjects(trade: string): { hero: string; gallery: string[] } {
         "a Level 2 EV charger mounted on an exterior garage wall at dusk, car silhouette nearby",
         "neatly bundled conduit runs down a commercial wall, warm ambient lighting",
         "a voltmeter on an outlet during a diagnostic, hand steady on the probe",
+        "under-cabinet LED strip lighting installed in a modern kitchen, warm glow",
+        "a ceiling junction with recessed cans wired neatly into a new circuit, clean install",
       ],
     };
   }
@@ -162,6 +172,8 @@ function tradeSubjects(trade: string): { hero: string; gallery: string[] } {
         "a neat lineup of amber hair product bottles on a marble counter",
         "clean sweep of a freshly cut floor, reflections in a polished mirror",
         "a leather styling chair and tool caddy in warm natural light",
+        "a backwash basin with soft towels and brushed brass fixtures in clean light",
+        "a blowout in progress from behind, shiny hair catching window light",
       ],
     };
   }
@@ -173,6 +185,8 @@ function tradeSubjects(trade: string): { hero: string; gallery: string[] } {
         "steam rising from a bubbling sauté pan on a gas range",
         "a matte ceramic bowl of soup with a spoon resting on the rim, marble counter",
         "fresh produce — citrus, herbs, tomatoes — on a wooden prep board",
+        "a barista pouring latte art into a ceramic cup, morning light through windows",
+        "an open wood-fired oven glowing orange with a pizza blistering on the stone",
       ],
     };
   }
@@ -184,6 +198,60 @@ function tradeSubjects(trade: string): { hero: string; gallery: string[] } {
         "a zero-turn mower on a green lawn, crisp stripes behind it",
         "a stone path winding through a planted bed of perennials, dew on leaves",
         "a leaf blower lifting autumn leaves against warm afternoon light",
+        "a paver patio with ambient landscape lighting glowing as dusk falls",
+        "a freshly mulched planting bed framing a modern front walkway, crisp edges",
+      ],
+    };
+  }
+  if (/paint|drywall|stucco/.test(trade)) {
+    return {
+      hero: "a freshly painted craftsman exterior with clean trim lines, late afternoon sidelight",
+      gallery: [
+        "a taped-off door frame with crisp primer edges, masking tape catching light",
+        "a roller cutting a clean line along a ceiling, soft ladder shadow",
+        "an organized drop-cloth job site with labeled paint cans neatly arranged",
+        "a smooth freshly skimmed drywall wall awaiting primer, soft overhead light",
+        "a cabinet door sprayed with a flawless satin finish drying on racks",
+        "an exterior stucco patch blended seamlessly into a sunlit wall",
+      ],
+    };
+  }
+  if (/auto|mechanic|tire|collision|detail/.test(trade)) {
+    return {
+      hero: "a bright modern auto shop bay with a car on a lift, clean epoxy floor, tool cabinets along the wall",
+      gallery: [
+        "gloved hands turning a torque wrench on a freshly mounted alloy wheel",
+        "a diagnostic tablet hooked into an OBD port, engine bay in soft focus",
+        "brake rotors and pads laid out on a clean shop towel, organized kit",
+        "a detailer polishing a black hood with a dual-action buffer, reflections pristine",
+        "an alignment rack with laser heads attached to wheels, gauges glowing",
+        "a tidy parts wall of labeled bins in a well-lit shop interior",
+      ],
+    };
+  }
+  if (/clean|janitor|maid/.test(trade)) {
+    return {
+      hero: "a spotless modern living room at golden hour, vacuum lines visible on the rug, soft window light",
+      gallery: [
+        "gloved hands wiping a marble countertop, microfiber cloth mid-stroke",
+        "a caddy of branded-color cleaning supplies on a freshly mopped tile floor",
+        "a sparkling glass shower enclosure reflecting natural light, squeegee resting",
+        "vacuum stripes on thick plush carpet in a sunlit bedroom",
+        "a gleaming stainless steel kitchen after deep clean, no streaks",
+        "a commercial lobby floor being buffed, warm overhead light across polished stone",
+      ],
+    };
+  }
+  if (/dent|dental|orthodont/.test(trade)) {
+    return {
+      hero: "a bright, modern dental operatory with ergonomic chair and large window, soft morning light",
+      gallery: [
+        "a tray of pristine dental instruments neatly arranged on sterile blue cloth",
+        "a modern intraoral scanner wand resting on a clean counter, soft clinical light",
+        "a sleek waiting room with linen sofas, muted textures, plant in the corner",
+        "a dentist's gloved hands preparing a composite resin, shallow depth of field",
+        "a digital x-ray panel glowing softly on a wall-mounted monitor, clinical tones",
+        "a clean sterilization station with autoclave pouches neatly stacked",
       ],
     };
   }
@@ -194,6 +262,8 @@ function tradeSubjects(trade: string): { hero: string; gallery: string[] } {
       `a close-up of hands at work in the trade of ${trade}`,
       `the finished result of a ${trade} job, neat and polished`,
       `an establishing interior shot of a ${trade} business, empty, clean`,
+      `a detail of the materials a ${trade} business uses, arranged tidily`,
+      `an exterior establishing shot of a service vehicle for a ${trade} business at dawn`,
     ],
   };
 }

@@ -16,7 +16,7 @@ export type SiteImageSet = {
   gallery: { id: string; src: string }[];
 };
 
-const DEFAULT_GALLERY_COUNT = 4;
+const DEFAULT_GALLERY_COUNT = 6;
 
 export async function generateSiteImages(
   scrapedBusinessId: string,

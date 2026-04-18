@@ -163,6 +163,7 @@ type SiteIn = {
   headings: unknown; // Json — expected shape { tag, text }[]
   textContent: string | null;
   description: string | null;
+  title: string | null;
 } | null;
 
 export type GeneratedImagesIn = {
@@ -234,8 +235,8 @@ export function buildFromScrape(
       hoursLine: "Mon–Sat · 7am – 7pm",
     },
     hero: {
-      title: deriveHeroTitle(b),
-      subtitle: deriveHeroSubtitle(b),
+      title: deriveHeroTitle(b, site),
+      subtitle: deriveHeroSubtitle(b, site),
       image: heroPick?.src ?? null,
       alertBanner: null,
     },
@@ -309,25 +310,56 @@ function buildServiceArea(city: string | null, state: string | null): string[] {
 }
 
 function deriveTagline(b: ScrapedIn, site: SiteIn): string {
-  if (site?.description && site.description.length > 0 && site.description.length < 140) {
-    return site.description;
+  // Prefer the meta description the business wrote for their own site — that's
+  // how they already describe themselves. Trim if it's too long for a tagline.
+  const desc = cleanMetaText(site?.description);
+  if (desc) {
+    if (desc.length <= 160) return desc;
+    return truncateAtSentence(desc, 140);
   }
   if (b.city) return `${b.city}'s trusted roofing contractor since day one.`;
   return "Roofing done right. The first time.";
 }
 
-function deriveHeroTitle(b: ScrapedIn): string {
+function deriveHeroTitle(b: ScrapedIn, site: SiteIn): string {
+  // If their own title tag contains a real headline (not just brand+location),
+  // use it verbatim — that's copy they've already signed off on.
+  const title = cleanMetaText(site?.title);
+  if (title && title.length >= 18 && title.length <= 80) {
+    // strip trailing brand/pipe segments: "Best Roof | Denver CO | Acme Co"
+    const cleaned = title.split(/\s*[\|—–·]\s*/)[0].trim();
+    if (cleaned.length >= 18 && cleaned.length <= 80 && !/^\s*home\s*$/i.test(cleaned)) {
+      return cleaned;
+    }
+  }
   if (b.city) return `Your roof, built to outlast the next ${b.state || b.city} storm.`;
   return "Your roof, built to outlast the next storm.";
 }
 
-function deriveHeroSubtitle(b: ScrapedIn): string {
+function deriveHeroSubtitle(b: ScrapedIn, site: SiteIn): string {
   const loc = [b.city, b.state].filter(Boolean).join(", ");
+  const desc = cleanMetaText(site?.description);
+  if (desc && desc.length >= 40 && desc.length <= 220) return desc;
   const rating = b.rating ? `${b.rating.toFixed(1)}★ rated` : "Family-owned";
   const reviews = b.reviewsCount > 0 ? ` (${b.reviewsCount} reviews)` : "";
   return loc
     ? `${rating}${reviews} roofing in ${loc}. Free inspection, written estimate, insurance-friendly.`
     : `${rating}${reviews}. Free inspection, written estimate, insurance-friendly.`;
+}
+
+function cleanMetaText(s: string | null | undefined): string | null {
+  if (!s) return null;
+  const t = s.replace(/\s+/g, " ").trim();
+  return t.length > 0 ? t : null;
+}
+
+function truncateAtSentence(s: string, limit: number): string {
+  if (s.length <= limit) return s;
+  const cut = s.slice(0, limit);
+  const lastStop = Math.max(cut.lastIndexOf("."), cut.lastIndexOf("!"), cut.lastIndexOf("?"));
+  if (lastStop > 60) return cut.slice(0, lastStop + 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > 60 ? cut.slice(0, lastSpace) : cut).replace(/[,;:]\s*$/, "") + "…";
 }
 
 function deriveAbout(b: ScrapedIn, site: SiteIn): string {

@@ -57,6 +57,7 @@ export default async function RoofingBusinessTrackedPage({
           headings: business.site.headings,
           textContent: business.site.textContent,
           description: business.site.description,
+          title: business.site.title,
         }
       : null,
     generated,

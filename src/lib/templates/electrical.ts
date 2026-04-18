@@ -177,6 +177,7 @@ type SiteIn = {
   headings: unknown;
   textContent: string | null;
   description: string | null;
+  title: string | null;
 } | null;
 
 export type GeneratedImagesIn = {
@@ -237,8 +238,8 @@ export function buildElectricalFromScrape(
       licenseNumber: null,
     },
     hero: {
-      title: deriveHeroTitle(b),
-      subtitle: deriveHeroSubtitle(b),
+      title: deriveHeroTitle(b, site),
+      subtitle: deriveHeroSubtitle(b, site),
       image: heroPick?.src ?? null,
       alertBanner: null,
     },
@@ -299,25 +300,51 @@ function buildServiceArea(city: string | null, state: string | null): string[] {
 }
 
 function deriveTagline(b: ScrapedIn, site: SiteIn): string {
-  if (site?.description && site.description.length > 0 && site.description.length < 140) {
-    return site.description;
+  const desc = cleanMetaText(site?.description);
+  if (desc) {
+    if (desc.length <= 160) return desc;
+    return truncateAtSentence(desc, 140);
   }
   if (b.city) return `${b.city}'s licensed master electrician — done right the first time.`;
   return "Licensed master electrician. Done right the first time.";
 }
 
-function deriveHeroTitle(b: ScrapedIn): string {
+function deriveHeroTitle(b: ScrapedIn, site: SiteIn): string {
+  const title = cleanMetaText(site?.title);
+  if (title && title.length >= 18 && title.length <= 80) {
+    const cleaned = title.split(/\s*[\|—–·]\s*/)[0].trim();
+    if (cleaned.length >= 18 && cleaned.length <= 80 && !/^\s*home\s*$/i.test(cleaned)) {
+      return cleaned;
+    }
+  }
   if (b.city) return `The licensed electrician ${b.city} calls when it has to be right.`;
   return "The licensed electrician you call when it has to be right.";
 }
 
-function deriveHeroSubtitle(b: ScrapedIn): string {
+function deriveHeroSubtitle(b: ScrapedIn, site: SiteIn): string {
   const loc = [b.city, b.state].filter(Boolean).join(", ");
+  const desc = cleanMetaText(site?.description);
+  if (desc && desc.length >= 40 && desc.length <= 220) return desc;
   const rating = b.rating ? `${b.rating.toFixed(1)}★ rated` : "Family-owned";
   const reviews = b.reviewsCount > 0 ? ` (${b.reviewsCount} reviews)` : "";
   return loc
     ? `${rating}${reviews} master electrician in ${loc}. Same-day service, permits pulled, work inspected.`
     : `${rating}${reviews}. Same-day service, permits pulled, work inspected.`;
+}
+
+function cleanMetaText(s: string | null | undefined): string | null {
+  if (!s) return null;
+  const t = s.replace(/\s+/g, " ").trim();
+  return t.length > 0 ? t : null;
+}
+
+function truncateAtSentence(s: string, limit: number): string {
+  if (s.length <= limit) return s;
+  const cut = s.slice(0, limit);
+  const lastStop = Math.max(cut.lastIndexOf("."), cut.lastIndexOf("!"), cut.lastIndexOf("?"));
+  if (lastStop > 60) return cut.slice(0, lastStop + 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > 60 ? cut.slice(0, lastSpace) : cut).replace(/[,;:]\s*$/, "") + "…";
 }
 
 function deriveAbout(b: ScrapedIn, site: SiteIn): string {
