@@ -63,39 +63,59 @@ export async function generateSiteImages(
   const brief = await buildImageBrief(ctx);
   const failures: { prompt: string; error: string }[] = [];
 
-  const heroRow = await persistIfGenerated(
-    scrapedBusinessId, "hero", 0, brief.heroPrompt, "1536x1024", quality, failures,
+  // Run image generation in parallel with a small concurrency cap so we
+  // finish well under the serverless 60s cap but don't hammer OpenAI.
+  // Sequential gen of 16 images was timing out the function and causing
+  // the client to receive a non-JSON platform error page.
+  type Job = {
+    key: string;
+    purpose: SiteImagePurpose;
+    position: number;
+    prompt: string;
+    size: "1024x1024" | "1536x1024";
+  };
+  const jobs: Job[] = [
+    { key: "hero", purpose: "hero", position: 0, prompt: brief.heroPrompt, size: "1536x1024" },
+    { key: "banner-about", purpose: "banner-about", position: 0, prompt: brief.aboutBannerPrompt, size: "1536x1024" },
+    { key: "banner-services", purpose: "banner-services", position: 1, prompt: brief.servicesBannerPrompt, size: "1536x1024" },
+    { key: "banner-cta", purpose: "banner-cta", position: 2, prompt: brief.ctaBannerPrompt, size: "1536x1024" },
+    ...brief.serviceCardPrompts.slice(0, DEFAULT_SERVICE_CARD_COUNT).map((prompt, i) => ({
+      key: `service-card-${i}`,
+      purpose: "service-card" as SiteImagePurpose,
+      position: i,
+      prompt,
+      size: "1024x1024" as const,
+    })),
+    ...brief.galleryPrompts.slice(0, galleryCount).map((prompt, i) => ({
+      key: `gallery-${i}`,
+      purpose: "gallery" as SiteImagePurpose,
+      position: i,
+      prompt,
+      size: "1024x1024" as const,
+    })),
+  ];
+
+  const results = await runParallel(jobs, 6, (job) =>
+    persistIfGenerated(scrapedBusinessId, job.purpose, job.position, job.prompt, job.size, quality, failures),
   );
 
-  const banners: { purpose: SiteImagePurpose; prompt: string }[] = [
-    { purpose: "banner-about", prompt: brief.aboutBannerPrompt },
-    { purpose: "banner-services", prompt: brief.servicesBannerPrompt },
-    { purpose: "banner-cta", prompt: brief.ctaBannerPrompt },
-  ];
+  const byKey = new Map<string, { id: string } | null>();
+  jobs.forEach((j, i) => byKey.set(j.key, results[i]));
+
+  const heroRow = byKey.get("hero") ?? null;
   const bannerRows: Partial<Record<SiteImagePurpose, { id: string }>> = {};
-  for (let i = 0; i < banners.length; i++) {
-    const b = banners[i];
-    const row = await persistIfGenerated(
-      scrapedBusinessId, b.purpose, i, b.prompt, "1536x1024", quality, failures,
-    );
-    if (row) bannerRows[b.purpose] = row;
-  }
+  if (byKey.get("banner-about")) bannerRows["banner-about"] = byKey.get("banner-about")!;
+  if (byKey.get("banner-services")) bannerRows["banner-services"] = byKey.get("banner-services")!;
+  if (byKey.get("banner-cta")) bannerRows["banner-cta"] = byKey.get("banner-cta")!;
 
   const serviceCardRows: { id: string }[] = [];
-  const serviceCardPrompts = brief.serviceCardPrompts.slice(0, DEFAULT_SERVICE_CARD_COUNT);
-  for (let i = 0; i < serviceCardPrompts.length; i++) {
-    const row = await persistIfGenerated(
-      scrapedBusinessId, "service-card", i, serviceCardPrompts[i], "1024x1024", quality, failures,
-    );
+  for (let i = 0; i < DEFAULT_SERVICE_CARD_COUNT; i++) {
+    const row = byKey.get(`service-card-${i}`);
     if (row) serviceCardRows.push(row);
   }
-
   const galleryRows: { id: string }[] = [];
-  const galleryPrompts = brief.galleryPrompts.slice(0, galleryCount);
-  for (let i = 0; i < galleryPrompts.length; i++) {
-    const row = await persistIfGenerated(
-      scrapedBusinessId, "gallery", i, galleryPrompts[i], "1024x1024", quality, failures,
-    );
+  for (let i = 0; i < galleryCount; i++) {
+    const row = byKey.get(`gallery-${i}`);
     if (row) galleryRows.push(row);
   }
 
@@ -254,6 +274,33 @@ async function safeGenerate(
     failures.push({ prompt: opts.prompt.slice(0, 80), error: msg.slice(0, 200) });
     return null;
   }
+}
+
+// Run up to `concurrency` promises at a time, preserving input order in
+// the output array. A single failing job becomes null in its slot rather
+// than rejecting the whole batch — matches the existing "failures array"
+// error-handling contract.
+async function runParallel<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R | null>,
+): Promise<(R | null)[]> {
+  const out: (R | null)[] = new Array(items.length).fill(null);
+  let cursor = 0;
+  async function worker() {
+    while (true) {
+      const i = cursor++;
+      if (i >= items.length) return;
+      try {
+        out[i] = await fn(items[i], i);
+      } catch {
+        out[i] = null;
+      }
+    }
+  }
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker());
+  await Promise.all(workers);
+  return out;
 }
 
 function genericSafePrompt(size: "1024x1024" | "1024x1536" | "1536x1024" | undefined): string {

@@ -279,8 +279,9 @@ function GenerateWizard({
       const res = await fetch(`/api/outreach/businesses/${business.id}/enrich`, {
         method: "POST",
       });
-      const j = await res.json();
-      if (!res.ok) throw new Error(j.error || "Enrich failed");
+      const j = await parseJsonSafe(res);
+      if (!res.ok) throw new Error(j?.error || `Enrich failed (HTTP ${res.status})`);
+      if (!j) throw new Error("Enrich failed — malformed response.");
       setEnrichResult(j);
       onChange({ audited: true, hasWebsite: true });
       setStep(2);
@@ -300,8 +301,16 @@ function GenerateWizard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ force }),
       });
-      const j = await res.json();
-      if (!res.ok) throw new Error(j.error || "Image generation failed");
+      const j = await parseJsonSafe(res);
+      if (!res.ok) {
+        const msg =
+          j?.error ||
+          (res.status === 504 || res.status === 502
+            ? "Image generation timed out. Try again — it can take a minute."
+            : `Image generation failed (HTTP ${res.status})`);
+        throw new Error(msg);
+      }
+      if (!j) throw new Error("Image generation failed — malformed response.");
       setImageSet({ hero: j.hero, gallery: j.gallery });
       setStep(3);
     } catch (err) {
@@ -320,8 +329,9 @@ function GenerateWizard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ templateChoice: template }),
       });
-      const j = await res.json();
-      if (!res.ok) throw new Error(j.error || "Build failed");
+      const j = await parseJsonSafe(res);
+      if (!res.ok) throw new Error(j?.error || `Build failed (HTTP ${res.status})`);
+      if (!j) throw new Error("Build failed — malformed response.");
       setPreviewUrl(j.previewUrl);
       onChange({ siteGenerated: true });
     } catch (err) {
@@ -730,4 +740,19 @@ function Notes({ id, initial }: { id: string; initial: string }) {
       </div>
     </div>
   );
+}
+
+// Safely parse a Response body as JSON — returns null if the body is empty
+// or non-JSON (e.g., platform timeout pages returning plain text). Lets the
+// caller decide how to surface an error without crashing the UI with
+// "Failed to execute 'json' on 'Response'".
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function parseJsonSafe<T = any>(res: Response): Promise<T | null> {
+  try {
+    const text = await res.text();
+    if (!text) return null;
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
 }
