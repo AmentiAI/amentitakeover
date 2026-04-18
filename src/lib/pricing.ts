@@ -22,7 +22,7 @@ export const PRICING_TIERS: PricingTier[] = [
     name: "Starter",
     emoji: "🌱",
     tagline: "Perfect if you just want a professional website handled for you",
-    monthly: 297,
+    monthly: 300,
     setup: 800,
     features: [
       "Professionally designed 5-page website built for your brand",
@@ -43,7 +43,7 @@ export const PRICING_TIERS: PricingTier[] = [
     name: "Growth",
     emoji: "🚀",
     tagline: "Designed to help your website bring in more local customers",
-    monthly: 697,
+    monthly: 700,
     setup: 1500,
     badge: "Most Popular",
     inheritsFrom: "Starter",

@@ -24,8 +24,15 @@ export default async function AffiliateMapPage({
     redirect(`/a/${slug}`);
   }
 
-  const rows = await prisma.scrapedBusiness.findMany({
-    where: { archived: false },
+  const builtIds = (
+    await prisma.generatedImage.findMany({
+      select: { scrapedBusinessId: true },
+      distinct: ["scrapedBusinessId"],
+    })
+  ).map((r) => r.scrapedBusinessId);
+
+  const rows = builtIds.length === 0 ? [] : await prisma.scrapedBusiness.findMany({
+    where: { archived: false, id: { in: builtIds } },
     select: {
       id: true,
       name: true,

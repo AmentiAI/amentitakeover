@@ -69,12 +69,27 @@ export default async function AffiliatePortalPage({
     }
   }
 
-  const businesses = await prisma.scrapedBusiness.findMany({
+  // Only surface businesses we've actually built a mockup site for — i.e.,
+  // they have at least one GeneratedImage row. Anything else is just scraped
+  // data and not ready for the affiliate to pitch.
+  const builtIds = (
+    await prisma.generatedImage.findMany({
+      select: { scrapedBusinessId: true },
+      distinct: ["scrapedBusinessId"],
+    })
+  ).map((r) => r.scrapedBusinessId);
+
+  const excludedIds = [...notInterestedIds];
+  const filteredBuiltIds = excludedIds.length
+    ? builtIds.filter((id) => !notInterestedIds.has(id))
+    : builtIds;
+
+  const businesses = filteredBuiltIds.length === 0 ? [] : await prisma.scrapedBusiness.findMany({
     where: {
+      id: { in: filteredBuiltIds },
       archived: false,
       phone: { not: null },
       closedWon: false,
-      id: notInterestedIds.size > 0 ? { notIn: [...notInterestedIds] } : undefined,
     },
     orderBy: [{ rating: "desc" }, { updatedAt: "desc" }],
     take: 60,

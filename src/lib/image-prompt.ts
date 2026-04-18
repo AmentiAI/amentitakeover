@@ -147,21 +147,37 @@ function fallbackBrief(ctx: BusinessContext): ImageBrief {
   const style =
     "Photorealistic commercial editorial photography, 35mm lens, soft natural light, warm highlights, shallow depth of field, no text, no logos, no visible faces, ultra-sharp detail.";
   const set = tradeImages(trade, loc);
+  const brand = briefContext(ctx);
   const serviceCards = (ctx.serviceTitles.length ? ctx.serviceTitles : new Array(6).fill("")).map(
     (title, i) =>
       title
-        ? `Photorealistic square image depicting a ${trade} business's "${title}" service in ${loc}: show the specific work and tools, no text or logos, editorial composition. ${style}`
-        : `${set.gallery[i % set.gallery.length]} ${style}`,
+        ? `Photorealistic square image depicting ${ctx.name}'s "${title}" service in ${loc}. Show the specific work, tools, and finished result a real ${trade} would produce. ${brand} No text or logos, editorial composition. ${style}`
+        : `${ctx.name} — ${set.gallery[i % set.gallery.length]}. ${brand} ${style}`,
   );
   return {
     styleDirection: style,
-    heroPrompt: `${set.hero} ${style}`,
-    aboutBannerPrompt: `${set.aboutBanner} ${style}`,
-    servicesBannerPrompt: `${set.servicesBanner} ${style}`,
-    ctaBannerPrompt: `${set.ctaBanner} ${style}`,
+    heroPrompt: `${ctx.name} in ${loc}: ${set.hero} ${brand} ${style}`,
+    aboutBannerPrompt: `${ctx.name} — ${set.aboutBanner} ${brand} ${style}`,
+    servicesBannerPrompt: `${ctx.name} — ${set.servicesBanner} ${brand} ${style}`,
+    ctaBannerPrompt: `${ctx.name} — ${set.ctaBanner} ${brand} ${style}`,
     serviceCardPrompts: serviceCards,
-    galleryPrompts: set.gallery.slice(0, 6).map((g) => `${g} ${style}`),
+    galleryPrompts: set.gallery.slice(0, 6).map((g) => `${ctx.name} — ${g} ${brand} ${style}`),
   };
+}
+
+function briefContext(ctx: BusinessContext): string {
+  const bits: string[] = [];
+  if (ctx.description) {
+    const d = ctx.description.replace(/\s+/g, " ").trim().slice(0, 180);
+    if (d) bits.push(`Business context: ${d}`);
+  }
+  if (ctx.serviceTitles.length) {
+    bits.push(`Services offered: ${ctx.serviceTitles.slice(0, 6).join(", ")}.`);
+  }
+  if (ctx.palette.length) {
+    bits.push(`Accent colors: ${ctx.palette.slice(0, 3).join(", ")} (use subtly, no color swatches).`);
+  }
+  return bits.join(" ");
 }
 
 type TradeImages = {

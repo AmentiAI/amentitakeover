@@ -125,12 +125,26 @@ export function buildSiteData(
   const hero = generated?.hero ?? null;
   const gallery: { src: string; alt: string }[] = [];
   const seen = new Set<string>();
-  for (const g of generated?.gallery ?? []) {
-    if (seen.has(g.src)) continue;
-    seen.add(g.src);
-    gallery.push({ src: g.src, alt: `${b.name} — recent work` });
+  const pushImg = (src: string, alt: string) => {
+    if (!src || seen.has(src)) return;
+    seen.add(src);
+    gallery.push({ src, alt: alt || `${b.name} — recent work` });
+  };
+
+  // Prefer real scraped photos from the business's own site — they show
+  // the business's actual work / space. Filter junk (logos, icons, tiny assets).
+  for (const img of images.filter(isGalleryCandidate)) {
+    pushImg(img.src, img.alt || `${b.name}`);
     if (gallery.length >= 12) break;
   }
+
+  // Fill the remaining slots with AI-generated gallery art so every site has
+  // at least 6 images even when the scrape returned few or none.
+  for (const g of generated?.gallery ?? []) {
+    if (gallery.length >= 12) break;
+    pushImg(g.src, `${b.name} — recent work`);
+  }
+
   if (gallery.length === 0) FALLBACK_GALLERY.forEach((f) => gallery.push(f));
 
   const palette = pickBrandPalette(site?.palette ?? []) ?? FALLBACK_PALETTE;
@@ -150,11 +164,27 @@ export function buildSiteData(
     headings: headings.map((h) => h.text),
   });
   const serviceBodies = buildServiceBodies(trade, serviceTitles, b);
-  const services = serviceTitles.map((title, i) => ({
-    title,
-    body: serviceBodies[i] ?? defaultServiceBody(title, trade, b),
-    image: generated?.serviceCards?.[i]?.src ?? null,
-  }));
+
+  // Build a pool of business-specific images to guarantee every service card
+  // has art: AI service cards first (matched by index), then other AI cards
+  // for rotation, then AI gallery, then scraped business photos, then hero.
+  const serviceCardPool: string[] = [];
+  for (const c of generated?.serviceCards ?? []) serviceCardPool.push(c.src);
+  for (const g of generated?.gallery ?? []) serviceCardPool.push(g.src);
+  for (const img of images.filter(isGalleryCandidate)) serviceCardPool.push(img.src);
+  if (generated?.hero) serviceCardPool.push(generated.hero.src);
+
+  const services = serviceTitles.map((title, i) => {
+    const matched = generated?.serviceCards?.[i]?.src;
+    const rotated = serviceCardPool.length
+      ? serviceCardPool[i % serviceCardPool.length]
+      : null;
+    return {
+      title,
+      body: serviceBodies[i] ?? defaultServiceBody(title, trade, b),
+      image: matched ?? rotated,
+    };
+  });
 
   const headlines = deriveHeadlines({ headings, trade });
 
@@ -234,6 +264,18 @@ const DEFAULT_PROCESS: SiteData["process"] = [
 
 function looksLikeLogo(i: { src: string; alt: string }): boolean {
   return /logo|favicon|brand/i.test(i.alt) || /logo|favicon|brand/i.test(i.src);
+}
+
+const GALLERY_EXCLUDE_RE =
+  /(logo|favicon|brand|icon[-_/.]|sprite|avatar|badge|social|facebook|instagram|twitter|linkedin|youtube|tiktok|pinterest|yelp|google|bbb|angi|thumbtack|chamber|yext|bing|stars?\.|rating|trust|seal|award)/i;
+
+function isGalleryCandidate(i: { src: string; alt: string }): boolean {
+  if (looksLikeLogo(i)) return false;
+  if (GALLERY_EXCLUDE_RE.test(i.src)) return false;
+  if (i.alt && GALLERY_EXCLUDE_RE.test(i.alt)) return false;
+  if (/\.svg($|\?)/i.test(i.src)) return false;
+  if (/\/sprites?\//i.test(i.src)) return false;
+  return true;
 }
 
 function parseImages(raw: unknown): { src: string; alt: string }[] {

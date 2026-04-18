@@ -119,7 +119,7 @@ function ElevatorPitch() {
 
       <Card title="The 60-second pitch (for longer conversations)">
         <Script>
-          {`"Most marketing agencies ask you to sign a contract, pay a setup fee, then hope you like what they build 6 weeks later. We do it backwards. We build your new site first — a full, live preview with your business name, services, photos, everything — and send you a link. You look at it. If it's a yes, we launch it under your domain and start driving SEO traffic the same week. If it's a no, you've lost nothing except 5 minutes looking at it. Starter plans run $297/month, Growth is $697/month and includes local SEO and ongoing content. Setup ranges from $800 to $1,500 depending on the plan. No long-term contract, 30-day out anytime."`}
+          {`"Most marketing agencies ask you to sign a contract, pay a setup fee, then hope you like what they build 6 weeks later. We do it backwards. We build your new site first — a full, live preview with your business name, services, photos, everything — and send you a link. You look at it. If it's a yes, we launch it under your domain and start driving SEO traffic the same week. If it's a no, you've lost nothing except 5 minutes looking at it. Starter plans run $300/month, Growth is $700/month and includes local SEO and ongoing content. Setup ranges from $800 to $1,500 depending on the plan. No long-term contract, 30-day out anytime."`}
         </Script>
       </Card>
 
@@ -454,7 +454,7 @@ function Industries() {
       name: "Roofing",
       hook: `"Roofing is 80% Google at this point. When someone's roof is leaking, they pull out their phone and call the first three results. I built you a site designed to be one of those three. Want to see it?"`,
       pain: `"Insurance restoration leads go to whoever ranks first on Google for 'storm damage roofing [city].' Let me show you a site built to own that keyword."`,
-      value: `"One retail roof job is $8–15k. Our Growth plan is $697/month. One extra job every 2 months pays for it 10x."`,
+      value: `"One retail roof job is $8–15k. Our Growth plan is $700/month. One extra job every 2 months pays for it 10x."`,
     },
     {
       name: "HVAC",
@@ -476,7 +476,7 @@ function Industries() {
     },
     {
       name: "Dental",
-      hook: `"New patient lifetime value for a dental practice is $3–5k. Our Growth plan is $697/month. One new patient every 2 months makes it obvious."`,
+      hook: `"New patient lifetime value for a dental practice is $3–5k. Our Growth plan is $700/month. One new patient every 2 months makes it obvious."`,
       pain: `"Every mom searching 'dentist that takes [insurance] in [city]' — is she finding you, or the DSO chain down the road?"`,
       value: `"We build the local pages, the insurance pages, the procedure pages — everything a patient Googles before they call."`,
     },
@@ -508,7 +508,7 @@ function Industries() {
       name: "Contractor / Remodel",
       hook: `"Kitchen remodels, bathroom remodels, additions — all high-intent Google searches. I built you a site with project galleries organized by service. Got 2 minutes?"`,
       pain: `"Remodel shoppers look at 3-5 contractors before they call. Your site is literally your first impression."`,
-      value: `"Average remodel is $30–80k. One extra project a year = massive ROI on a $697/month marketing plan."`,
+      value: `"Average remodel is $30–80k. One extra project a year = massive ROI on a $700/month marketing plan."`,
     },
     {
       name: "Auto repair",
@@ -749,7 +749,7 @@ function Objections() {
     },
     {
       q: "It's too expensive.",
-      a: `"I hear you. Let's back into it — one new [job type] is worth what, $[deal size] to you? Our Growth plan is $697/month. If we bring you one extra job every other month, it pays for itself 10x. And the setup is $1,500, one time. Want me to show you what's included?"`,
+      a: `"I hear you. Let's back into it — one new [job type] is worth what, $[deal size] to you? Our Growth plan is $700/month. If we bring you one extra job every other month, it pays for itself 10x. And the setup is $1,500, one time. Want me to show you what's included?"`,
     },
     {
       q: "I need to think about it.",
@@ -809,7 +809,7 @@ function Objections() {
     },
     {
       q: "I just need a website, not the marketing.",
-      a: `"Totally fine — we offer Starter at $297/month which is website + hosting + basic SEO + monthly updates. No long-term content plan. If you ever want to scale up to full SEO later, we flip a switch. Want me to walk you through Starter?"`,
+      a: `"Totally fine — we offer Starter at $300/month which is website + hosting + basic SEO + monthly updates. No long-term content plan. If you ever want to scale up to full SEO later, we flip a switch. Want me to walk you through Starter?"`,
     },
     {
       q: "What if I want to cancel?",
@@ -897,7 +897,7 @@ function Closing() {
 
       <Card title="Alternative-choice close">
         <Script>
-          {`"Two options — Starter at $297/month gets your new site live with basic SEO, or Growth at $697/month adds the local landing pages and ongoing blog content so you rank higher. Which one fits where you are right now?"`}
+          {`"Two options — Starter at $300/month gets your new site live with basic SEO, or Growth at $700/month adds the local landing pages and ongoing blog content so you rank higher. Which one fits where you are right now?"`}
         </Script>
         <p className="mt-2 text-xs text-slate-400">
           Give them A or B, not yes or no. Most will pick one.
@@ -906,7 +906,7 @@ function Closing() {
 
       <Card title="Summary close (for analytical buyers)">
         <Script>
-          {`"Let me just recap what we talked about. You said your biggest issue is [pain]. You wanted [outcome]. The Growth plan fixes that by [specific thing #1], [thing #2], and [thing #3]. It's $697/month with a $1,500 one-time setup, no contract, 30-day out any time. Does that line up with what you need?"`}
+          {`"Let me just recap what we talked about. You said your biggest issue is [pain]. You wanted [outcome]. The Growth plan fixes that by [specific thing #1], [thing #2], and [thing #3]. It's $700/month with a $1,500 one-time setup, no contract, 30-day out any time. Does that line up with what you need?"`}
         </Script>
       </Card>
 
@@ -1100,7 +1100,7 @@ Quick one while I'm thinking of you. 46% of all Google searches are looking for 
 
 That preview site I sent: [link]
 
-Built specifically to rank for [city] searches. Takes 10 days to launch, $1,500 one-time setup, $697/month ongoing.
+Built specifically to rank for [city] searches. Takes 10 days to launch, $1,500 one-time setup, $700/month ongoing.
 
 Want to hop on a call? Wednesday works: [calendar link] / I'm open 2pm, 3pm, 4pm.
 

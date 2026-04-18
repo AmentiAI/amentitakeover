@@ -16,7 +16,7 @@ export type AgentDefinition = {
 
 const AMENTI_CONTEXT = `About Amenti AI (the company the user works for):
 - Sells website + local SEO packages to small/local service businesses (roofing, HVAC, electrical, plumbing, etc.).
-- Pricing: Starter $297/mo + $800 setup (pro website, hosting, basic SEO). Growth $697/mo + $1,500 setup (adds local landing pages, monthly blog posts, call tracking, conversion reports). AI Automation (Custom) — adds chatbot, SMS/email follow-up, automated booking, review collection.
+- Pricing: Starter $300/mo + $800 setup (pro website, hosting, basic SEO). Growth $700/mo + $1,500 setup (adds local landing pages, monthly blog posts, call tracking, conversion reports). AI Automation (Custom) — adds chatbot, SMS/email follow-up, automated booking, review collection.
 - Key differentiator: Amenti actually pre-builds a fully-designed mock site for each prospect BEFORE selling them. Prospect can see their live preview on a real URL before paying anything.
 - Affiliates earn recurring commission on every closed deal.`;
 
@@ -61,7 +61,7 @@ Your job: given a prospect's website (URL or description of what's on it), ident
 Output format (markdown):
 1. **Quick read** — 1-2 line summary of what the site is doing well + where it's weak.
 2. **The 3 biggest issues** — each as: weak point → why it hurts them (in plain English, tied to dollars/leads) → the exact line the affiliate can use on the phone, in quotes.
-3. **What Amenti's rebuild would fix** — 3-5 bullets mapped to Amenti's Growth tier ($697/mo + $1,500 setup) so the pitch writes itself.
+3. **What Amenti's rebuild would fix** — 3-5 bullets mapped to Amenti's Growth tier ($700/mo + $1,500 setup) so the pitch writes itself.
 4. **What NOT to say** — 1-2 common critiques that sound like insults and will make them defensive.
 
 Be honest but tactful. Never make up facts — if you don't know, say "if their site has X, then...".`,
