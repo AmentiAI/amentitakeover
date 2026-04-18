@@ -5,9 +5,16 @@ import { loadSiteData, loadSiteMetadata } from "@/lib/templates/site-loader";
 import { PestBanner, PestFooter, PestNav } from "@/components/templates/pest/chrome";
 import { PestCounter } from "@/components/templates/pest/pest-counter";
 import {
+  FAQSection,
   FinalCta,
+  GuaranteePledge,
+  LicenseBadges,
+  PestTeaser,
+  ProcessSteps,
   ServicesTeaser,
   TestimonialsSection,
+  TreatmentZonesSection,
+  ValueBar,
   splitHero,
 } from "@/components/templates/pest/pest-sections";
 
@@ -26,7 +33,7 @@ export default async function PestHomePage({
   const data = await loadSiteData(id);
   if (!data) notFound();
 
-  const { business, hero, services, testimonials, headlines } = data;
+  const { business, hero, services, testimonials, headlines, faqs } = data;
   const loc = [business.city, business.state].filter(Boolean).join(", ");
   const rating = business.rating;
   const parts = splitHero(hero.title);
@@ -141,12 +148,26 @@ export default async function PestHomePage({
         </div>
       </section>
 
+      <ValueBar />
+
       <ServicesTeaser services={services} id={id} />
+
+      <ProcessSteps />
+
+      <TreatmentZonesSection />
+
+      <PestTeaser id={id} />
 
       <TestimonialsSection
         testimonials={testimonials}
         headline={headlines.testimonials}
       />
+
+      <LicenseBadges />
+
+      <GuaranteePledge />
+
+      <FAQSection faqs={faqs} />
 
       <FinalCta business={business} ctaHeadline={headlines.cta} />
 

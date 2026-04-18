@@ -60,6 +60,9 @@ export function BarrierShieldCanvas({
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     const intruders: Intruder[] = [];
+    // Bugs are painted in a warm caramel brown so they stand out against
+    // the dark emerald canvas backdrop — not the shield color.
+    const bugColor = "rgba(180, 135, 80, 0.98)";
     let spawnCooldown = 0.25;
 
     function sizeCanvas() {
@@ -268,7 +271,7 @@ export function BarrierShieldCanvas({
 
         const alpha =
           b.state === "repelled" ? Math.max(0, 1 - b.repelT / 1.4) : 1;
-        drawIntruder(ctx!, b, color, alpha);
+        drawIntruder(ctx!, b, bugColor, alpha);
       }
 
       frameId = requestAnimationFrame(step);

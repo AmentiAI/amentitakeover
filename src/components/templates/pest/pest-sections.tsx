@@ -3,20 +3,27 @@ import {
   ArrowRight,
   Award,
   BadgeCheck,
+  Bug,
   CheckCircle2,
   ClipboardCheck,
   Leaf,
   MapPin,
   Phone,
+  Plus,
   Radar,
+  Search,
   Shield,
   ShieldCheck,
+  Sparkles,
   Star,
+  Zap,
 } from "lucide-react";
 import { SafeImg } from "@/components/safe-img";
 import { BarrierShieldCanvas } from "@/components/templates/pest/barrier-shield-canvas";
+import { DetectionGridCanvas } from "@/components/templates/pest/detection-grid-canvas";
 import { HeroBugBanner } from "@/components/templates/pest/hero-bug-banner";
 import { RadarSweepCanvas } from "@/components/templates/pest/radar-sweep-canvas";
+import { TreatmentZonesCanvas } from "@/components/templates/pest/treatment-zones-canvas";
 import {
   AntIcon,
   BedBugIcon,
@@ -615,9 +622,9 @@ export function FinalCta({
           />
         </div>
       ) : (
-        <div className="absolute inset-0 opacity-75">
+        <div className="absolute inset-0 opacity-85">
           <HeroBugBanner
-            color="rgba(8, 20, 12, 0.95)"
+            color="rgba(168, 120, 62, 0.96)"
             accent="rgba(134, 239, 172, 0.95)"
             count={28}
             reactToCursor
@@ -886,3 +893,359 @@ const LICENSE_BADGES: { label: string; body: string; icon: React.ReactNode }[] =
     icon: <Award className="h-4 w-4" />,
   },
 ];
+
+// -------- Value props / why us (home) --------
+
+export function ValueBar() {
+  const items: { icon: React.ReactNode; title: string; body: string }[] = [
+    {
+      icon: <Search className="h-5 w-5" />,
+      title: "Real inspection",
+      body: "45-minute walk-through with a written report — not a sales pitch.",
+    },
+    {
+      icon: <Leaf className="h-5 w-5" />,
+      title: "Pet + kid safe",
+      body: "EPA-registered products at the lowest effective rate. Cure times shared in advance.",
+    },
+    {
+      icon: <ShieldCheck className="h-5 w-5" />,
+      title: "Perimeter guarantee",
+      body: "If pests return between visits, we come back free — no questions.",
+    },
+    {
+      icon: <Zap className="h-5 w-5" />,
+      title: "Same-day response",
+      body: "Emergencies get a truck dispatched today. Routine bookings within 48 hours.",
+    },
+  ];
+  return (
+    <section className="relative bg-white py-20 sm:py-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+              Why us
+            </div>
+            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
+              Four things we do <span className="italic text-emerald-700">every single visit.</span>
+            </h2>
+          </div>
+        </div>
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {items.map((it) => (
+            <div
+              key={it.title}
+              className="group relative flex flex-col rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-white hover:shadow-lg"
+            >
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 transition group-hover:bg-emerald-600 group-hover:text-white">
+                {it.icon}
+              </span>
+              <h3 className="mt-5 text-[17px] font-bold tracking-tight text-slate-900">
+                {it.title}
+              </h3>
+              <p className="mt-2 text-[13.5px] leading-relaxed text-slate-600">
+                {it.body}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// -------- Process steps (home) --------
+
+export function ProcessSteps() {
+  const steps: {
+    icon: React.ReactNode;
+    step: string;
+    title: string;
+    body: string;
+    bullets: string[];
+  }[] = [
+    {
+      icon: <Search className="h-5 w-5" />,
+      step: "01",
+      title: "Inspect",
+      body: "A real walk-through of your property, documented with photos and a written plan emailed the same day.",
+      bullets: [
+        "Foundation + entry-point map",
+        "Evidence log: droppings, wings, trails",
+        "Conducive-conditions report",
+      ],
+    },
+    {
+      icon: <Sparkles className="h-5 w-5" />,
+      step: "02",
+      title: "Treat",
+      body: "Targeted interior + exterior treatment. Low-odor, label-compliant, applied only where needed.",
+      bullets: [
+        "Crack + crevice precision treatment",
+        "Foundation perimeter barrier",
+        "Bait stations in rodent corridors",
+      ],
+    },
+    {
+      icon: <ShieldCheck className="h-5 w-5" />,
+      step: "03",
+      title: "Protect",
+      body: "Quarterly return visits keep the barrier fresh. Emergency re-treats between visits are always free.",
+      bullets: [
+        "Scheduled maintenance cadence",
+        "Weather + season adjustments",
+        "Unlimited callbacks, no fee",
+      ],
+    },
+  ];
+  return (
+    <section className="relative border-y border-slate-200 bg-slate-50 py-20 sm:py-28">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+              How it works
+            </div>
+            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
+              Three steps, <span className="italic text-emerald-700">one written plan.</span>
+            </h2>
+          </div>
+          <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
+            Inspection · treatment · guarantee
+          </div>
+        </div>
+        <div className="relative mt-12">
+          {/* Connecting dashed line between step numbers on desktop */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-0 right-0 top-14 hidden h-px bg-[linear-gradient(to_right,transparent,rgba(16,185,129,0.35)_12%,rgba(16,185,129,0.35)_88%,transparent)] lg:block"
+          />
+          <div className="relative grid gap-5 md:grid-cols-3">
+            {steps.map((s) => (
+              <article
+                key={s.step}
+                className="relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-xl"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="grid h-11 w-11 place-items-center rounded-full bg-emerald-600 text-white shadow-md shadow-emerald-600/30">
+                    {s.icon}
+                  </span>
+                  <span className="font-serif text-4xl italic text-emerald-700">
+                    {s.step}
+                  </span>
+                </div>
+                <h3 className="mt-5 font-serif text-[26px] font-normal leading-tight tracking-tight text-slate-900">
+                  {s.title}
+                </h3>
+                <p className="mt-2 text-[14.5px] leading-relaxed text-slate-600">
+                  {s.body}
+                </p>
+                <ul className="mt-5 space-y-2 text-[13px] text-slate-700">
+                  {s.bullets.map((b) => (
+                    <li key={b} className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// -------- Treatment zones (home) — uses TreatmentZonesCanvas --------
+
+export function TreatmentZonesSection() {
+  return (
+    <section className="relative overflow-hidden bg-white py-20 sm:py-28">
+      <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+        <div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+            Treatment coverage
+          </div>
+          <h2 className="mt-3 font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
+            Every <span className="italic text-emerald-700">entry point</span> — mapped, monitored, treated.
+          </h2>
+          <p className="mt-5 max-w-lg text-base leading-relaxed text-slate-600 sm:text-lg">
+            A quarterly visit treats four zones in parallel: attic voids, kitchen harborage, living-space thresholds, and the foundation perimeter. Nothing gets skipped.
+          </p>
+          <ul className="mt-7 grid gap-3 text-[14px] text-slate-700 sm:grid-cols-2">
+            <ZoneLegend color="rgba(16, 185, 129, 1)" label="Attic voids + vents" />
+            <ZoneLegend color="rgba(16, 185, 129, 1)" label="Kitchen harborage" />
+            <ZoneLegend color="rgba(16, 185, 129, 1)" label="Living thresholds" />
+            <ZoneLegend color="rgba(16, 185, 129, 1)" label="Foundation perimeter" />
+          </ul>
+        </div>
+        <div className="relative aspect-[5/4] w-full overflow-hidden rounded-3xl border border-emerald-900/30 bg-[#060c09] shadow-2xl shadow-emerald-900/20">
+          <TreatmentZonesCanvas />
+          <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-200/85 backdrop-blur">
+            Live coverage
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ZoneLegend({ color, label }: { color: string; label: string }) {
+  return (
+    <li className="flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-[13px] font-semibold text-slate-700">
+      <span
+        className="h-2.5 w-2.5 rounded-full"
+        style={{ background: color, boxShadow: `0 0 12px ${color}` }}
+      />
+      {label}
+    </li>
+  );
+}
+
+// -------- Pest teaser (home) — 4 pests with bug icons + link to services --------
+
+export function PestTeaser({ id }: { id: string }) {
+  const top = PEST_CATALOG.slice(0, 4);
+  return (
+    <section className="relative overflow-hidden bg-[#060c09] py-20 text-white sm:py-28">
+      {/* Live detection grid overlay sets the mood for the pest callouts */}
+      <div className="pointer-events-none absolute inset-0 opacity-70">
+        <DetectionGridCanvas />
+      </div>
+      <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-300">
+              Most flagged
+            </div>
+            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-white sm:text-5xl">
+              What we&apos;re <span className="italic text-emerald-300">catching this season.</span>
+            </h2>
+          </div>
+          <Link
+            href={`/p/pest/${id}/services`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 px-4 py-2 text-[12px] font-bold text-emerald-100 transition hover:bg-emerald-400/10"
+          >
+            All pests <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {top.map((p) => (
+            <article
+              key={p.name}
+              className="group relative flex flex-col rounded-2xl border border-emerald-900/40 bg-[#0a1612]/70 p-6 backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-emerald-400/60 hover:bg-[#0a1612]"
+            >
+              <div className="flex items-center justify-between">
+                <span className="grid h-12 w-12 place-items-center rounded-xl bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30">
+                  {p.icon}
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-300/70">
+                  {p.tier}
+                </span>
+              </div>
+              <h3 className="mt-5 text-[17px] font-bold tracking-tight text-white">{p.name}</h3>
+              <p className="mt-2 text-[13px] leading-relaxed text-emerald-100/80">{p.body}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// -------- Guarantee / pledge (home) --------
+
+export function GuaranteePledge() {
+  return (
+    <section className="relative bg-white py-20 sm:py-28">
+      <div className="mx-auto max-w-5xl px-5 sm:px-8">
+        <div className="relative overflow-hidden rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 p-10 shadow-sm sm:p-14">
+          <div className="absolute -right-10 -top-10 grid h-40 w-40 place-items-center rounded-full bg-emerald-100/70">
+            <Shield className="h-16 w-16 text-emerald-600/80" />
+          </div>
+          <div className="relative">
+            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-700">
+              Our pledge
+            </div>
+            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
+              If the pests come back, <span className="italic text-emerald-700">so do we.</span>
+            </h2>
+            <p className="mt-5 max-w-2xl text-[15.5px] leading-relaxed text-slate-600">
+              Between scheduled visits, you get unlimited free re-treats. No trip fee, no deductible, no fine print. The only guarantee we know how to write is the one we&apos;d want as a homeowner ourselves.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <PledgeChip icon={<Bug className="h-3.5 w-3.5" />} label="Unlimited re-treats" />
+              <PledgeChip icon={<Shield className="h-3.5 w-3.5" />} label="No trip fee" />
+              <PledgeChip icon={<Award className="h-3.5 w-3.5" />} label="30-day guarantee" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PledgeChip({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-white px-3.5 py-1.5 text-[12.5px] font-semibold text-emerald-800">
+      {icon} {label}
+    </span>
+  );
+}
+
+// -------- FAQ (home) — uses client accordion --------
+
+export function FAQSection({
+  faqs,
+}: {
+  faqs: { q: string; a: string }[];
+}) {
+  if (faqs.length === 0) return null;
+  const shown = faqs.slice(0, 6);
+  return (
+    <section className="relative border-t border-slate-200 bg-slate-50 py-20 sm:py-28">
+      <div className="mx-auto max-w-4xl px-5 sm:px-8">
+        <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+          Questions we hear often
+        </div>
+        <h2 className="mt-3 font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
+          Straight answers, <span className="italic text-emerald-700">no jargon.</span>
+        </h2>
+        <div className="mt-10 divide-y divide-slate-200 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+          {shown.map((f, i) => (
+            <FAQRow key={i} q={f.q} a={f.a} defaultOpen={i === 0} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FAQRow({
+  q,
+  a,
+  defaultOpen,
+}: {
+  q: string;
+  a: string;
+  defaultOpen?: boolean;
+}) {
+  return (
+    <details
+      className="group px-6 py-5 marker:content-[''] sm:px-8"
+      open={defaultOpen}
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-left">
+        <span className="text-[15.5px] font-bold tracking-tight text-slate-900">
+          {q}
+        </span>
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 transition group-open:rotate-45 group-open:bg-emerald-600 group-open:text-white">
+          <Plus className="h-4 w-4" />
+        </span>
+      </summary>
+      <p className="mt-3 text-[14.5px] leading-relaxed text-slate-600">{a}</p>
+    </details>
+  );
+}

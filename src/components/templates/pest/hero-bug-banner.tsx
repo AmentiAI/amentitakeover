@@ -44,7 +44,10 @@ type Bug = {
 // pest-control "we find + eliminate" theme. A subtle sweep line traverses
 // the banner horizontally on a slow cadence.
 export function HeroBugBanner({
-  color = "rgba(18, 10, 6, 0.94)",
+  // Warm caramel/amber — reads clearly as a bug silhouette against dark
+  // emerald backgrounds. Previously this was near-black and blended into
+  // the banner.
+  color = "rgba(168, 120, 62, 0.96)",
   accent = "rgba(134, 239, 172, 0.95)",
   count = 30,
   reactToCursor = true,

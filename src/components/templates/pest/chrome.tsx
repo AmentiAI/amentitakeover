@@ -216,8 +216,18 @@ export function PestFooter({
   socials: SiteData["socials"];
 }) {
   return (
-    <footer className="relative border-t border-emerald-900/40 bg-[#060c09] text-emerald-100/80">
-      <div className="mx-auto grid max-w-7xl gap-8 px-5 py-12 text-[12.5px] sm:grid-cols-3 sm:px-8">
+    <footer className="relative overflow-hidden border-t border-emerald-900/40 bg-[#060c09] text-emerald-100/80">
+      {/* Low-density bug crawl across the footer strip. No cursor reaction
+          so it never steals pointer from the social + contact links. */}
+      <div className="pointer-events-none absolute inset-0 opacity-60">
+        <HeroBugBanner
+          color="rgba(168, 120, 62, 0.9)"
+          accent="rgba(134, 239, 172, 0.9)"
+          count={14}
+          reactToCursor={false}
+        />
+      </div>
+      <div className="relative z-10 mx-auto grid max-w-7xl gap-8 px-5 py-12 text-[12.5px] sm:grid-cols-3 sm:px-8">
         <div>
           <div className="flex items-center gap-2 text-[13px] font-bold uppercase tracking-[0.18em] text-white">
             <ShieldCheck className="h-4 w-4 text-emerald-300" />
@@ -247,7 +257,7 @@ export function PestFooter({
           <SocialLinks socials={socials} />
         </div>
       </div>
-      <div className="border-t border-emerald-900/40 bg-[#050a07] py-4 text-center text-[11px] uppercase tracking-[0.24em] text-emerald-200/50">
+      <div className="relative z-10 border-t border-emerald-900/40 bg-[#050a07]/90 py-4 text-center text-[11px] uppercase tracking-[0.24em] text-emerald-200/50 backdrop-blur-sm">
         © {new Date().getFullYear()} {business.name}
       </div>
     </footer>
