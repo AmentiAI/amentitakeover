@@ -270,6 +270,7 @@ export function ProcessSection({ data }: { data: SiteData }) {
 
 export function GalleryStrip({ data, compact = false }: { data: SiteData; compact?: boolean }) {
   const shown = compact ? data.gallery.slice(0, 6) : data.gallery;
+  if (shown.length === 0) return null;
   return (
     <section className="relative bg-slate-50 py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-5 sm:px-6">

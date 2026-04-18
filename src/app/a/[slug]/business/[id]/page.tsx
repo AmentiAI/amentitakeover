@@ -24,6 +24,7 @@ export const dynamic = "force-dynamic";
 
 const TEMPLATES: Array<{ key: string; label: string }> = [
   { key: "site", label: "Pro Multi-Page" },
+  { key: "editorial", label: "Editorial" },
 ];
 
 export default async function AffiliateBusinessDetailPage({

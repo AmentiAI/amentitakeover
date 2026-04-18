@@ -166,15 +166,19 @@ export function buildSiteData(
   const aiCardsByIndex = generated?.serviceCards ?? [];
   const aiGallery = generated?.gallery ?? [];
 
-  // Services: each claims its purpose-built AI card first (index-matched),
-  // then falls back through unused AI cards → scraped photos → AI gallery.
-  const serviceFallbackOrder: string[] = [];
-  for (const c of aiCardsByIndex) serviceFallbackOrder.push(c.src);
-  for (const img of scrapedPhotos) serviceFallbackOrder.push(img.src);
-  for (const g of aiGallery) serviceFallbackOrder.push(g.src);
+  // Services: each claims its purpose-built AI card first (index-matched).
+  // If that specific card didn't generate, fall back to another unused AI
+  // service-card (still trade-relevant), then a scraped business photo.
+  // We deliberately do NOT fall back to AI gallery here — those are general
+  // trade shots and pairing them with a specific service title often looks
+  // like a mismatch. Better to leave the card image null and show a clean
+  // accent tile than to show an unrelated photo.
+  const serviceSpecificPool: string[] = [];
+  for (const c of aiCardsByIndex) serviceSpecificPool.push(c.src);
+  for (const img of scrapedPhotos) serviceSpecificPool.push(img.src);
 
-  const pickUnused = (): string | null => {
-    for (const src of serviceFallbackOrder) {
+  const pickServiceFallback = (): string | null => {
+    for (const src of serviceSpecificPool) {
       const taken = claim(src);
       if (taken) return taken;
     }
@@ -186,12 +190,13 @@ export function buildSiteData(
     return {
       title,
       body: serviceBodies[i] ?? defaultServiceBody(title, trade, b),
-      image: matched ?? pickUnused(),
+      image: matched ?? pickServiceFallback(),
     };
   });
 
-  // Gallery: scraped photos first, then remaining AI gallery, then any
-  // leftover AI service cards. Everything already used above is skipped.
+  // Gallery: scraped photos first (real business, always trustworthy), then
+  // remaining AI gallery shots, then any leftover AI service-card images.
+  // Everything used above is skipped via usedImages.
   const gallery: { src: string; alt: string }[] = [];
   const pushGallery = (src: string | null, alt: string) => {
     const taken = claim(src);
@@ -210,7 +215,8 @@ export function buildSiteData(
     if (gallery.length >= 12) break;
     pushGallery(c.src, `${b.name} — recent work`);
   }
-  if (gallery.length === 0) FALLBACK_GALLERY.forEach((f) => gallery.push(f));
+  // Intentionally no generic Unsplash fallback — empty gallery beats
+  // cross-site-repeated stock photos.
 
   const headlines = deriveHeadlines({ headings, trade });
 
@@ -273,13 +279,6 @@ const FALLBACK_PALETTE: SiteData["palette"] = {
   accent: "#1e40af",
   trust: "#0f766e",
 };
-
-const FALLBACK_GALLERY: { src: string; alt: string }[] = [
-  { src: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80", alt: "Recent work" },
-  { src: "https://images.unsplash.com/photo-1565374395542-0ce18882c857?auto=format&fit=crop&w=1200&q=80", alt: "Quality craft" },
-  { src: "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?auto=format&fit=crop&w=1200&q=80", alt: "Tools of the trade" },
-  { src: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=1200&q=80", alt: "Finished result" },
-];
 
 const DEFAULT_PROCESS: SiteData["process"] = [
   { step: "01", title: "Free consult", body: "We listen, inspect the site, and tell you straight — not a sales pitch." },
