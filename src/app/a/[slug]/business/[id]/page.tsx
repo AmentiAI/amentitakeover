@@ -19,13 +19,14 @@ import {
   Twitter,
 } from "lucide-react";
 import { BizActions } from "./biz-actions";
+import {
+  allowedTemplatesForBusiness,
+  defaultTemplateForBusiness,
+  normalizeTemplateChoice,
+  TEMPLATE_CHOICES,
+} from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
-
-const TEMPLATES: Array<{ key: string; label: string }> = [
-  { key: "site", label: "Pro Multi-Page" },
-  { key: "editorial", label: "Editorial" },
-];
 
 export default async function AffiliateBusinessDetailPage({
   params,
@@ -64,7 +65,18 @@ export default async function AffiliateBusinessDetailPage({
   ]);
 
   const liveSiteUrl = biz.website ?? biz.site?.url ?? null;
-  const currentTemplate = biz.templateChoice === "editorial" ? "editorial" : "site";
+  const industrySignals = {
+    industry: biz.industry,
+    category: biz.category,
+    name: biz.name,
+    tags: biz.tags,
+  };
+  const allowedTemplates = allowedTemplatesForBusiness(industrySignals);
+  const allowedValues = new Set(allowedTemplates.map((t) => t.value));
+  const storedTemplate = normalizeTemplateChoice(biz.templateChoice);
+  const currentTemplate = allowedValues.has(storedTemplate)
+    ? storedTemplate
+    : defaultTemplateForBusiness(industrySignals);
   const templateUrl = `/p/${currentTemplate}/${biz.id}`;
 
   return (
@@ -299,10 +311,10 @@ export default async function AffiliateBusinessDetailPage({
             Try other templates
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {TEMPLATES.map((t) => (
+            {allowedTemplates.map((t) => (
               <a
-                key={t.key}
-                href={`/p/${t.key}/${biz.id}`}
+                key={t.value}
+                href={`/p/${t.value}/${biz.id}`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-2 py-2 text-[11px] font-medium text-slate-300 hover:border-slate-500 hover:text-white"
@@ -389,8 +401,9 @@ export default async function AffiliateBusinessDetailPage({
 }
 
 function labelFor(key: string | null | undefined): string {
-  const t = TEMPLATES.find((x) => x.key === (key || "site"));
-  return t ? `${t.label} template` : "Template";
+  const val = normalizeTemplateChoice(key);
+  const match = TEMPLATE_CHOICES.find((t) => t.value === val);
+  return match ? `${match.label} template` : "Template";
 }
 
 function Card({

@@ -20,6 +20,8 @@ import {
 import { LIFECYCLE, type LifecycleStep } from "@/lib/lifecycle";
 import {
   TEMPLATE_CHOICES,
+  allowedTemplatesForBusiness,
+  defaultTemplateForBusiness,
   getTemplatePreviewUrl,
   type TemplateChoice,
 } from "@/lib/site-url";
@@ -257,7 +259,15 @@ function GenerateWizard({
   const [imagesBusy, setImagesBusy] = useState(false);
   const [imageSet, setImageSet] = useState<ImageSet | null>(null);
   const [buildBusy, setBuildBusy] = useState(false);
-  const [template, setTemplate] = useState<TemplateChoice>("site");
+  const industrySignals = {
+    category: business.category,
+    name: business.name,
+    tags: business.tags,
+  };
+  const allowedTemplates = allowedTemplatesForBusiness(industrySignals);
+  const [template, setTemplate] = useState<TemplateChoice>(() =>
+    defaultTemplateForBusiness(industrySignals),
+  );
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -476,7 +486,7 @@ function GenerateWizard({
               <Wand2 className="h-3 w-3" /> Choose template
             </div>
             <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
-              {TEMPLATE_CHOICES.map((t) => {
+              {allowedTemplates.map((t) => {
                 const selected = template === t.value;
                 return (
                   <button
@@ -494,7 +504,8 @@ function GenerateWizard({
               })}
             </div>
             <div className="mt-1.5 text-[10px] leading-snug text-slate-500">
-              {TEMPLATE_CHOICES.find((t) => t.value === template)?.hint}
+              {allowedTemplates.find((t) => t.value === template)?.hint ??
+                TEMPLATE_CHOICES.find((t) => t.value === template)?.hint}
             </div>
           </div>
           <button
