@@ -9,7 +9,7 @@ const Body = z.object({
   businessId: z.string(),
   tone: z.string().default("friendly-professional"),
   hook: z.string().default("website audit"),
-  template: z.enum(["roofing", "roofing2", "roofing3", "electrical"]).optional(),
+  template: z.literal("site").optional(),
 });
 
 const SYSTEM = `You write short, sharp cold emails for B2B agency outreach.

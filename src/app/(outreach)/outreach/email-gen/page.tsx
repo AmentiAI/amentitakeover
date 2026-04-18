@@ -26,7 +26,7 @@ export default async function EmailGenPage({
 
   const selectedTemplate = selected?.scrapedBusiness
     ? normalizeTemplateChoice(selected.scrapedBusiness.templateChoice)
-    : "roofing";
+    : "site";
 
   const siteUrl =
     selected?.scrapedBusinessId != null
@@ -65,8 +65,8 @@ export default async function EmailGenPage({
   return (
     <>
       <OutreachTopbar activeHref="/outreach/email-gen" />
-      <div className="flex min-h-0 flex-1">
-        <div className="w-96 shrink-0 overflow-y-auto border-r border-slate-800 bg-slate-950 p-4">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <div className="max-h-[60vh] w-full shrink-0 overflow-y-auto border-b border-slate-800 bg-slate-950 p-4 lg:max-h-none lg:w-96 lg:border-b-0 lg:border-r">
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
             New email
           </div>
@@ -135,7 +135,7 @@ export default async function EmailGenPage({
             )}
           </div>
         </div>
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 sm:p-6">
           {selected ? (
             <DraftPreview
               draft={{

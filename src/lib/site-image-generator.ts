@@ -3,20 +3,32 @@ import { buildImageBrief, type BusinessContext } from "@/lib/image-prompt";
 import { generateImage, ImageModerationError, type ImageQuality } from "@/lib/openai-image";
 
 /**
- * Generate a matched set of mockup-site images (hero + gallery) for a
- * scraped business. Persists raw PNG bytes to GeneratedImage rows so the
- * template can reference them via /api/generated-image/:id.
+ * Generate a matched set of mockup-site images for a scraped business.
+ * Produces one hero, three section banners, and four gallery squares — 8
+ * images total so the template has distinct art for each section instead
+ * of reusing one gallery everywhere.
  *
+ * Persists raw PNG bytes to GeneratedImage rows keyed by purpose.
  * Idempotent: if the business already has generated images and `force` is
  * not set, returns the existing set untouched.
  */
 
+export type SiteImagePurpose =
+  | "hero"
+  | "banner-about"
+  | "banner-services"
+  | "banner-cta"
+  | "gallery";
+
 export type SiteImageSet = {
   hero: { id: string; src: string } | null;
+  aboutBanner: { id: string; src: string } | null;
+  servicesBanner: { id: string; src: string } | null;
+  ctaBanner: { id: string; src: string } | null;
   gallery: { id: string; src: string }[];
 };
 
-const DEFAULT_GALLERY_COUNT = 6;
+const DEFAULT_GALLERY_COUNT = 4;
 
 export async function generateSiteImages(
   scrapedBusinessId: string,
@@ -43,51 +55,28 @@ export async function generateSiteImages(
   const brief = await buildImageBrief(ctx);
   const failures: { prompt: string; error: string }[] = [];
 
-  const hero = await safeGenerate(
-    { prompt: brief.heroPrompt, size: "1536x1024", quality },
-    failures,
-  );
-  let heroRow: { id: string } | null = null;
-  if (hero) {
-    heroRow = await prisma.generatedImage.create({
-      data: {
-        scrapedBusinessId,
-        purpose: "hero",
-        position: 0,
-        prompt: brief.heroPrompt,
-        bytes: hero.bytes,
-        mimeType: hero.mimeType,
-        width: hero.width,
-        height: hero.height,
-        model: hero.model,
-      },
-      select: { id: true },
-    });
+  // Hero — landscape flagship
+  const heroRow = await persistIfGenerated(scrapedBusinessId, "hero", 0, brief.heroPrompt, "1536x1024", quality, failures);
+
+  // Three section banners — all landscape, different narrative
+  const banners: { purpose: SiteImagePurpose; prompt: string }[] = [
+    { purpose: "banner-about", prompt: brief.aboutBannerPrompt },
+    { purpose: "banner-services", prompt: brief.servicesBannerPrompt },
+    { purpose: "banner-cta", prompt: brief.ctaBannerPrompt },
+  ];
+  const bannerRows: Partial<Record<SiteImagePurpose, { id: string }>> = {};
+  for (let i = 0; i < banners.length; i++) {
+    const b = banners[i];
+    const row = await persistIfGenerated(scrapedBusinessId, b.purpose, i, b.prompt, "1536x1024", quality, failures);
+    if (row) bannerRows[b.purpose] = row;
   }
 
+  // Gallery — square process/detail shots
   const galleryRows: { id: string }[] = [];
   const prompts = brief.galleryPrompts.slice(0, galleryCount);
   for (let i = 0; i < prompts.length; i++) {
-    const result = await safeGenerate(
-      { prompt: prompts[i], size: "1024x1024", quality },
-      failures,
-    );
-    if (!result) continue;
-    const row = await prisma.generatedImage.create({
-      data: {
-        scrapedBusinessId,
-        purpose: "gallery",
-        position: i,
-        prompt: prompts[i],
-        bytes: result.bytes,
-        mimeType: result.mimeType,
-        width: result.width,
-        height: result.height,
-        model: result.model,
-      },
-      select: { id: true },
-    });
-    galleryRows.push(row);
+    const row = await persistIfGenerated(scrapedBusinessId, "gallery", i, prompts[i], "1024x1024", quality, failures);
+    if (row) galleryRows.push(row);
   }
 
   await prisma.activityEvent.create({
@@ -97,6 +86,7 @@ export async function generateSiteImages(
       details: {
         scrapedBusinessId,
         heroGenerated: Boolean(heroRow),
+        bannersGenerated: Object.keys(bannerRows).length,
         galleryGenerated: galleryRows.length,
         styleDirection: brief.styleDirection,
         failures: failures.slice(0, 5),
@@ -105,7 +95,10 @@ export async function generateSiteImages(
   });
 
   return {
-    hero: heroRow ? { id: heroRow.id, src: `/api/generated-image/${heroRow.id}` } : null,
+    hero: rowToImg(heroRow),
+    aboutBanner: rowToImg(bannerRows["banner-about"]),
+    servicesBanner: rowToImg(bannerRows["banner-services"]),
+    ctaBanner: rowToImg(bannerRows["banner-cta"]),
     gallery: galleryRows.map((r) => ({ id: r.id, src: `/api/generated-image/${r.id}` })),
   };
 }
@@ -118,12 +111,49 @@ export async function getSiteImageSet(
     select: { id: true, purpose: true, position: true },
     orderBy: [{ purpose: "asc" }, { position: "asc" }],
   });
-  const heroRow = rows.find((r) => r.purpose === "hero");
+  const hero = rows.find((r) => r.purpose === "hero");
+  const aboutBanner = rows.find((r) => r.purpose === "banner-about");
+  const servicesBanner = rows.find((r) => r.purpose === "banner-services");
+  const ctaBanner = rows.find((r) => r.purpose === "banner-cta");
   const gallery = rows.filter((r) => r.purpose === "gallery");
   return {
-    hero: heroRow ? { id: heroRow.id, src: `/api/generated-image/${heroRow.id}` } : null,
+    hero: rowToImg(hero),
+    aboutBanner: rowToImg(aboutBanner),
+    servicesBanner: rowToImg(servicesBanner),
+    ctaBanner: rowToImg(ctaBanner),
     gallery: gallery.map((g) => ({ id: g.id, src: `/api/generated-image/${g.id}` })),
   };
+}
+
+function rowToImg(row: { id: string } | undefined | null): { id: string; src: string } | null {
+  return row ? { id: row.id, src: `/api/generated-image/${row.id}` } : null;
+}
+
+async function persistIfGenerated(
+  scrapedBusinessId: string,
+  purpose: SiteImagePurpose,
+  position: number,
+  prompt: string,
+  size: "1024x1024" | "1536x1024" | "1024x1536",
+  quality: ImageQuality,
+  failures: { prompt: string; error: string }[],
+): Promise<{ id: string } | null> {
+  const result = await safeGenerate({ prompt, size, quality }, failures);
+  if (!result) return null;
+  return prisma.generatedImage.create({
+    data: {
+      scrapedBusinessId,
+      purpose,
+      position,
+      prompt,
+      bytes: result.bytes,
+      mimeType: result.mimeType,
+      width: result.width,
+      height: result.height,
+      model: result.model,
+    },
+    select: { id: true },
+  });
 }
 
 function buildContext(

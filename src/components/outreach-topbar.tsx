@@ -15,8 +15,8 @@ const TABS = [
 
 export function OutreachTopbar({ activeHref }: { activeHref: string }) {
   return (
-    <header className="flex items-center justify-between border-b border-slate-800 bg-slate-950 px-4">
-      <nav className="flex">
+    <header className="flex items-center justify-between gap-2 border-b border-slate-800 bg-slate-950 pl-2 pr-2 sm:pl-4 sm:pr-4">
+      <nav className="-mx-1 flex flex-1 overflow-x-auto scrollbar-none">
         {TABS.map((t) => {
           const active =
             activeHref === t.href ||
@@ -25,7 +25,7 @@ export function OutreachTopbar({ activeHref }: { activeHref: string }) {
             <Link
               key={t.href}
               href={t.href}
-              className={`relative px-3 py-3 text-[13px] transition ${
+              className={`relative whitespace-nowrap px-3 py-3 text-[12.5px] transition sm:text-[13px] ${
                 active
                   ? "text-white"
                   : "text-slate-400 hover:text-slate-200"
@@ -39,18 +39,18 @@ export function OutreachTopbar({ activeHref }: { activeHref: string }) {
           );
         })}
       </nav>
-      <div className="flex items-center gap-1 text-slate-400">
-        <button className="grid h-8 w-8 place-items-center rounded-md hover:bg-slate-800 hover:text-white">
+      <div className="flex shrink-0 items-center gap-1 text-slate-400">
+        <button className="hidden h-8 w-8 place-items-center rounded-md hover:bg-slate-800 hover:text-white sm:grid">
           <Bell className="h-4 w-4" />
         </button>
         <Link
           href="/settings"
-          className="grid h-8 w-8 place-items-center rounded-md hover:bg-slate-800 hover:text-white"
+          className="hidden h-8 w-8 place-items-center rounded-md hover:bg-slate-800 hover:text-white sm:grid"
         >
           <Settings className="h-4 w-4" />
         </Link>
         <SignOutButton variant="dark" />
-        <div className="ml-1 grid h-8 w-8 place-items-center rounded-full bg-indigo-600 text-xs font-semibold text-white">
+        <div className="ml-1 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-indigo-600 text-xs font-semibold text-white">
           W
         </div>
       </div>

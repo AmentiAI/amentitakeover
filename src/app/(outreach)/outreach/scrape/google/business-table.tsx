@@ -129,8 +129,8 @@ export function BusinessTable({ businesses }: { businesses: Row[] }) {
         </div>
       )}
 
-      <div className="overflow-auto">
-        <table className="w-full border-collapse text-sm">
+      <div className="overflow-auto scrollbar-thin">
+        <table className="w-full min-w-[860px] border-collapse text-sm">
           <thead className="sticky top-0 bg-slate-950 text-left text-[10px] uppercase tracking-wider text-slate-500">
             <tr className="border-b border-slate-800">
               <th className="w-8 px-3 py-2">

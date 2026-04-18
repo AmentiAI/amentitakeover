@@ -48,7 +48,9 @@ const BLOG_HINTS = ["blog", "news", "resources", "articles", "insights"];
 const AREAS_HINTS = ["areas", "locations", "service-area", "neighborhoods", "cities"];
 const REVIEWS_HINTS = ["reviews", "testimonials", "what-clients-say"];
 const FAQ_HINTS = ["faq", "faqs", "questions"];
-const MAX_SUBPAGES = 14;
+const MAX_SUBPAGES = 18;
+const SITEMAP_TIMEOUT_MS = 4000;
+const SITEMAP_MAX_URLS = 30;
 
 export async function deepScrapeSite(inputUrl: string): Promise<DeepScrapeResult> {
   const base = await scrapeSite(inputUrl);
@@ -84,14 +86,27 @@ export async function deepScrapeSite(inputUrl: string): Promise<DeepScrapeResult
 
   // Fill any remaining budget with same-origin nav/top-level links so we
   // don't miss pages that don't match keyword hints (unusual URL structures).
-  const remaining = Math.max(0, MAX_SUBPAGES - candidates.length);
-  if (remaining > 0) {
-    const extra = sameOriginTopLevelLinks(base.links, originHost, base.url)
-      .filter((l) => !candidates.some((c) => normalizeForDedup(c.href) === normalizeForDedup(l.href)))
-      .slice(0, remaining);
-    for (const l of extra) {
-      candidates.push({ href: l.href, text: l.text, kind: "other" });
+  const pushCandidate = (href: string, text: string, kind: SubpageKind) => {
+    const key = normalizeForDedup(href);
+    if (candidates.some((c) => normalizeForDedup(c.href) === key)) return;
+    candidates.push({ href, text, kind });
+  };
+
+  for (const l of sameOriginTopLevelLinks(base.links, originHost, base.url)) {
+    if (candidates.length >= MAX_SUBPAGES) break;
+    pushCandidate(l.href, l.text, classifyByPath(l.href, l.text));
+  }
+
+  // Sitemap.xml discovery — guarantees we see pages not linked from the
+  // homepage nav (deep service pages, location pages, etc).
+  try {
+    const sitemapUrls = await fetchSitemapUrls(base.url, originHost);
+    for (const href of sitemapUrls) {
+      if (candidates.length >= MAX_SUBPAGES) break;
+      pushCandidate(href, "", classifyByPath(href, ""));
     }
+  } catch {
+    // sitemap is optional
   }
 
   const extraImages: ScrapeResult["images"] = [];
@@ -221,6 +236,84 @@ function pickLinks(
     hits.push({ href: l.href, text: l.text });
   }
   return hits;
+}
+
+function classifyByPath(href: string, text: string): SubpageKind {
+  const p = safePath(href);
+  const t = text.toLowerCase();
+  const has = (hints: string[]) => hints.some((h) => p.includes(h) || t.includes(h.replace(/-/g, " ")));
+  if (has(WORK_HINTS)) return "work";
+  if (has(SERVICES_HINTS)) return "services";
+  if (has(ABOUT_HINTS)) return "about";
+  if (has(REVIEWS_HINTS)) return "reviews";
+  if (has(AREAS_HINTS)) return "areas";
+  if (has(FAQ_HINTS)) return "faq";
+  if (has(BLOG_HINTS)) return "blog";
+  if (has(CONTACT_HINTS)) return "contact";
+  return "other";
+}
+
+async function fetchSitemapUrls(baseUrl: string, originHost: string): Promise<string[]> {
+  let origin = "";
+  try {
+    origin = new URL(baseUrl).origin;
+  } catch {
+    return [];
+  }
+  const candidates = [`${origin}/sitemap.xml`, `${origin}/sitemap_index.xml`];
+  const discovered: string[] = [];
+  for (const url of candidates) {
+    const xml = await fetchWithTimeout(url, SITEMAP_TIMEOUT_MS);
+    if (!xml) continue;
+    const locMatches = Array.from(xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)).map((m) => m[1]);
+    const nested: string[] = [];
+    for (const loc of locMatches) {
+      if (/\.xml(\?|$)/i.test(loc) && safeHost(loc) === originHost) nested.push(loc);
+      else if (safeHost(loc) === originHost && !/\.(png|jpe?g|gif|svg|webp|pdf|zip|ico|css|js)(\?|$)/i.test(loc)) {
+        discovered.push(loc);
+      }
+    }
+    // one level of nested sitemap expansion — enough for /sitemap_index.xml
+    for (const nestedUrl of nested.slice(0, 4)) {
+      const sub = await fetchWithTimeout(nestedUrl, SITEMAP_TIMEOUT_MS);
+      if (!sub) continue;
+      const subLocs = Array.from(sub.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)).map((m) => m[1]);
+      for (const loc of subLocs) {
+        if (safeHost(loc) !== originHost) continue;
+        if (/\.(png|jpe?g|gif|svg|webp|pdf|zip|ico|css|js|xml)(\?|$)/i.test(loc)) continue;
+        discovered.push(loc);
+      }
+    }
+    if (discovered.length) break; // stop at the first sitemap that returns URLs
+  }
+  // De-dup and trim
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const u of discovered) {
+    const k = normalizeForDedup(u);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(u);
+    if (out.length >= SITEMAP_MAX_URLS) break;
+  }
+  return out;
+}
+
+async function fetchWithTimeout(url: string, timeoutMs: number): Promise<string | null> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; AmentiAffiliateBot/1.0)" },
+      signal: ctrl.signal,
+    });
+    if (!res.ok) return null;
+    return await res.text();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function sameOriginTopLevelLinks(

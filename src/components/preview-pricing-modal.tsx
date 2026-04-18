@@ -98,11 +98,14 @@ export function PreviewPricingModal() {
     <>
       {/* Launcher pill — lives in bottom-right */}
       {launcherVisible && !expanded && (
-        <div className="pointer-events-none fixed bottom-4 right-4 z-[9998] sm:bottom-5 sm:right-5">
-          <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/95 p-1 pl-4 text-sm text-white shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)] backdrop-blur">
+        <div
+          className="pointer-events-none fixed right-3 z-[9998] sm:right-5"
+          style={{ bottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+        >
+          <div className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-white/10 bg-slate-950/95 p-1 pl-3.5 text-[13px] text-white shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)] backdrop-blur sm:gap-2 sm:pl-4 sm:text-sm">
             <button
               onClick={openExpanded}
-              className="flex items-center gap-2 rounded-full pr-3 text-sm font-semibold"
+              className="flex min-h-[36px] items-center gap-1.5 rounded-full pr-2 text-[13px] font-semibold sm:gap-2 sm:pr-3 sm:text-sm"
               aria-label="Open pricing"
             >
               <Sparkles className="h-3.5 w-3.5 text-cyan-300" />
@@ -112,7 +115,7 @@ export function PreviewPricingModal() {
             <button
               onClick={dismissLauncher}
               aria-label="Hide pricing launcher"
-              className="grid h-7 w-7 place-items-center rounded-full bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white"
+              className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white sm:h-7 sm:w-7"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -134,7 +137,8 @@ export function PreviewPricingModal() {
             role="dialog"
             aria-modal="true"
             aria-label="Choose a plan"
-            className="fixed bottom-3 right-3 z-[9999] flex max-h-[calc(100vh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-[420px] flex-col overflow-hidden rounded-2xl bg-white shadow-[0_40px_120px_-30px_rgba(0,0,0,0.7)] ring-1 ring-slate-900/10 sm:bottom-5 sm:right-5 sm:max-h-[min(88vh,780px)]"
+            className="fixed right-3 z-[9999] flex max-h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-[420px] flex-col overflow-hidden rounded-2xl bg-white shadow-[0_40px_120px_-30px_rgba(0,0,0,0.7)] ring-1 ring-slate-900/10 sm:right-5 sm:max-h-[min(88dvh,780px)]"
+            style={{ bottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
           >
             {/* Header */}
             <div className="relative overflow-hidden bg-[#050816] px-5 pb-5 pt-5 text-white">
@@ -162,9 +166,9 @@ export function PreviewPricingModal() {
                 <button
                   onClick={() => setExpanded(false)}
                   aria-label="Minimize pricing"
-                  className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white sm:h-8 sm:w-8"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-4 w-4" />
                 </button>
               </div>
 

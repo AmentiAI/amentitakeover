@@ -57,7 +57,7 @@ function ComposeForm({ candidates }: { candidates: Candidate[] }) {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [template, setTemplate] = useState<TemplateChoice>(
-    candidates[0]?.templateChoice ?? "roofing",
+    candidates[0]?.templateChoice ?? "site",
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -151,7 +151,7 @@ function AIForm({ candidates }: { candidates: Candidate[] }) {
   const [tone, setTone] = useState("friendly-professional");
   const [hook, setHook] = useState("Rebuilt your homepage for free");
   const [template, setTemplate] = useState<TemplateChoice>(
-    candidates[0]?.templateChoice ?? "roofing",
+    candidates[0]?.templateChoice ?? "site",
   );
   const [loading, setLoading] = useState(false);
 

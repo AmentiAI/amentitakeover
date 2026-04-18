@@ -227,7 +227,7 @@ export function OpportunitiesView({
               </Link>
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <a
-                  href={`/p/${b.templateChoice || "roofing"}/${b.id}`}
+                  href={`/p/site/${b.id}`}
                   target="_blank"
                   rel="noreferrer"
                   className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20 sm:flex-none sm:py-1.5"

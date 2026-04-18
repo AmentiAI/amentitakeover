@@ -9,7 +9,7 @@ export default async function IgAutomationPage() {
   return (
     <>
       <OutreachTopbar activeHref="/outreach/instagram-auto" />
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-4 sm:p-6">
         <div className="mb-4 grid gap-3 md:grid-cols-3">
           <Kpi label="Follows today" value="0" />
           <Kpi label="Unfollows today" value="0" />

@@ -39,20 +39,20 @@ export default async function GoogleBusinessesPage({
     <>
       <OutreachTopbar activeHref="/outreach/scrape/google" />
       <div className="flex-1 overflow-auto">
-        <div className="border-b border-slate-800 bg-slate-950 px-4 pt-3">
+        <div className="border-b border-slate-800 bg-slate-950 px-3 pt-3 sm:px-4">
           <StatsRow />
         </div>
 
-        <div className="border-b border-slate-800 bg-slate-950 px-4 py-3">
+        <div className="border-b border-slate-800 bg-slate-950 px-3 py-3 sm:px-4">
           <form
             action="/outreach/scrape/google"
             method="GET"
-            className="flex flex-wrap items-center gap-2"
+            className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center"
           >
             <select
               name="state"
               defaultValue={sp.state ?? ""}
-              className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-200"
+              className="min-w-0 rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-200"
             >
               <option value="">All States</option>
               {[
@@ -65,12 +65,12 @@ export default async function GoogleBusinessesPage({
               name="city"
               defaultValue={sp.city ?? ""}
               placeholder="All Cities"
-              className="w-36 rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-200 placeholder:text-slate-500"
+              className="min-w-0 rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-200 placeholder:text-slate-500 sm:w-36"
             />
             <select
               name="industry"
               defaultValue={sp.industry ?? ""}
-              className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-200"
+              className="col-span-2 min-w-0 rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-200 sm:col-span-1"
             >
               <option value="">All Industries</option>
               {INDUSTRIES.map((i) => (
@@ -81,24 +81,24 @@ export default async function GoogleBusinessesPage({
               name="q"
               defaultValue={sp.q ?? ""}
               placeholder="Search by name, email, or URL…"
-              className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 placeholder:text-slate-500"
+              className="col-span-2 min-w-0 flex-1 rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 placeholder:text-slate-500 sm:col-span-1"
             />
             <button
               type="submit"
-              className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+              className="rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-500 sm:py-1.5"
             >
               Apply
             </button>
             <Link
               href="/outreach/scrape/google"
-              className="rounded-md border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800"
+              className="rounded-md border border-slate-700 px-3 py-2 text-center text-xs text-slate-300 hover:bg-slate-800 sm:py-1.5"
             >
               Clear
             </Link>
           </form>
         </div>
 
-        <div className="border-b border-slate-800 bg-slate-950 px-4 py-2">
+        <div className="border-b border-slate-800 bg-slate-950 px-3 py-2 sm:px-4">
           <ScrapeTrigger serpApiReady={serpApiAvailable()} />
         </div>
 

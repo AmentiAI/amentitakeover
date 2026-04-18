@@ -12,7 +12,7 @@ export default function AgentDetailsPage() {
   return (
     <>
       <OutreachTopbar activeHref="/outreach/scrape/google" />
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-4 sm:p-6">
         <div className="mb-4 text-sm text-slate-400">
           Agents that power scraping and enrichment.
         </div>

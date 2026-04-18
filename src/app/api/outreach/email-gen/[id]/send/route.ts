@@ -112,7 +112,7 @@ function stripStaleMockupUrls(body: string, scrapedBusinessId: string | null): s
   // Our own mockup paths — remove so the tracked P.S. is the only link.
   const idFragment = scrapedBusinessId ? `/${scrapedBusinessId}` : "";
   const pathRe = new RegExp(
-    `https?:\\/\\/[^\\s<>"')]*\\/p\\/(roofing[23]?|electrical)${idFragment}(?:\\/v\\/[^\\s<>"')]*)?`,
+    `https?:\\/\\/[^\\s<>"')]*\\/p\\/(site|roofing[23]?|electrical)${idFragment}(?:\\/v\\/[^\\s<>"')]*)?`,
     "gi",
   );
   cleaned = cleaned.replace(pathRe, "");

@@ -23,10 +23,7 @@ import { BizActions } from "./biz-actions";
 export const dynamic = "force-dynamic";
 
 const TEMPLATES: Array<{ key: string; label: string }> = [
-  { key: "roofing", label: "Bold" },
-  { key: "roofing2", label: "Editorial" },
-  { key: "roofing3", label: "Classic" },
-  { key: "electrical", label: "Electrical" },
+  { key: "site", label: "Pro Multi-Page" },
 ];
 
 export default async function AffiliateBusinessDetailPage({
@@ -66,7 +63,7 @@ export default async function AffiliateBusinessDetailPage({
   ]);
 
   const liveSiteUrl = biz.website ?? biz.site?.url ?? null;
-  const templateUrl = `/p/${biz.templateChoice || "roofing"}/${biz.id}`;
+  const templateUrl = `/p/site/${biz.id}`;
 
   return (
     <div className="px-4 py-5 sm:px-6 sm:py-6">
@@ -390,7 +387,7 @@ export default async function AffiliateBusinessDetailPage({
 }
 
 function labelFor(key: string | null | undefined): string {
-  const t = TEMPLATES.find((x) => x.key === (key || "roofing"));
+  const t = TEMPLATES.find((x) => x.key === (key || "site"));
   return t ? `${t.label} template` : "Template";
 }
 

@@ -8,7 +8,7 @@ export default async function OutreachCampaignsPage() {
   return (
     <>
       <OutreachTopbar activeHref="/outreach/email-campaigns" />
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-4 sm:p-6">
         <div className="mb-3 flex items-center justify-between">
           <div className="text-sm text-slate-400">
             {campaigns.length} campaign{campaigns.length === 1 ? "" : "s"}

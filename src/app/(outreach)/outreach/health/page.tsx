@@ -15,7 +15,7 @@ export default async function ServiceHealthPage() {
   return (
     <>
       <OutreachTopbar activeHref="/outreach" />
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-4 sm:p-6">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {services.map((s) => (
             <div

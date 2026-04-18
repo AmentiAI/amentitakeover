@@ -42,8 +42,8 @@ export default async function OutreachDashboard() {
   return (
     <>
       <OutreachTopbar activeHref="/outreach" />
-      <div className="flex-1 overflow-auto p-6">
-        <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="flex-1 overflow-auto p-4 sm:p-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
           <Stat color="sky" label="Total" value={fmt(total)} icon={Building2} />
           <Stat color="emerald" label="Enriched" value={fmt(enriched)} icon={Sparkles} />
           <Stat color="violet" label="Qualified" value={fmt(qualified)} icon={CheckCircle2} />
@@ -51,7 +51,7 @@ export default async function OutreachDashboard() {
           <Stat color="teal" label="Has Email" value={fmt(hasEmail)} icon={Mail} />
           <Stat color="amber" label="HQ Confidence" value={fmt(hqConfidence)} icon={Send} />
         </div>
-        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Card title="Running jobs" value={jobs} cta="View batch" href="/outreach/batch" />
           <Card title="Drafted emails" value={drafts} cta="Open email gen" href="/outreach/email-gen" />
           <Card

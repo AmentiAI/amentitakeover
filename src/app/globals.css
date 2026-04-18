@@ -21,6 +21,9 @@ html, body {
 .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
 
+.scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
 @layer utilities {
   .stage-band-warm { background: linear-gradient(180deg, #f5a623 0%, #f5a62366 100%); }
   .stage-band-engaged { background: linear-gradient(180deg, #e9c46a 0%, #e9c46a66 100%); }

@@ -20,7 +20,7 @@ export default async function AiUsagePage() {
   return (
     <>
       <OutreachTopbar activeHref="/outreach" />
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-4 sm:p-6">
         <div className="grid gap-3 md:grid-cols-4">
           <Stat label="Total calls" value={agg._count.toString()} />
           <Stat label="Input tokens" value={(agg._sum.inputTokens ?? 0).toLocaleString()} />

@@ -8,9 +8,9 @@ export default async function IndustryProgressPage() {
   return (
     <>
       <OutreachTopbar activeHref="/outreach/industry" />
-      <div className="flex-1 overflow-auto p-6">
-        <div className="rounded-lg border border-slate-800 bg-slate-950">
-          <table className="w-full border-collapse text-sm">
+      <div className="flex-1 overflow-auto p-4 sm:p-6">
+        <div className="overflow-x-auto rounded-lg border border-slate-800 bg-slate-950 scrollbar-thin">
+          <table className="w-full min-w-[680px] border-collapse text-sm">
             <thead className="text-left text-[10px] uppercase tracking-wider text-slate-500">
               <tr className="border-b border-slate-800">
                 <th className="px-4 py-2">Industry</th>

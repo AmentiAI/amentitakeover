@@ -99,7 +99,7 @@ export function BusinessDrawer({
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/50" onClick={onClose}>
       <div
-        className="flex h-full w-full max-w-2xl flex-col border-l border-slate-800 bg-slate-900 text-slate-200 shadow-2xl"
+        className="flex h-full w-full flex-col border-l border-slate-800 bg-slate-900 text-slate-200 shadow-2xl sm:max-w-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {!data ? (
@@ -108,7 +108,7 @@ export function BusinessDrawer({
           </div>
         ) : (
           <>
-            <div className="flex items-start gap-3 border-b border-slate-800 px-6 py-4">
+            <div className="flex items-start gap-3 border-b border-slate-800 px-4 py-4 sm:px-6">
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-slate-800">
                 <Building2 className="h-5 w-5 text-slate-400" />
               </div>
@@ -193,7 +193,7 @@ export function BusinessDrawer({
               </button>
             </div>
 
-            <div className="border-b border-slate-800 px-6">
+            <div className="border-b border-slate-800 px-4 sm:px-6">
               <div className="flex gap-4">
                 {["overview", "notes"].map((t) => (
                   <button
@@ -212,7 +212,7 @@ export function BusinessDrawer({
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-4 scrollbar-thin">
+            <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-thin sm:px-6">
               {tab === "overview" ? (
                 <Overview data={data} />
               ) : (
@@ -257,7 +257,7 @@ function GenerateWizard({
   const [imagesBusy, setImagesBusy] = useState(false);
   const [imageSet, setImageSet] = useState<ImageSet | null>(null);
   const [buildBusy, setBuildBusy] = useState(false);
-  const [template, setTemplate] = useState<TemplateChoice>("roofing");
+  const [template, setTemplate] = useState<TemplateChoice>("site");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 

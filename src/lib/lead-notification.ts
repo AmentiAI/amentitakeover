@@ -12,7 +12,7 @@ export async function notifyLead({
 }: {
   to: string | null;
   businessName: string;
-  industry: "roofing" | "electrical";
+  industry: string;
   lead: {
     name: string;
     phone: string;
@@ -23,7 +23,7 @@ export async function notifyLead({
 }): Promise<void> {
   if (!to) return;
 
-  const label = industry === "electrical" ? "dispatch request" : "quote request";
+  const label = /electric/i.test(industry) ? "dispatch request" : "quote request";
   const subject = `New ${label}: ${lead.name}${lead.need ? ` — ${lead.need}` : ""}`;
 
   const lines = [

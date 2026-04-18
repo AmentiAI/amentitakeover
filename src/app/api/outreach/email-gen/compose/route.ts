@@ -6,7 +6,7 @@ const Body = z.object({
   businessId: z.string(),
   subject: z.string().min(1).max(200),
   body: z.string().min(1).max(10_000),
-  template: z.enum(["roofing", "roofing2", "roofing3", "electrical"]).optional(),
+  template: z.literal("site").optional(),
 });
 
 export async function POST(req: NextRequest) {

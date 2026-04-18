@@ -50,31 +50,31 @@ function ensureScheme(s: string): string {
 }
 
 /**
+ * There's a single unified multi-page template now. The `TemplateChoice` type
+ * is kept so downstream tracking + outreach code doesn't change shape, but it
+ * always resolves to the `site` template.
+ */
+export type TemplateChoice = "site";
+
+export const TEMPLATE_CHOICES: { value: TemplateChoice; label: string; hint: string }[] = [
+  { value: "site", label: "Pro Multi-Page", hint: "Modern multi-page preview tailored to the scraped business" },
+];
+
+export function normalizeTemplateChoice(_raw: unknown): TemplateChoice {
+  return "site";
+}
+
+/**
  * Absolute URL for the generated template preview, keyed by the
  * scraped-business id. Optional `trackingToken` (typically the email-draft id)
  * is appended as a `/v/<token>` path segment so we can attribute opens back
  * to a specific outreach send.
  */
-export type TemplateChoice = "roofing" | "roofing2" | "roofing3" | "electrical";
-
-export const TEMPLATE_CHOICES: { value: TemplateChoice; label: string; hint: string }[] = [
-  { value: "roofing", label: "Classic", hint: "Clean card-based roofing layout" },
-  { value: "roofing2", label: "Editorial", hint: "Magazine-style long-form" },
-  { value: "roofing3", label: "Bold", hint: "Luxury-dark with oversized type" },
-  { value: "electrical", label: "Electrical", hint: "For electrical contractors" },
-];
-
-export function normalizeTemplateChoice(raw: unknown): TemplateChoice {
-  if (raw === "roofing2" || raw === "roofing3" || raw === "electrical") return raw;
-  return "roofing";
-}
-
 export function getTemplatePreviewUrl(
   scrapedBusinessId: string,
   opts?: { trackingToken?: string | null; template?: TemplateChoice },
 ): string {
-  const template = opts?.template ?? "roofing";
-  const base = `${getPreviewBaseUrl()}/p/${template}/${scrapedBusinessId}`;
+  const base = `${getPreviewBaseUrl()}/p/site/${scrapedBusinessId}`;
   const token = opts?.trackingToken?.trim();
   return token ? `${base}/v/${encodeURIComponent(token)}` : base;
 }
