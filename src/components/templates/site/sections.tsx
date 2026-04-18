@@ -5,7 +5,7 @@
  */
 
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Check, Mail, MapPin, Phone, Quote, ShieldCheck, Sparkles, Star } from "lucide-react";
+import { ArrowRight, BadgeCheck, Mail, MapPin, Phone, Quote, ShieldCheck, Sparkles, Star } from "lucide-react";
 import type { SiteData } from "@/lib/templates/site";
 
 export function Hero({ data }: { data: SiteData }) {
@@ -26,7 +26,7 @@ export function Hero({ data }: { data: SiteData }) {
         <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-950/55 to-transparent" />
       </div>
 
-      <div className="relative mx-auto max-w-7xl px-5 py-20 sm:px-6 md:py-28 lg:py-32">
+      <div className="relative mx-auto max-w-7xl px-5 py-20 sm:px-6 md:py-28 lg:py-36">
         <div className="max-w-3xl text-white">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.22em] backdrop-blur">
             <Sparkles className="h-3 w-3" />
@@ -55,17 +55,27 @@ export function Hero({ data }: { data: SiteData }) {
             </Link>
           </div>
 
-          {business.rating && (
-            <div className="mt-8 flex items-center gap-2 text-sm text-white/80">
-              <div className="flex items-center">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                ))}
+          <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3 text-[12.5px] text-white/80">
+            {business.rating ? (
+              <div className="inline-flex items-center gap-2">
+                <div className="flex items-center">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <span className="font-semibold text-white">{business.rating.toFixed(1)}/5</span>
+                {business.reviewsCount > 0 && (
+                  <span className="text-white/60">· {business.reviewsCount} reviews</span>
+                )}
               </div>
-              <span className="font-semibold">{business.rating.toFixed(1)}/5</span>
-              {business.reviewsCount > 0 && <span className="text-white/60">· {business.reviewsCount} reviews</span>}
-            </div>
-          )}
+            ) : null}
+            <span className="inline-flex items-center gap-1.5">
+              <ShieldCheck className="h-4 w-4" /> Licensed · Bonded · Insured
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <BadgeCheck className="h-4 w-4" /> Written warranty
+            </span>
+          </div>
         </div>
       </div>
     </section>
@@ -111,7 +121,7 @@ export function AboutPreview({ data }: { data: SiteData }) {
         <div className="flex flex-col justify-center">
           <div className="text-xs font-bold uppercase tracking-[0.22em] text-accent">About {business.name}</div>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            Built on referrals, not ads.
+            {data.headlines.about}
           </h2>
           <p className="mt-4 text-base leading-relaxed text-slate-600">{about.short}</p>
           <div className="mt-6 flex flex-wrap gap-3">
@@ -143,7 +153,7 @@ export function ServicesGrid({ data, compact = false }: { data: SiteData; compac
           <div>
             <div className="text-xs font-bold uppercase tracking-[0.22em] text-accent">What we do</div>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-              Full-service, done right.
+              {data.headlines.services}
             </h2>
           </div>
           {compact && (
@@ -158,19 +168,42 @@ export function ServicesGrid({ data, compact = false }: { data: SiteData; compac
 
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((s) => (
-            <div
+            <article
               key={s.title}
-              className="group relative flex flex-col rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-md"
+              className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-lg"
             >
-              <div
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-white"
-                style={{ background: "var(--site-accent)" }}
-              >
-                <Check className="h-5 w-5" />
+              <div className="relative aspect-[5/3] w-full overflow-hidden bg-slate-200">
+                {s.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={s.image}
+                    alt={s.title}
+                    className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: "var(--site-trust)" }}
+                    aria-hidden
+                  />
+                )}
+                <div
+                  className="absolute inset-x-0 bottom-0 h-1.5"
+                  style={{ background: "var(--site-accent)" }}
+                  aria-hidden
+                />
               </div>
-              <h3 className="mt-4 text-lg font-bold text-slate-900">{s.title}</h3>
-              <p className="mt-2 text-[14px] leading-relaxed text-slate-600">{s.body}</p>
-            </div>
+              <div className="flex flex-1 flex-col p-6">
+                <h3 className="text-lg font-bold tracking-tight text-slate-900">{s.title}</h3>
+                <p className="mt-2 flex-1 text-[14px] leading-relaxed text-slate-600">{s.body}</p>
+                <Link
+                  href={`/p/site/${data.slug}/contact`}
+                  className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-bold text-accent hover:underline"
+                >
+                  Get a quote <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </article>
           ))}
         </div>
       </div>
@@ -194,7 +227,7 @@ export function ServicesBannerStrip({ data }: { data: SiteData }) {
           <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-8">
             <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/75">Craft you can see</div>
             <h3 className="mt-2 max-w-lg text-2xl font-bold leading-snug tracking-tight sm:text-3xl">
-              Every job gets the same attention — start to finish.
+              {data.headlines.services}
             </h3>
           </div>
         </div>
@@ -210,7 +243,7 @@ export function ProcessSection({ data }: { data: SiteData }) {
         <div className="max-w-2xl">
           <div className="text-xs font-bold uppercase tracking-[0.22em] text-accent">How it works</div>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            Honest, simple process.
+            {data.headlines.process}
           </h2>
           <p className="mt-3 text-base leading-relaxed text-slate-600">
             No pressure. No expiring discounts. Here&apos;s what to expect from call one through warranty.
@@ -244,7 +277,7 @@ export function GalleryStrip({ data, compact = false }: { data: SiteData; compac
           <div>
             <div className="text-xs font-bold uppercase tracking-[0.22em] text-accent">Recent work</div>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-              Proof lives in the details.
+              {data.headlines.gallery}
             </h2>
           </div>
           {compact && (
@@ -279,8 +312,21 @@ export function Testimonials({ data }: { data: SiteData }) {
         <div className="max-w-2xl">
           <div className="text-xs font-bold uppercase tracking-[0.22em] text-accent">What customers say</div>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            Reviews that feel like referrals.
+            {data.headlines.testimonials}
           </h2>
+          {data.business.rating ? (
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[13px] font-semibold text-slate-700">
+              <div className="flex items-center">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                ))}
+              </div>
+              {data.business.rating.toFixed(1)}/5
+              {data.business.reviewsCount > 0 && (
+                <span className="text-slate-500">· {data.business.reviewsCount} Google reviews</span>
+              )}
+            </div>
+          ) : null}
         </div>
         <div className="mt-10 grid gap-5 md:grid-cols-3">
           {data.testimonials.map((t, i) => (
@@ -352,7 +398,7 @@ export function CTASection({ data }: { data: SiteData }) {
             Free estimate · no obligation
           </div>
           <h2 className="mt-5 text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
-            Let&apos;s get your project on the calendar.
+            {data.headlines.cta}
           </h2>
           <p className="mt-4 text-base leading-relaxed text-white/80 sm:text-lg">
             Same-week response. Written quotes. Real people on the phone.

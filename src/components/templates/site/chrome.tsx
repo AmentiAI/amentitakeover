@@ -9,9 +9,90 @@
  */
 
 import Link from "next/link";
-import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone, Twitter } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone, Twitter, Youtube } from "lucide-react";
 import type { SiteData } from "@/lib/templates/site";
 import { NavMenu } from "./nav-menu";
+
+type Socials = SiteData["socials"];
+
+function hasAnySocial(s: Socials): boolean {
+  return Boolean(s.instagram || s.facebook || s.twitter || s.linkedin || s.tiktok || s.youtube);
+}
+
+function TikTokIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M19.321 5.562a5.124 5.124 0 0 1-1.423-4.168 5.242 5.242 0 0 1-3.4 0l.006 13.71a3.235 3.235 0 1 1-3.235-3.235 3.184 3.184 0 0 1 .993.16V8.538a7.07 7.07 0 1 0 6.24 7.025V9.127a8.48 8.48 0 0 0 4.946 1.582V7.318a5.084 5.084 0 0 1-4.127-1.756Z" />
+    </svg>
+  );
+}
+
+export function SocialLinks({
+  socials,
+  variant = "light",
+  size = "sm",
+}: {
+  socials: Socials;
+  variant?: "light" | "dark";
+  size?: "sm" | "md";
+}) {
+  if (!hasAnySocial(socials)) return null;
+  const base =
+    variant === "light"
+      ? "text-slate-500 hover:text-slate-900"
+      : "text-white/70 hover:text-white";
+  const dim = size === "md" ? "h-9 w-9" : "h-8 w-8";
+  const icon = size === "md" ? "h-4 w-4" : "h-3.5 w-3.5";
+  const ring =
+    variant === "light"
+      ? "border border-slate-200 bg-white hover:bg-slate-50"
+      : "border border-white/10 bg-white/5 hover:bg-white/15";
+  return (
+    <div className="flex items-center gap-1.5">
+      {socials.instagram && (
+        <a href={socials.instagram} target="_blank" rel="noreferrer" aria-label="Instagram"
+          className={`grid ${dim} place-items-center rounded-full ${ring} ${base} transition`}>
+          <Instagram className={icon} />
+        </a>
+      )}
+      {socials.facebook && (
+        <a href={socials.facebook} target="_blank" rel="noreferrer" aria-label="Facebook"
+          className={`grid ${dim} place-items-center rounded-full ${ring} ${base} transition`}>
+          <Facebook className={icon} />
+        </a>
+      )}
+      {socials.twitter && (
+        <a href={socials.twitter} target="_blank" rel="noreferrer" aria-label="Twitter"
+          className={`grid ${dim} place-items-center rounded-full ${ring} ${base} transition`}>
+          <Twitter className={icon} />
+        </a>
+      )}
+      {socials.linkedin && (
+        <a href={socials.linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn"
+          className={`grid ${dim} place-items-center rounded-full ${ring} ${base} transition`}>
+          <Linkedin className={icon} />
+        </a>
+      )}
+      {socials.youtube && (
+        <a href={socials.youtube} target="_blank" rel="noreferrer" aria-label="YouTube"
+          className={`grid ${dim} place-items-center rounded-full ${ring} ${base} transition`}>
+          <Youtube className={icon} />
+        </a>
+      )}
+      {socials.tiktok && (
+        <a href={socials.tiktok} target="_blank" rel="noreferrer" aria-label="TikTok"
+          className={`grid ${dim} place-items-center rounded-full ${ring} ${base} transition`}>
+          <TikTokIcon className={icon} />
+        </a>
+      )}
+    </div>
+  );
+}
 
 export type SiteChromeProps = {
   data: SiteData;
@@ -59,7 +140,8 @@ function inlineTheme(p: SiteData["palette"]): string {
 function TopBar({ data }: { data: SiteData }) {
   const { phone, email, hoursLine, city, state } = data.business;
   const loc = [city, state].filter(Boolean).join(", ");
-  if (!phone && !email && !loc) return null;
+  const showSocials = hasAnySocial(data.socials);
+  if (!phone && !email && !loc && !showSocials) return null;
   return (
     <div className="hidden border-b border-slate-200 bg-slate-50 text-[11.5px] text-slate-600 md:block">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2">
@@ -82,6 +164,7 @@ function TopBar({ data }: { data: SiteData }) {
               <Phone className="h-3.5 w-3.5" /> {phone}
             </a>
           )}
+          {showSocials && <SocialLinks socials={data.socials} variant="light" size="sm" />}
         </div>
       </div>
     </div>
@@ -143,6 +226,7 @@ function SiteHeader({ data, active }: { data: SiteData; active: SiteChromeProps[
             slug={slug}
             active={active}
             phone={business.phone}
+            socials={data.socials}
           />
         </div>
       </div>
@@ -207,20 +291,9 @@ function SiteFooter({ data }: { data: SiteData }) {
             </div>
           </div>
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/70">{business.tagline}</p>
-          {(socials.instagram || socials.facebook || socials.twitter || socials.linkedin) && (
-            <div className="mt-5 flex items-center gap-2">
-              {socials.instagram && (
-                <SocialIcon href={socials.instagram} label="Instagram"><Instagram className="h-4 w-4" /></SocialIcon>
-              )}
-              {socials.facebook && (
-                <SocialIcon href={socials.facebook} label="Facebook"><Facebook className="h-4 w-4" /></SocialIcon>
-              )}
-              {socials.twitter && (
-                <SocialIcon href={socials.twitter} label="Twitter"><Twitter className="h-4 w-4" /></SocialIcon>
-              )}
-              {socials.linkedin && (
-                <SocialIcon href={socials.linkedin} label="LinkedIn"><Linkedin className="h-4 w-4" /></SocialIcon>
-              )}
+          {hasAnySocial(socials) && (
+            <div className="mt-5">
+              <SocialLinks socials={socials} variant="dark" size="md" />
             </div>
           )}
         </div>
@@ -268,20 +341,6 @@ function SiteFooter({ data }: { data: SiteData }) {
         </div>
       </div>
     </footer>
-  );
-}
-
-function SocialIcon({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      aria-label={label}
-      className="grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-white/5 text-white/80 transition hover:bg-white/15 hover:text-white"
-    >
-      {children}
-    </a>
   );
 }
 

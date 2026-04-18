@@ -24,6 +24,7 @@ export type SiteData = {
     reviewsCount: number;
     logoUrl: string | null;
     hoursLine: string;
+    trade: string;
   };
   hero: {
     title: string;
@@ -36,7 +37,15 @@ export type SiteData = {
     services: string | null;
     cta: string | null;
   };
-  services: { title: string; body: string }[];
+  headlines: {
+    about: string;
+    services: string;
+    process: string;
+    gallery: string;
+    testimonials: string;
+    cta: string;
+  };
+  services: { title: string; body: string; image: string | null }[];
   valueProps: { label: string; body: string }[];
   process: { step: string; title: string; body: string }[];
   gallery: { src: string; alt: string }[];
@@ -98,8 +107,11 @@ export type GeneratedImagesIn = {
   aboutBanner: { src: string } | null;
   servicesBanner: { src: string } | null;
   ctaBanner: { src: string } | null;
+  serviceCards: { src: string }[];
   gallery: { src: string }[];
 } | null;
+
+type HeadingEntry = { tag: string; text: string };
 
 export function buildSiteData(
   b: ScrapedIn,
@@ -108,6 +120,7 @@ export function buildSiteData(
 ): SiteData {
   const images = parseImages(site?.images);
   const logoUrl = images.find(looksLikeLogo)?.src ?? null;
+  const headings = parseHeadings(site?.headings);
 
   const hero = generated?.hero ?? null;
   const gallery: { src: string; alt: string }[] = [];
@@ -122,7 +135,7 @@ export function buildSiteData(
 
   const palette = pickBrandPalette(site?.palette ?? []) ?? FALLBACK_PALETTE;
 
-  const trade = inferTradeLabel(b);
+  const trade = inferTradeLabel({ category: b.category, industry: b.industry });
   const city = b.city ?? null;
   const loc = [b.city, b.state].filter(Boolean).join(", ");
   const tagline = deriveTagline(b, site, trade);
@@ -130,6 +143,20 @@ export function buildSiteData(
   const long = deriveLongAbout(b, site, trade);
   const heroTitle = deriveHeroTitle(b, site, trade);
   const heroSubtitle = deriveHeroSubtitle(b, site, trade);
+
+  const serviceTitles = inferServiceTitles({
+    trade,
+    name: b.name,
+    headings: headings.map((h) => h.text),
+  });
+  const serviceBodies = buildServiceBodies(trade, serviceTitles, b);
+  const services = serviceTitles.map((title, i) => ({
+    title,
+    body: serviceBodies[i] ?? defaultServiceBody(title, trade, b),
+    image: generated?.serviceCards?.[i]?.src ?? null,
+  }));
+
+  const headlines = deriveHeadlines({ headings, trade });
 
   return {
     slug: b.id,
@@ -147,6 +174,7 @@ export function buildSiteData(
       reviewsCount: b.reviewsCount,
       logoUrl,
       hoursLine: "Mon–Sat · 8am – 6pm",
+      trade,
     },
     hero: {
       eyebrow: loc ? `Serving ${loc}` : `Local ${trade}`,
@@ -159,7 +187,8 @@ export function buildSiteData(
       services: generated?.servicesBanner?.src ?? null,
       cta: generated?.ctaBanner?.src ?? null,
     },
-    services: buildServices(trade, b),
+    headlines,
+    services,
     valueProps: buildValueProps(b),
     process: DEFAULT_PROCESS,
     gallery,
@@ -222,7 +251,21 @@ function parseImages(raw: unknown): { src: string; alt: string }[] {
   return out;
 }
 
-function inferTradeLabel(b: ScrapedIn): string {
+function parseHeadings(raw: unknown): HeadingEntry[] {
+  if (!Array.isArray(raw)) return [];
+  const out: HeadingEntry[] = [];
+  for (const x of raw) {
+    if (!x || typeof x !== "object") continue;
+    const rec = x as { tag?: unknown; text?: unknown };
+    const tag = typeof rec.tag === "string" ? rec.tag.toLowerCase() : "";
+    const text = typeof rec.text === "string" ? rec.text.trim() : "";
+    if (!text) continue;
+    out.push({ tag: /^h[1-6]$/.test(tag) ? tag : "h2", text });
+  }
+  return out;
+}
+
+export function inferTradeLabel(b: { category: string | null; industry: string | null }): string {
   const raw = (b.category ?? b.industry ?? "").toLowerCase();
   if (/roof/.test(raw)) return "roofing contractor";
   if (/plumb/.test(raw)) return "plumber";
@@ -238,6 +281,102 @@ function inferTradeLabel(b: ScrapedIn): string {
   if (/locksmith/.test(raw)) return "locksmith";
   if (raw) return raw;
   return "local business";
+}
+
+/**
+ * Detect real service names from scraped headings, falling back to a canonical
+ * trade list when the scraped page doesn't have enough signal.
+ */
+export function inferServiceTitles(args: {
+  trade: string;
+  name: string;
+  headings: string[];
+}): string[] {
+  const detected = extractServiceHeadings(args.headings);
+  if (detected.length >= 4) return detected.slice(0, 6);
+  const canned = cannedServiceTitles(args.trade);
+  const merged: string[] = [];
+  const seen = new Set<string>();
+  for (const t of [...detected, ...canned]) {
+    const k = t.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    merged.push(t);
+    if (merged.length >= 6) break;
+  }
+  return merged;
+}
+
+const NON_SERVICE_PATTERNS = [
+  /^(contact|contact us|about|about us|home|our team|meet|our story|faq|faqs|frequently|testimonial|review|blog|news|press|careers?|privacy|terms|cart|shop|menu)\b/i,
+  /^(why|how|what|when|where)\s/i,
+  /\?$/,
+  /welcome/i,
+  /^get\b|^call\b|^book\b|^schedule\b|^request\b/i,
+  /\d{3,}/, // phone numbers, zip codes
+  /@/,
+  /^(our services|services|what we do|products)$/i,
+];
+
+function extractServiceHeadings(texts: string[]): string[] {
+  const candidates: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of texts) {
+    const text = cleanHeading(raw);
+    if (!text) continue;
+    if (text.length < 3 || text.length > 48) continue;
+    if (text.split(/\s+/).length > 6) continue;
+    if (NON_SERVICE_PATTERNS.some((r) => r.test(text))) continue;
+    if (/^[a-z]/.test(text)) continue;
+    const k = text.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    candidates.push(text);
+    if (candidates.length >= 8) break;
+  }
+  return candidates;
+}
+
+function cleanHeading(s: string): string {
+  return s.replace(/\s+/g, " ").replace(/[•·–—|]+\s*$/g, "").trim();
+}
+
+function deriveHeadlines({
+  headings,
+  trade,
+}: {
+  headings: HeadingEntry[];
+  trade: string;
+}): SiteData["headlines"] {
+  const texts = headings.map((h) => h.text);
+  const findByKeyword = (patterns: RegExp[]): string | null => {
+    for (const t of texts) {
+      const c = cleanHeading(t);
+      if (c.length < 8 || c.length > 80) continue;
+      if (patterns.some((p) => p.test(c))) return c;
+    }
+    return null;
+  };
+  return {
+    about:
+      findByKeyword([/^about\b/i, /who we are/i, /our story/i, /why\s+(choose|us)/i]) ||
+      `Built on referrals, not ads.`,
+    services:
+      findByKeyword([/^our services/i, /^services we/i, /what we do/i, /what we offer/i]) ||
+      `Full-service ${trade}, done right.`,
+    process:
+      findByKeyword([/how it works/i, /our process/i, /the process/i]) ||
+      "Honest, simple process.",
+    gallery:
+      findByKeyword([/our work/i, /recent projects/i, /gallery/i, /portfolio/i, /case studies/i]) ||
+      "Proof lives in the details.",
+    testimonials:
+      findByKeyword([/what.*customers say/i, /reviews/i, /testimonials/i]) ||
+      "Reviews that feel like referrals.",
+    cta:
+      findByKeyword([/get.*(estimate|quote|started)/i, /ready to/i, /let'?s (work|talk|build)/i]) ||
+      "Let's get your project on the calendar.",
+  };
 }
 
 function deriveTagline(b: ScrapedIn, site: SiteIn, trade: string): string {
@@ -288,115 +427,132 @@ function deriveHeroSubtitle(b: ScrapedIn, site: SiteIn, trade: string): string {
     : `${rating}${reviews} ${trade}. Free estimates, written quotes, warrantied work.`;
 }
 
-function buildServices(trade: string, b: ScrapedIn): SiteData["services"] {
-  if (/roof/.test(trade)) {
-    return [
-      { title: "Residential Roofing", body: "Asphalt shingle, metal, and tile installations built to last decades — not until the next storm." },
-      { title: "Commercial Roofing", body: "TPO, EPDM, and modified bitumen for flat and low-slope roofs with full warranty coverage." },
-      { title: "Storm Damage", body: "Free inspection and insurance claim support after hail, wind, and tree damage. We work directly with your adjuster." },
-      { title: "Repairs & Leaks", body: "Small problems caught early stay small. Same-week diagnostic + fix for most leaks." },
-      { title: "Gutters & Downspouts", body: "Seamless aluminum, sized to your roof. Guards available." },
-      { title: "Free Roof Inspection", body: "Written report, photos, and honest options — without a pressure pitch." },
-    ];
-  }
-  if (/plumb/.test(trade)) {
-    return [
-      { title: "Emergency Service", body: "Burst pipes, major leaks, and clogged mains — 24/7 response across the region." },
-      { title: "Water Heaters", body: "Tankless and conventional installs, repair, and annual service plans." },
-      { title: "Drain & Sewer", body: "Camera inspection, hydro jetting, and trenchless repair when it's time." },
-      { title: "Remodels & New Builds", body: "Rough-in through finish. Permitted, inspected, and tidy." },
-      { title: "Fixtures & Faucets", body: "Swap-outs, upgrades, and new installs — brands we trust." },
-      { title: "Maintenance Plans", body: "Annual check-ins to catch problems before they flood your kitchen." },
-    ];
-  }
-  if (/hvac|heating|cool/.test(trade)) {
-    return [
-      { title: "AC Installation", body: "Right-sized systems, efficient models, quieter operation." },
-      { title: "Heating & Furnaces", body: "High-efficiency furnaces, boilers, and heat pumps with real warranty." },
-      { title: "Repair & Diagnostics", body: "Same-day service calls most of the year, 24/7 during peaks." },
-      { title: "Indoor Air Quality", body: "Filtration, humidification, and duct cleaning that actually improves the air." },
-      { title: "Maintenance Agreements", body: "Two visits a year, priority scheduling, discounts on parts." },
-      { title: "Commercial Service", body: "Rooftop units, chillers, and full building systems supported." },
-    ];
-  }
-  if (/electric/.test(trade)) {
-    return [
-      { title: "Panel Upgrades", body: "200A service upgrades, sub-panels, and modern breakers." },
-      { title: "EV Chargers", body: "Level 2 home charger installs with permit and inspection." },
-      { title: "Lighting & Outlets", body: "Recessed cans, under-cabinet, and new circuits — clean finish work." },
-      { title: "Whole-Home Rewires", body: "Old knob-and-tube or aluminum replaced safely, one zone at a time." },
-      { title: "Emergency Service", body: "Power loss, sparking, or burning smell? Same-day response." },
-      { title: "Commercial Work", body: "Tenant improvements, panel swaps, and controls." },
-    ];
-  }
-  if (/landscap|lawn|garden/.test(trade)) {
-    return [
-      { title: "Lawn Care", body: "Weekly mow, edge, trim, and blow with a consistent crew." },
-      { title: "Design & Install", body: "Full yard design, plantings, hardscape, and lighting." },
-      { title: "Hardscape", body: "Paver patios, walkways, retaining walls — built to last." },
-      { title: "Irrigation", body: "New installs, repairs, and smart-controller upgrades." },
-      { title: "Seasonal Clean-up", body: "Spring and fall clean-ups that leave the yard ready." },
-      { title: "Landscape Lighting", body: "Low-voltage LED design and install." },
-    ];
-  }
-  if (/paint/.test(trade)) {
-    return [
-      { title: "Interior Painting", body: "Prep, prime, two coats. Clean lines, tidy jobsite." },
-      { title: "Exterior Painting", body: "Wash, scrape, prime, and finish-coat with manufacturer-warrantied paint." },
-      { title: "Cabinet Refinishing", body: "Hand-sanded, sprayed finishes that look factory-new." },
-      { title: "Drywall Repair", body: "Holes, cracks, and bad patches fixed invisibly." },
-      { title: "Stain & Seal", body: "Decks, fences, and beams cleaned and sealed." },
-      { title: "Color Consults", body: "On-site color matching — no guessing from a card." },
-    ];
-  }
-  if (/salon|barber|hair/.test(trade)) {
-    return [
-      { title: "Cut & Style", body: "Precision cuts, blowouts, and finishing that hold." },
-      { title: "Color", body: "Balayage, highlights, glosses, and color correction." },
-      { title: "Extensions", body: "Hand-tied, tape-in, and keratin bond installs and maintenance." },
-      { title: "Treatments", body: "Olaplex, gloss, and scalp treatments that actually work." },
-      { title: "Weddings & Events", body: "Trials, day-of services, and on-site options." },
-      { title: "Men's Grooming", body: "Tailored cuts, beard shaping, and straight-razor shaves." },
-    ];
-  }
-  if (/clean/.test(trade)) {
-    return [
-      { title: "Recurring Clean", body: "Weekly, bi-weekly, or monthly — same crew, same standard." },
-      { title: "Deep Clean", body: "Full reset of the home, top to bottom." },
-      { title: "Move-in / Move-out", body: "Empty-home deep clean to get a deposit back — or start fresh." },
-      { title: "Post-construction", body: "Dust, debris, and fingerprint removal after renovations." },
-      { title: "Commercial Janitorial", body: "Offices, medical, and retail — after hours or on schedule." },
-      { title: "Green Cleaning", body: "Kid- and pet-safe products available on request." },
-    ];
-  }
-  if (/restaurant|cafe|food/.test(trade)) {
-    return [
-      { title: "Dine-in", body: "Seasonal menu in a warm, welcoming room." },
-      { title: "Takeout", body: "Fast, clean packaging — same quality as the dining room." },
-      { title: "Catering", body: "Events, offices, and private parties." },
-      { title: "Private Events", body: "Full or partial buyouts for celebrations." },
-      { title: "Gift Cards", body: "Physical and digital — a good-food kind of gift." },
-      { title: "Seasonal Specials", body: "Rotating features tied to what's in season." },
-    ];
-  }
-  if (/dent/.test(trade)) {
-    return [
-      { title: "Preventive Care", body: "Cleanings, exams, and x-rays — the foundation of every mouth." },
-      { title: "Cosmetic Dentistry", body: "Veneers, bonding, and whitening that look natural." },
-      { title: "Restorative", body: "Fillings, crowns, and bridges that hold up." },
-      { title: "Orthodontics", body: "Invisalign and clear aligners for adults and teens." },
-      { title: "Implants", body: "Single-tooth through full-arch — start-to-finish in one practice." },
-      { title: "Emergency Care", body: "Same-day appointments for pain and breakage." },
-    ];
-  }
+function cannedServiceTitles(trade: string): string[] {
+  if (/roof/.test(trade)) return ["Residential Roofing", "Commercial Roofing", "Storm Damage", "Repairs & Leaks", "Gutters & Downspouts", "Free Roof Inspection"];
+  if (/plumb/.test(trade)) return ["Emergency Service", "Water Heaters", "Drain & Sewer", "Remodels & New Builds", "Fixtures & Faucets", "Maintenance Plans"];
+  if (/hvac|heating|cool/.test(trade)) return ["AC Installation", "Heating & Furnaces", "Repair & Diagnostics", "Indoor Air Quality", "Maintenance Agreements", "Commercial Service"];
+  if (/electric/.test(trade)) return ["Panel Upgrades", "EV Chargers", "Lighting & Outlets", "Whole-Home Rewires", "Emergency Service", "Commercial Work"];
+  if (/landscap|lawn|garden/.test(trade)) return ["Lawn Care", "Design & Install", "Hardscape", "Irrigation", "Seasonal Clean-up", "Landscape Lighting"];
+  if (/paint/.test(trade)) return ["Interior Painting", "Exterior Painting", "Cabinet Refinishing", "Drywall Repair", "Stain & Seal", "Color Consults"];
+  if (/salon|barber|hair/.test(trade)) return ["Cut & Style", "Color", "Extensions", "Treatments", "Weddings & Events", "Men's Grooming"];
+  if (/clean/.test(trade)) return ["Recurring Clean", "Deep Clean", "Move-in / Move-out", "Post-construction", "Commercial Janitorial", "Green Cleaning"];
+  if (/restaurant|cafe|food/.test(trade)) return ["Dine-in", "Takeout", "Catering", "Private Events", "Gift Cards", "Seasonal Specials"];
+  if (/dent/.test(trade)) return ["Preventive Care", "Cosmetic Dentistry", "Restorative", "Orthodontics", "Implants", "Emergency Care"];
+  if (/auto|mechanic|tire/.test(trade)) return ["Oil & Maintenance", "Brakes", "Tires & Alignment", "Diagnostics", "A/C & Heating", "Detailing"];
   return [
-    { title: `Our Core ${capitalize(trade)} Service`, body: `${b.name}'s flagship offering — what we do better than anyone else in the region.` },
-    { title: "Consultations & Estimates", body: "Free, no-pressure, written. You get our honest read, not a sales pitch." },
-    { title: "Project Management", body: "One point of contact from start to finish — no getting passed around." },
-    { title: "Maintenance & Follow-up", body: "We stand behind the work and return calls after the job is done." },
-    { title: "Emergency Response", body: "When it can't wait, we show up fast." },
-    { title: "Custom Work", body: "If it's in our lane and we can do it right, we'll quote it." },
+    `Core ${capitalize(trade)} Service`,
+    "Consultations & Estimates",
+    "Project Management",
+    "Maintenance & Follow-up",
+    "Emergency Response",
+    "Custom Work",
   ];
+}
+
+function buildServiceBodies(
+  trade: string,
+  titles: string[],
+  b: ScrapedIn,
+): string[] {
+  const lookup = cannedServiceBodies(trade);
+  return titles.map((t) => lookup[t.toLowerCase()] ?? defaultServiceBody(t, trade, b));
+}
+
+function cannedServiceBodies(trade: string): Record<string, string> {
+  if (/roof/.test(trade)) return {
+    "residential roofing": "Asphalt shingle, metal, and tile installations built to last decades — not until the next storm.",
+    "commercial roofing": "TPO, EPDM, and modified bitumen for flat and low-slope roofs with full warranty coverage.",
+    "storm damage": "Free inspection and insurance claim support after hail, wind, and tree damage. We work directly with your adjuster.",
+    "repairs & leaks": "Small problems caught early stay small. Same-week diagnostic + fix for most leaks.",
+    "gutters & downspouts": "Seamless aluminum, sized to your roof. Guards available.",
+    "free roof inspection": "Written report, photos, and honest options — without a pressure pitch.",
+  };
+  if (/plumb/.test(trade)) return {
+    "emergency service": "Burst pipes, major leaks, and clogged mains — 24/7 response across the region.",
+    "water heaters": "Tankless and conventional installs, repair, and annual service plans.",
+    "drain & sewer": "Camera inspection, hydro jetting, and trenchless repair when it's time.",
+    "remodels & new builds": "Rough-in through finish. Permitted, inspected, and tidy.",
+    "fixtures & faucets": "Swap-outs, upgrades, and new installs — brands we trust.",
+    "maintenance plans": "Annual check-ins to catch problems before they flood your kitchen.",
+  };
+  if (/hvac|heating|cool/.test(trade)) return {
+    "ac installation": "Right-sized systems, efficient models, quieter operation.",
+    "heating & furnaces": "High-efficiency furnaces, boilers, and heat pumps with real warranty.",
+    "repair & diagnostics": "Same-day service calls most of the year, 24/7 during peaks.",
+    "indoor air quality": "Filtration, humidification, and duct cleaning that actually improves the air.",
+    "maintenance agreements": "Two visits a year, priority scheduling, discounts on parts.",
+    "commercial service": "Rooftop units, chillers, and full building systems supported.",
+  };
+  if (/electric/.test(trade)) return {
+    "panel upgrades": "200A service upgrades, sub-panels, and modern breakers.",
+    "ev chargers": "Level 2 home charger installs with permit and inspection.",
+    "lighting & outlets": "Recessed cans, under-cabinet, and new circuits — clean finish work.",
+    "whole-home rewires": "Old knob-and-tube or aluminum replaced safely, one zone at a time.",
+    "emergency service": "Power loss, sparking, or burning smell? Same-day response.",
+    "commercial work": "Tenant improvements, panel swaps, and controls.",
+  };
+  if (/landscap|lawn|garden/.test(trade)) return {
+    "lawn care": "Weekly mow, edge, trim, and blow with a consistent crew.",
+    "design & install": "Full yard design, plantings, hardscape, and lighting.",
+    hardscape: "Paver patios, walkways, retaining walls — built to last.",
+    irrigation: "New installs, repairs, and smart-controller upgrades.",
+    "seasonal clean-up": "Spring and fall clean-ups that leave the yard ready.",
+    "landscape lighting": "Low-voltage LED design and install.",
+  };
+  if (/paint/.test(trade)) return {
+    "interior painting": "Prep, prime, two coats. Clean lines, tidy jobsite.",
+    "exterior painting": "Wash, scrape, prime, and finish-coat with manufacturer-warrantied paint.",
+    "cabinet refinishing": "Hand-sanded, sprayed finishes that look factory-new.",
+    "drywall repair": "Holes, cracks, and bad patches fixed invisibly.",
+    "stain & seal": "Decks, fences, and beams cleaned and sealed.",
+    "color consults": "On-site color matching — no guessing from a card.",
+  };
+  if (/salon|barber|hair/.test(trade)) return {
+    "cut & style": "Precision cuts, blowouts, and finishing that hold.",
+    color: "Balayage, highlights, glosses, and color correction.",
+    extensions: "Hand-tied, tape-in, and keratin bond installs and maintenance.",
+    treatments: "Olaplex, gloss, and scalp treatments that actually work.",
+    "weddings & events": "Trials, day-of services, and on-site options.",
+    "men's grooming": "Tailored cuts, beard shaping, and straight-razor shaves.",
+  };
+  if (/clean/.test(trade)) return {
+    "recurring clean": "Weekly, bi-weekly, or monthly — same crew, same standard.",
+    "deep clean": "Full reset of the home, top to bottom.",
+    "move-in / move-out": "Empty-home deep clean to get a deposit back — or start fresh.",
+    "post-construction": "Dust, debris, and fingerprint removal after renovations.",
+    "commercial janitorial": "Offices, medical, and retail — after hours or on schedule.",
+    "green cleaning": "Kid- and pet-safe products available on request.",
+  };
+  if (/restaurant|cafe|food/.test(trade)) return {
+    "dine-in": "Seasonal menu in a warm, welcoming room.",
+    takeout: "Fast, clean packaging — same quality as the dining room.",
+    catering: "Events, offices, and private parties.",
+    "private events": "Full or partial buyouts for celebrations.",
+    "gift cards": "Physical and digital — a good-food kind of gift.",
+    "seasonal specials": "Rotating features tied to what's in season.",
+  };
+  if (/dent/.test(trade)) return {
+    "preventive care": "Cleanings, exams, and x-rays — the foundation of every mouth.",
+    "cosmetic dentistry": "Veneers, bonding, and whitening that look natural.",
+    restorative: "Fillings, crowns, and bridges that hold up.",
+    orthodontics: "Invisalign and clear aligners for adults and teens.",
+    implants: "Single-tooth through full-arch — start-to-finish in one practice.",
+    "emergency care": "Same-day appointments for pain and breakage.",
+  };
+  return {};
+}
+
+function defaultServiceBody(title: string, trade: string, b: ScrapedIn): string {
+  const lower = title.toLowerCase();
+  if (/emergency|24|hour|urgent/.test(lower))
+    return `When it can't wait, ${b.name} responds fast — same day for most of the region.`;
+  if (/consult|quote|estimate|inspect/.test(lower))
+    return "Free, no-pressure, written. You get our honest read, not a sales pitch.";
+  if (/warranty|maintenance|follow/.test(lower))
+    return "We stand behind the work and return calls after the job is done.";
+  if (/custom|special/.test(lower))
+    return `If it's in our lane and we can do it right, we'll quote it.`;
+  return `Professional ${title.toLowerCase()} from ${b.name} — clean process, clear pricing, ${trade} expertise you can count on.`;
 }
 
 function buildValueProps(b: ScrapedIn): SiteData["valueProps"] {

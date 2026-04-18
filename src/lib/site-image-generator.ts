@@ -1,16 +1,19 @@
 import { prisma } from "@/lib/db";
 import { buildImageBrief, type BusinessContext } from "@/lib/image-prompt";
 import { generateImage, ImageModerationError, type ImageQuality } from "@/lib/openai-image";
+import { inferServiceTitles, inferTradeLabel } from "@/lib/templates/site";
 
 /**
  * Generate a matched set of mockup-site images for a scraped business.
- * Produces one hero, three section banners, and four gallery squares — 8
- * images total so the template has distinct art for each section instead
- * of reusing one gallery everywhere.
+ * Produces:
+ *   - 1 hero (landscape)
+ *   - 3 section banners (about / services / cta, landscape)
+ *   - 6 service-card images (one per service, square)
+ *   - 6 gallery images (square)
+ * = 16 images total, all matched visually and tied to the business's real
+ * scraped services + page content.
  *
- * Persists raw PNG bytes to GeneratedImage rows keyed by purpose.
- * Idempotent: if the business already has generated images and `force` is
- * not set, returns the existing set untouched.
+ * Idempotent unless `force` is set.
  */
 
 export type SiteImagePurpose =
@@ -18,6 +21,7 @@ export type SiteImagePurpose =
   | "banner-about"
   | "banner-services"
   | "banner-cta"
+  | "service-card"
   | "gallery";
 
 export type SiteImageSet = {
@@ -25,22 +29,26 @@ export type SiteImageSet = {
   aboutBanner: { id: string; src: string } | null;
   servicesBanner: { id: string; src: string } | null;
   ctaBanner: { id: string; src: string } | null;
+  serviceCards: { id: string; src: string }[];
   gallery: { id: string; src: string }[];
 };
 
-const DEFAULT_GALLERY_COUNT = 4;
+const DEFAULT_GALLERY_COUNT = 6;
+const DEFAULT_SERVICE_CARD_COUNT = 6;
 
 export async function generateSiteImages(
   scrapedBusinessId: string,
   opts?: { force?: boolean; quality?: ImageQuality; galleryCount?: number },
 ): Promise<SiteImageSet> {
   const force = opts?.force ?? false;
-  const quality: ImageQuality = opts?.quality ?? "medium";
+  const quality: ImageQuality = opts?.quality ?? "high";
   const galleryCount = opts?.galleryCount ?? DEFAULT_GALLERY_COUNT;
 
   if (!force) {
     const existing = await getSiteImageSet(scrapedBusinessId);
-    if (existing.hero || existing.gallery.length > 0) return existing;
+    if (existing.hero || existing.gallery.length > 0 || existing.serviceCards.length > 0) {
+      return existing;
+    }
   } else {
     await prisma.generatedImage.deleteMany({ where: { scrapedBusinessId } });
   }
@@ -55,10 +63,10 @@ export async function generateSiteImages(
   const brief = await buildImageBrief(ctx);
   const failures: { prompt: string; error: string }[] = [];
 
-  // Hero — landscape flagship
-  const heroRow = await persistIfGenerated(scrapedBusinessId, "hero", 0, brief.heroPrompt, "1536x1024", quality, failures);
+  const heroRow = await persistIfGenerated(
+    scrapedBusinessId, "hero", 0, brief.heroPrompt, "1536x1024", quality, failures,
+  );
 
-  // Three section banners — all landscape, different narrative
   const banners: { purpose: SiteImagePurpose; prompt: string }[] = [
     { purpose: "banner-about", prompt: brief.aboutBannerPrompt },
     { purpose: "banner-services", prompt: brief.servicesBannerPrompt },
@@ -67,15 +75,27 @@ export async function generateSiteImages(
   const bannerRows: Partial<Record<SiteImagePurpose, { id: string }>> = {};
   for (let i = 0; i < banners.length; i++) {
     const b = banners[i];
-    const row = await persistIfGenerated(scrapedBusinessId, b.purpose, i, b.prompt, "1536x1024", quality, failures);
+    const row = await persistIfGenerated(
+      scrapedBusinessId, b.purpose, i, b.prompt, "1536x1024", quality, failures,
+    );
     if (row) bannerRows[b.purpose] = row;
   }
 
-  // Gallery — square process/detail shots
+  const serviceCardRows: { id: string }[] = [];
+  const serviceCardPrompts = brief.serviceCardPrompts.slice(0, DEFAULT_SERVICE_CARD_COUNT);
+  for (let i = 0; i < serviceCardPrompts.length; i++) {
+    const row = await persistIfGenerated(
+      scrapedBusinessId, "service-card", i, serviceCardPrompts[i], "1024x1024", quality, failures,
+    );
+    if (row) serviceCardRows.push(row);
+  }
+
   const galleryRows: { id: string }[] = [];
-  const prompts = brief.galleryPrompts.slice(0, galleryCount);
-  for (let i = 0; i < prompts.length; i++) {
-    const row = await persistIfGenerated(scrapedBusinessId, "gallery", i, prompts[i], "1024x1024", quality, failures);
+  const galleryPrompts = brief.galleryPrompts.slice(0, galleryCount);
+  for (let i = 0; i < galleryPrompts.length; i++) {
+    const row = await persistIfGenerated(
+      scrapedBusinessId, "gallery", i, galleryPrompts[i], "1024x1024", quality, failures,
+    );
     if (row) galleryRows.push(row);
   }
 
@@ -87,6 +107,7 @@ export async function generateSiteImages(
         scrapedBusinessId,
         heroGenerated: Boolean(heroRow),
         bannersGenerated: Object.keys(bannerRows).length,
+        serviceCardsGenerated: serviceCardRows.length,
         galleryGenerated: galleryRows.length,
         styleDirection: brief.styleDirection,
         failures: failures.slice(0, 5),
@@ -99,6 +120,7 @@ export async function generateSiteImages(
     aboutBanner: rowToImg(bannerRows["banner-about"]),
     servicesBanner: rowToImg(bannerRows["banner-services"]),
     ctaBanner: rowToImg(bannerRows["banner-cta"]),
+    serviceCards: serviceCardRows.map((r) => ({ id: r.id, src: `/api/generated-image/${r.id}` })),
     gallery: galleryRows.map((r) => ({ id: r.id, src: `/api/generated-image/${r.id}` })),
   };
 }
@@ -115,12 +137,14 @@ export async function getSiteImageSet(
   const aboutBanner = rows.find((r) => r.purpose === "banner-about");
   const servicesBanner = rows.find((r) => r.purpose === "banner-services");
   const ctaBanner = rows.find((r) => r.purpose === "banner-cta");
+  const serviceCards = rows.filter((r) => r.purpose === "service-card");
   const gallery = rows.filter((r) => r.purpose === "gallery");
   return {
     hero: rowToImg(hero),
     aboutBanner: rowToImg(aboutBanner),
     servicesBanner: rowToImg(servicesBanner),
     ctaBanner: rowToImg(ctaBanner),
+    serviceCards: serviceCards.map((g) => ({ id: g.id, src: `/api/generated-image/${g.id}` })),
     gallery: gallery.map((g) => ({ id: g.id, src: `/api/generated-image/${g.id}` })),
   };
 }
@@ -167,6 +191,7 @@ function buildContext(
       description: string | null;
       headings: unknown;
       palette: string[];
+      textContent: string | null;
     } | null;
   },
 ): BusinessContext {
@@ -180,6 +205,15 @@ function buildContext(
       }
     }
   }
+  const trade = inferTradeLabel({
+    category: business.category,
+    industry: business.industry,
+  });
+  const serviceTitles = inferServiceTitles({
+    trade,
+    name: business.name,
+    headings: headingTexts,
+  }).slice(0, 6);
   return {
     name: business.name,
     category: business.category,
@@ -189,6 +223,8 @@ function buildContext(
     description: business.site?.description ?? null,
     headings: headingTexts,
     palette: business.site?.palette ?? [],
+    textContent: business.site?.textContent ?? null,
+    serviceTitles,
   };
 }
 
@@ -214,7 +250,7 @@ async function safeGenerate(
       }
     }
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("[site-image-generator] gpt-image-1 error:", msg);
+    console.error("[site-image-generator] image gen error:", msg);
     failures.push({ prompt: opts.prompt.slice(0, 80), error: msg.slice(0, 200) });
     return null;
   }

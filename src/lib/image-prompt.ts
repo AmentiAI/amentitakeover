@@ -3,12 +3,13 @@ import { getOpenAI, callOpenAI } from "@/lib/openai";
 /**
  * Build an image-generation brief from scraped business context.
  *
- * A site needs distinct art for each section, not one gallery everywhere.
+ * A site needs distinct art for each section and for every service card.
  * This brief produces prompts for:
  *   - 1 landscape hero (home page)
  *   - 3 landscape section banners (about, services, contact/CTA)
- *   - 4 square gallery images (work detail shots)
- * = 8 unique visuals per site.
+ *   - 6 square service-card images (one per service, matched by title)
+ *   - 6 square gallery images (work detail shots)
+ * = 16 unique visuals per site.
  */
 
 export type BusinessContext = {
@@ -20,6 +21,8 @@ export type BusinessContext = {
   description: string | null;
   headings: string[];
   palette: string[];
+  textContent: string | null;
+  serviceTitles: string[];
 };
 
 export type ImageBrief = {
@@ -28,66 +31,76 @@ export type ImageBrief = {
   aboutBannerPrompt: string;
   servicesBannerPrompt: string;
   ctaBannerPrompt: string;
+  serviceCardPrompts: string[];
   galleryPrompts: string[];
 };
 
 const SYSTEM = `You write compact image-generation prompts for small-business marketing websites.
 
-You'll get scraped context about the business. Return JSON ONLY, matching:
+You'll get scraped context about the business, including real page copy and the list of actual services. Return JSON ONLY, matching:
 {
   "styleDirection": "<one sentence: consistent visual style — lens, lighting, palette, mood>",
   "heroPrompt": "<landscape 3:2 hero image prompt — wide, atmospheric, flagship shot>",
   "aboutBannerPrompt": "<landscape 3:2 about-section banner — narrative, human, environmental>",
-  "servicesBannerPrompt": "<landscape 3:2 services-section banner — showing the breadth of work, tools or site context>",
+  "servicesBannerPrompt": "<landscape 3:2 services-section banner — showing the breadth of work>",
   "ctaBannerPrompt": "<landscape 3:2 contact/CTA banner — warm inviting, finished-result or exterior context>",
-  "galleryPrompts": ["<square>", "<square>", "<square>", "<square>"]
+  "serviceCardPrompts": ["<square, service 1>", "<square, service 2>", ..., "<square, service N>"],
+  "galleryPrompts": ["<square>", "<square>", "<square>", "<square>", "<square>", "<square>"]
 }
 
-All 8 images MUST feel like the same brand but each depicts something DIFFERENT. No two images should share subject or angle.
-
-Rules for every prompt:
-- Photorealistic. Documentary / editorial look unless the brand reads as artisan/craft/luxury.
-- NEVER include text, words, logos, signs, storefront text, price tags, license plates, screens, banners.
+CRITICAL RULES:
+- Every image MUST feel like the same brand (same lighting, palette, mood) but depict something DIFFERENT.
+- Photorealistic, documentary / editorial commercial photography. Ultra-sharp detail. Real texture.
+- The serviceCardPrompts array MUST have one entry per service in the provided service list, in the same order. Each image should depict the SPECIFIC service, not a generic shot.
+- Use the provided real page copy to make images feel tied to the business's actual work (e.g., if they mention "custom cedar decks", show a cedar deck; if "mid-century homes", use that aesthetic).
+- NEVER include text, words, numbers, logos, signs, storefront text, price tags, license plates, screens, banners, or readable letters of any kind.
 - NEVER include human faces clearly visible — from behind / over shoulder / hands working is fine.
-- Match the business's trade: show the WORK (roofing = roof install close-ups; electrician = panels/wiring/EV chargers; salon = scissors/products/chairs; restaurant = food/kitchen). Never generic stock.
-- Cover range across the 8 frames: one wide establishing hero, narrative about-banner, breadth-of-work services banner, warm CTA banner, then 4 varied close-ups (tools, process, detail, finished result).
+- Match the business's trade literally: roofing = roof install close-ups; electrician = panels/EV chargers/breakers; salon = scissors/products/chairs; restaurant = food/kitchen; etc. Never generic stock.
+- Cover range: wide establishing hero, narrative about-banner, breadth-of-work services banner, warm CTA banner, then per-service close-ups, then gallery details (tools, process, finished results).
 - Incorporate the brand palette subtly where natural (not literal color swatches).
-- 60-100 words per prompt, no markdown.`;
+- 80-140 words per prompt, no markdown, no bullet lists — plain imperative description.`;
 
 export async function buildImageBrief(ctx: BusinessContext): Promise<ImageBrief> {
   if (!getOpenAI()) return fallbackBrief(ctx);
 
+  const serviceList = ctx.serviceTitles.length
+    ? ctx.serviceTitles.map((t, i) => `  ${i + 1}. ${t}`).join("\n")
+    : "  (none — infer from trade)";
+
+  const body = ctx.textContent?.slice(0, 2400) ?? "";
   const userInput = [
     `Business name: ${ctx.name}`,
     `Category: ${ctx.category ?? ctx.industry ?? "local service business"}`,
     `Location: ${[ctx.city, ctx.state].filter(Boolean).join(", ") || "unknown"}`,
     `Description: ${ctx.description ?? "(none)"}`,
     `Palette (hex): ${ctx.palette.slice(0, 5).join(", ") || "(none)"}`,
-    `Headings:\n${ctx.headings.slice(0, 15).map((h) => `- ${h}`).join("\n")}`,
-  ].join("\n");
+    `Services to illustrate (in order):\n${serviceList}`,
+    `Scraped headings:\n${ctx.headings.slice(0, 20).map((h) => `- ${h}`).join("\n") || "(none)"}`,
+    `Scraped page copy excerpt:\n${body || "(none)"}`,
+  ].join("\n\n");
 
   try {
     const { text } = await callOpenAI({
       system: SYSTEM,
       user: userInput,
-      maxTokens: 1800,
+      maxTokens: 3200,
       jsonMode: true,
     });
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) return fallbackBrief(ctx);
     const parsed = JSON.parse(match[0]) as Partial<ImageBrief>;
-    const style =
-      typeof parsed.styleDirection === "string" ? parsed.styleDirection.trim() : "";
+    const style = str(parsed.styleDirection);
     const hero = str(parsed.heroPrompt);
     const aboutBanner = str(parsed.aboutBannerPrompt);
     const servicesBanner = str(parsed.servicesBannerPrompt);
     const ctaBanner = str(parsed.ctaBannerPrompt);
+    const serviceCards = Array.isArray(parsed.serviceCardPrompts)
+      ? parsed.serviceCardPrompts.filter((p): p is string => typeof p === "string" && p.length > 10)
+      : [];
     const gallery = Array.isArray(parsed.galleryPrompts)
       ? parsed.galleryPrompts.filter((p): p is string => typeof p === "string" && p.length > 10)
       : [];
 
-    // Require at least the hero + one banner + one gallery; fill missing
-    // banners from the fallback set so the generator always has 8 prompts.
     if (!hero || gallery.length === 0) return fallbackBrief(ctx);
     const fb = fallbackBrief(ctx);
 
@@ -97,11 +110,25 @@ export async function buildImageBrief(ctx: BusinessContext): Promise<ImageBrief>
       aboutBannerPrompt: withStyle(aboutBanner || fb.aboutBannerPrompt, style),
       servicesBannerPrompt: withStyle(servicesBanner || fb.servicesBannerPrompt, style),
       ctaBannerPrompt: withStyle(ctaBanner || fb.ctaBannerPrompt, style),
-      galleryPrompts: gallery.slice(0, 4).map((p) => withStyle(p, style)),
+      serviceCardPrompts: padServiceCards(
+        serviceCards.map((p) => withStyle(p, style)),
+        ctx,
+        fb.serviceCardPrompts,
+      ),
+      galleryPrompts: gallery.slice(0, 6).map((p) => withStyle(p, style)),
     };
   } catch {
     return fallbackBrief(ctx);
   }
+}
+
+function padServiceCards(fromLLM: string[], ctx: BusinessContext, fallback: string[]): string[] {
+  const count = Math.max(ctx.serviceTitles.length, 6);
+  const out: string[] = [];
+  for (let i = 0; i < count; i++) {
+    out.push(fromLLM[i] ?? fallback[i] ?? fallback[i % fallback.length] ?? "");
+  }
+  return out.filter(Boolean);
 }
 
 function str(v: unknown): string {
@@ -118,15 +145,22 @@ function fallbackBrief(ctx: BusinessContext): ImageBrief {
   const trade = (ctx.category ?? ctx.industry ?? "local business").toLowerCase();
   const loc = [ctx.city, ctx.state].filter(Boolean).join(", ") || "a quiet neighborhood";
   const style =
-    "Photorealistic documentary editorial, soft natural light, warm highlights, shallow depth of field, no text, no logos, no visible faces.";
+    "Photorealistic commercial editorial photography, 35mm lens, soft natural light, warm highlights, shallow depth of field, no text, no logos, no visible faces, ultra-sharp detail.";
   const set = tradeImages(trade, loc);
+  const serviceCards = (ctx.serviceTitles.length ? ctx.serviceTitles : new Array(6).fill("")).map(
+    (title, i) =>
+      title
+        ? `Photorealistic square image depicting a ${trade} business's "${title}" service in ${loc}: show the specific work and tools, no text or logos, editorial composition. ${style}`
+        : `${set.gallery[i % set.gallery.length]} ${style}`,
+  );
   return {
     styleDirection: style,
     heroPrompt: `${set.hero} ${style}`,
     aboutBannerPrompt: `${set.aboutBanner} ${style}`,
     servicesBannerPrompt: `${set.servicesBanner} ${style}`,
     ctaBannerPrompt: `${set.ctaBanner} ${style}`,
-    galleryPrompts: set.gallery.map((g) => `${g} ${style}`),
+    serviceCardPrompts: serviceCards,
+    galleryPrompts: set.gallery.slice(0, 6).map((g) => `${g} ${style}`),
   };
 }
 
@@ -150,6 +184,8 @@ function tradeImages(trade: string, loc: string): TradeImages {
         "a close-up of a polished deadbolt installed on a stained oak door, morning light",
         "a modern keypad entry pad glowing softly on a residential front door at dusk",
         "a service van interior with custom-built drawers of cut keys and hardware, organized",
+        "key cutting machine producing a fresh brass key, copper shavings catching light",
+        "a restored antique mortise lock on a weathered craftsman door, close-up",
       ],
     };
   }
@@ -164,6 +200,8 @@ function tradeImages(trade: string, loc: string): TradeImages {
         "a modern thermostat mounted on a wall, warm indoor light behind it",
         "a pressure gauge and tool roll on a neat workbench, organized plumbing parts",
         "a rooftop HVAC condenser unit in crisp daylight with tidy refrigerant lines",
+        "a technician's gloved hand holding refrigerant gauges against a clean AC unit",
+        "a freshly installed sump pump with PVC piping in a clean basement utility room",
       ],
     };
   }
@@ -178,6 +216,8 @@ function tradeImages(trade: string, loc: string): TradeImages {
         "a worker's boots on a steep roof pitch, tool belt slung across the waist, city skyline in distance",
         "clean new metal flashing around a brick chimney against a blue sky",
         "a seamless aluminum gutter run fastened along a fascia at golden hour",
+        "a drone-perspective overhead of a crisply finished gable with ridge vent detail",
+        "a stack of architectural shingles on a clean jobsite tarp, morning dew",
       ],
     };
   }
@@ -192,6 +232,8 @@ function tradeImages(trade: string, loc: string): TradeImages {
         "a Level 2 EV charger mounted on an exterior garage wall at dusk, car silhouette nearby",
         "a voltmeter on an outlet during a diagnostic, hand steady on the probe",
         "under-cabinet LED strip lighting installed in a modern kitchen, warm glow",
+        "a clean recessed can light install with exposed junction box, insulation around it",
+        "a neatly wired smart thermostat hub behind a freshly painted wall plate",
       ],
     };
   }
@@ -206,6 +248,8 @@ function tradeImages(trade: string, loc: string): TradeImages {
         "a neat lineup of amber hair product bottles on a marble counter",
         "clean sweep of a freshly cut floor, reflections in a polished mirror",
         "a blowout in progress from behind, shiny hair catching window light",
+        "a color bowl with freshly mixed gloss on a brushed metal tray",
+        "a clean styling station with hot tools hung in an organized rail",
       ],
     };
   }
@@ -220,6 +264,8 @@ function tradeImages(trade: string, loc: string): TradeImages {
         "steam rising from a bubbling sauté pan on a gas range",
         "a matte ceramic bowl of soup with a spoon resting on the rim, marble counter",
         "fresh produce — citrus, herbs, tomatoes — on a wooden prep board",
+        "a pour of natural wine into a stemless glass on a candlelit table",
+        "a clean pass line with tickets clipped above, soft heat lamp glow",
       ],
     };
   }
@@ -234,6 +280,8 @@ function tradeImages(trade: string, loc: string): TradeImages {
         "a zero-turn mower on a green lawn, crisp stripes behind it",
         "a stone path winding through a planted bed of perennials, dew on leaves",
         "a paver patio with ambient landscape lighting glowing as dusk falls",
+        "a freshly edged bed line between mulch and turf, crisp morning light",
+        "an irrigation spray catching sunlight over a flower bed",
       ],
     };
   }
@@ -248,6 +296,8 @@ function tradeImages(trade: string, loc: string): TradeImages {
         "a roller cutting a clean line along a ceiling, soft ladder shadow",
         "a smooth freshly skimmed drywall wall awaiting primer, soft overhead light",
         "an exterior stucco patch blended seamlessly into a sunlit wall",
+        "a spray booth with cabinet doors mid-coat, uniform finish",
+        "a color swatch fan open on a drop cloth next to a sash brush",
       ],
     };
   }
@@ -262,6 +312,8 @@ function tradeImages(trade: string, loc: string): TradeImages {
         "a diagnostic tablet hooked into an OBD port, engine bay in soft focus",
         "brake rotors and pads laid out on a clean shop towel, organized kit",
         "a detailer polishing a black hood with a dual-action buffer, reflections pristine",
+        "a tire balance machine spinning up with a new tire mounted",
+        "an oil drain pan beneath a freshly changed filter, clean shop floor",
       ],
     };
   }
@@ -276,6 +328,8 @@ function tradeImages(trade: string, loc: string): TradeImages {
         "a sparkling glass shower enclosure reflecting natural light, squeegee resting",
         "vacuum stripes on thick plush carpet in a sunlit bedroom",
         "a commercial lobby floor being buffed, warm overhead light across polished stone",
+        "freshly polished stainless steel appliances, reflective surfaces crisp",
+        "neatly folded and stacked linens on a made bed, soft morning light",
       ],
     };
   }
@@ -290,6 +344,8 @@ function tradeImages(trade: string, loc: string): TradeImages {
         "a dentist's gloved hands preparing a composite resin, shallow depth of field",
         "a digital x-ray panel glowing softly on a wall-mounted monitor, clinical tones",
         "a clean sterilization station with autoclave pouches neatly stacked",
+        "a set of clear aligners on a matte tray, soft key light",
+        "a mirror and explorer on sterile cloth, clinic overhead light softened",
       ],
     };
   }
@@ -303,6 +359,8 @@ function tradeImages(trade: string, loc: string): TradeImages {
       `a close-up of hands at work in the trade of ${trade}`,
       `the finished result of a ${trade} job, neat and polished`,
       `an establishing interior shot of a ${trade} business, empty, clean`,
+      `a detail shot of materials used in ${trade} work, organized`,
+      `a sign-off moment on a finished ${trade} job, environmental framing`,
     ],
   };
 }
