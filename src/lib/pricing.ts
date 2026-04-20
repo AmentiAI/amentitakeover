@@ -19,7 +19,7 @@ export type PricingTier = {
   custom?: boolean;
 };
 
-export type ServiceKey = "website" | "social" | "seo";
+export type ServiceKey = "website" | "seo";
 
 export type PricingService = {
   key: ServiceKey;
@@ -88,69 +88,6 @@ export const PRICING_SERVICES: PricingService[] = [
           "Scoped to your exact build",
           "Custom integrations + API work",
           "Migration from legacy platforms",
-          "Quote delivered within 48 hours",
-        ],
-      },
-    ],
-  },
-  {
-    key: "social",
-    name: "Social Media Marketing",
-    tagline: "Professional social media marketing that delivers measurable results.",
-    emoji: "🔍",
-    tiers: [
-      {
-        key: "social-starter",
-        name: "Starter",
-        price: 1200,
-        unit: "monthly",
-        features: [
-          "8–12 social media posts per month",
-          "Caption writing + hashtag strategy",
-          "Custom branded graphics",
-          "1 platform managed end-to-end",
-          "Monthly content calendar",
-          "Basic analytics report",
-          "Monthly strategy check-in",
-        ],
-      },
-      {
-        key: "social-growth",
-        name: "Growth",
-        price: 2500,
-        unit: "monthly",
-        features: [
-          "15–20 posts per month",
-          "Higher-quality graphics + light video edits",
-          "1 paid ad campaign setup & management",
-          "2–3 platforms managed",
-          "Monthly engagement + growth report",
-        ],
-      },
-      {
-        key: "social-premium",
-        name: "Premium",
-        price: 4500,
-        unit: "monthly",
-        features: [
-          "30+ posts per month (near-daily content)",
-          "Short-form videos (Reels / TikToks / Shorts)",
-          "Daily engagement & community management",
-          "Multi-platform coverage",
-          "Ongoing paid ad management + optimization",
-          "Dedicated strategist + weekly check-ins",
-        ],
-      },
-      {
-        key: "social-custom",
-        name: "Custom",
-        price: null,
-        unit: "monthly",
-        custom: true,
-        features: [
-          "Scoped to platform, cadence, and volume",
-          "Influencer outreach + UGC programs",
-          "Custom analytics dashboard",
           "Quote delivered within 48 hours",
         ],
       },

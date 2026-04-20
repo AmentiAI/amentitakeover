@@ -163,7 +163,7 @@ export function PreviewPricingModal() {
                       Amenti AI
                     </div>
                     <div className="truncate text-[13px] font-semibold text-white/90">
-                      Websites, Social & SEO
+                      Websites & Local SEO
                     </div>
                   </div>
                 </div>
@@ -218,11 +218,7 @@ export function PreviewPricingModal() {
                         : "text-slate-500 hover:text-slate-900"
                     }`}
                   >
-                    {s.key === "website"
-                      ? "Website"
-                      : s.key === "social"
-                        ? "Social"
-                        : "SEO"}
+                    {s.key === "website" ? "Website" : "SEO"}
                   </button>
                 );
               })}

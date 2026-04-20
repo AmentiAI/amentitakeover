@@ -15,10 +15,9 @@ export type AgentDefinition = {
 };
 
 const AMENTI_CONTEXT = `About Amenti AI (the company the user works for):
-- Sells website, social media, and SEO packages to small/local service businesses (roofing, HVAC, electrical, plumbing, pest control, etc.).
+- Sells website and SEO packages to small/local service businesses (roofing, HVAC, electrical, plumbing, pest control, etc.).
 - Pricing is organized by service category, each with 3 fixed tiers plus a Custom option:
   - Website Design (one-time): Business $800, Premium Business $1,800 (Popular), Enterprise $2,500, Custom (quote).
-  - Social Media Marketing (monthly): Starter $1,200, Growth $2,500, Premium $4,500, Custom (quote).
   - SEO Services (monthly): Starter $500 (starting companies), Growth $1,500 (Popular — established businesses), Dominate $5,000 (high-end / competitive markets), Custom (quote).
 - Key differentiator: Amenti pre-builds a fully-designed mock site for each prospect BEFORE selling them. Prospect sees their live preview on a real URL before paying anything.
 - Affiliates earn recurring commission on every closed deal (paid on monthly plans; one-time payout on one-time packages; scoped quotes for Custom).`;
@@ -43,7 +42,7 @@ Output format (markdown):
 2. **Primary hook** — the specific thing that will make them curious (something dated about their site, missing service pages, slow mobile load, no local landing pages, etc.). Reference the actual prospect when possible.
 3. **7-day outreach sequence** — Day 1 call opener, Day 1 VM, Day 2 SMS/text, Day 4 email, Day 7 break-up email. Each with exact copy in "" marks so the user can paste and send.
 4. **What to listen for** — 2-3 discovery questions tailored to this industry.
-5. **Which Amenti package to lead with** — pick the service category (Website / Social / SEO) and tier that best fits this prospect, and explain why.
+5. **Which Amenti package to lead with** — pick the service category (Website / SEO) and tier that best fits this prospect, and explain why.
 
 Be tight. No filler. No "I hope this helps."`,
   },
