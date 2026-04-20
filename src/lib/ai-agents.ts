@@ -15,10 +15,13 @@ export type AgentDefinition = {
 };
 
 const AMENTI_CONTEXT = `About Amenti AI (the company the user works for):
-- Sells website + local SEO packages to small/local service businesses (roofing, HVAC, electrical, plumbing, etc.).
-- Pricing: Starter $300/mo + $800 setup (pro website, hosting, basic SEO). Growth $700/mo + $1,500 setup (adds local landing pages, monthly blog posts, call tracking, conversion reports). AI Automation (Custom) — adds chatbot, SMS/email follow-up, automated booking, review collection.
-- Key differentiator: Amenti actually pre-builds a fully-designed mock site for each prospect BEFORE selling them. Prospect can see their live preview on a real URL before paying anything.
-- Affiliates earn recurring commission on every closed deal.`;
+- Sells website, social media, and SEO packages to small/local service businesses (roofing, HVAC, electrical, plumbing, pest control, etc.).
+- Pricing is organized by service category, each with 3 fixed tiers plus a Custom option:
+  - Website Design (one-time): Business $800, Premium Business $1,800 (Popular), Enterprise $2,500, Custom (quote).
+  - Social Media Marketing (monthly): Starter $1,200, Growth $2,500, Premium $4,500, Custom (quote).
+  - SEO Services (monthly): Starter $500 (starting companies), Growth $1,500 (Popular — established businesses), Dominate $5,000 (high-end / competitive markets), Custom (quote).
+- Key differentiator: Amenti pre-builds a fully-designed mock site for each prospect BEFORE selling them. Prospect sees their live preview on a real URL before paying anything.
+- Affiliates earn recurring commission on every closed deal (paid on monthly plans; one-time payout on one-time packages; scoped quotes for Custom).`;
 
 export const AGENTS: AgentDefinition[] = [
   {
@@ -40,7 +43,7 @@ Output format (markdown):
 2. **Primary hook** — the specific thing that will make them curious (something dated about their site, missing service pages, slow mobile load, no local landing pages, etc.). Reference the actual prospect when possible.
 3. **7-day outreach sequence** — Day 1 call opener, Day 1 VM, Day 2 SMS/text, Day 4 email, Day 7 break-up email. Each with exact copy in "" marks so the user can paste and send.
 4. **What to listen for** — 2-3 discovery questions tailored to this industry.
-5. **Which Amenti tier to lead with** and why (Starter / Growth / AI Automation).
+5. **Which Amenti package to lead with** — pick the service category (Website / Social / SEO) and tier that best fits this prospect, and explain why.
 
 Be tight. No filler. No "I hope this helps."`,
   },
@@ -61,7 +64,7 @@ Your job: given a prospect's website (URL or description of what's on it), ident
 Output format (markdown):
 1. **Quick read** — 1-2 line summary of what the site is doing well + where it's weak.
 2. **The 3 biggest issues** — each as: weak point → why it hurts them (in plain English, tied to dollars/leads) → the exact line the affiliate can use on the phone, in quotes.
-3. **What Amenti's rebuild would fix** — 3-5 bullets mapped to Amenti's Growth tier ($700/mo + $1,500 setup) so the pitch writes itself.
+3. **What Amenti's rebuild would fix** — 3-5 bullets mapped to a specific Amenti package (most often Website Design Premium Business $1,800 or Enterprise $2,500, optionally paired with SEO Growth $1,500/mo) so the pitch writes itself.
 4. **What NOT to say** — 1-2 common critiques that sound like insults and will make them defensive.
 
 Be honest but tactful. Never make up facts — if you don't know, say "if their site has X, then...".`,

@@ -116,7 +116,7 @@ export function DetectionGridCanvas({ className = "" }: { className?: string }) 
         // Bug body (tan).
         ctx!.save();
         ctx!.globalAlpha = alpha;
-        ctx!.fillStyle = "rgba(180, 135, 80, 0.96)";
+        ctx!.fillStyle = "rgba(248, 242, 224, 0.96)";
         ctx!.beginPath();
         ctx!.ellipse(wx, wy, 4.5, 3.2, s.t * 2, 0, Math.PI * 2);
         ctx!.fill();

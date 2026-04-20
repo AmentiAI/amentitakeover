@@ -622,9 +622,9 @@ export function FinalCta({
           />
         </div>
       ) : (
-        <div className="absolute inset-0 opacity-85">
+        <div className="absolute inset-0 opacity-90">
           <HeroBugBanner
-            color="rgba(168, 120, 62, 0.96)"
+            color="rgba(248, 242, 224, 0.96)"
             accent="rgba(134, 239, 172, 0.95)"
             count={28}
             reactToCursor

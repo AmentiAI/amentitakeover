@@ -3,7 +3,6 @@ import { Phone, ShieldCheck } from "lucide-react";
 import { HeroBugBanner } from "@/components/templates/pest/hero-bug-banner";
 import { RadarSweepCanvas } from "@/components/templates/pest/radar-sweep-canvas";
 import { SocialLinks } from "@/components/templates/site/chrome";
-import { SafeImg } from "@/components/safe-img";
 import type { SiteData } from "@/lib/templates/site";
 
 type NavItem = { label: string; href: string };
@@ -118,22 +117,14 @@ export function PestBanner({
   const bugCount = variant === "hero" ? 32 : 18;
 
   return (
-    <section className="relative isolate overflow-hidden bg-[#060c09] text-white">
+    <section className="relative isolate overflow-hidden bg-black text-white">
       <div className={`relative w-full ${heightClass}`}>
-        {/* Layer 1: faint hero image + emerald gradient backdrop */}
+        {/* Layer 1: solid black backdrop with a faint emerald highlight so the
+            bug canvas has something to breathe against. No hero image — the
+            banner reads as a clean black field behind the swarm. */}
         <div className="absolute inset-0">
-          {heroImage ? (
-            <SafeImg
-              src={heroImage}
-              alt=""
-              className="h-full w-full object-cover opacity-20"
-              fallback={<div className="h-full w-full bg-[#060c09]" />}
-            />
-          ) : (
-            <div className="h-full w-full bg-[#060c09]" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#060c09]/60 via-[#0a1a13]/70 to-[#060c09]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_40%,rgba(16,185,129,0.28),transparent_55%)]" />
+          <div className="h-full w-full bg-black" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_40%,rgba(16,185,129,0.18),transparent_60%)]" />
           {/* CRT scanlines (subtle) */}
           <div
             className="absolute inset-0 opacity-[0.06] mix-blend-overlay"
@@ -155,7 +146,7 @@ export function PestBanner({
 
         {/* Layer 3: the bugs — main animation */}
         <HeroBugBanner
-          color="rgba(22, 13, 7, 0.94)"
+          color="rgba(248, 242, 224, 0.96)"
           accent="rgba(134, 239, 172, 0.95)"
           count={bugCount}
           scatterRadius={170}
@@ -219,9 +210,9 @@ export function PestFooter({
     <footer className="relative overflow-hidden border-t border-emerald-900/40 bg-[#060c09] text-emerald-100/80">
       {/* Low-density bug crawl across the footer strip. No cursor reaction
           so it never steals pointer from the social + contact links. */}
-      <div className="pointer-events-none absolute inset-0 opacity-60">
+      <div className="pointer-events-none absolute inset-0 opacity-70">
         <HeroBugBanner
-          color="rgba(168, 120, 62, 0.9)"
+          color="rgba(248, 242, 224, 0.9)"
           accent="rgba(134, 239, 172, 0.9)"
           count={14}
           reactToCursor={false}

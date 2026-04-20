@@ -60,9 +60,9 @@ export function BarrierShieldCanvas({
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     const intruders: Intruder[] = [];
-    // Bugs are painted in a warm caramel brown so they stand out against
-    // the dark emerald canvas backdrop — not the shield color.
-    const bugColor = "rgba(180, 135, 80, 0.98)";
+    // Bugs are painted in a light ivory so they stand out clearly against
+    // the dark backdrop — much more visible than the shield's emerald.
+    const bugColor = "rgba(248, 242, 224, 0.98)";
     let spawnCooldown = 0.25;
 
     function sizeCanvas() {

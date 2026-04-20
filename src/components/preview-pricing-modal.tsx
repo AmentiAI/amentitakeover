@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronUp, Shield, Sparkles, Star, X } from "lucide-react";
 import {
-  PRICING_TIERS,
-  formatMonthly,
-  formatSetup,
+  PRICING_SERVICES,
+  formatTierPrice,
+  formatTierUnit,
   type PricingTier,
+  type ServiceKey,
 } from "@/lib/pricing";
 
 const CHECKOUT_BASE = "https://amentiai.com/checkout";
@@ -15,13 +16,11 @@ const OPENED_KEY = "amenti-preview-pricing-opened";
 const DISMISSED_KEY = "amenti-preview-pricing-dismissed";
 
 export function PreviewPricingModal() {
-  // launcher is the compact pill that sits in the bottom-right corner
-  // expanded is the full pricing card overlay
   const [launcherVisible, setLauncherVisible] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [activeService, setActiveService] = useState<ServiceKey>("website");
   const autoFiredRef = useRef(false);
 
-  // Mount: decide whether to show launcher, and schedule first auto-open
   useEffect(() => {
     if (typeof window === "undefined") return;
     let dismissed = false;
@@ -56,7 +55,6 @@ export function PreviewPricingModal() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  // Lock page scroll only while expanded; escape closes expanded view
   useEffect(() => {
     if (!expanded) return;
     const prev = document.body.style.overflow;
@@ -90,13 +88,20 @@ export function PreviewPricingModal() {
   }
 
   function selectPlan(tier: PricingTier) {
+    if (tier.price == null) {
+      const url = `${CHECKOUT_BASE}?plan=${encodeURIComponent(tier.key)}&custom=1`;
+      window.location.href = url;
+      return;
+    }
     const url = `${CHECKOUT_BASE}?plan=${encodeURIComponent(tier.key)}`;
     window.location.href = url;
   }
 
+  const service =
+    PRICING_SERVICES.find((s) => s.key === activeService) ?? PRICING_SERVICES[0];
+
   return (
     <>
-      {/* Launcher pill — lives in bottom-right */}
       {launcherVisible && !expanded && (
         <div
           className="pointer-events-none fixed right-3 z-[9998] sm:right-5"
@@ -123,10 +128,8 @@ export function PreviewPricingModal() {
         </div>
       )}
 
-      {/* Expanded popover — anchored bottom-right, not full-screen */}
       {expanded && (
         <>
-          {/* Soft page scrim — click to minimize */}
           <div
             className="fixed inset-0 z-[9998] bg-slate-950/35 backdrop-blur-[2px]"
             onClick={() => setExpanded(false)}
@@ -142,7 +145,6 @@ export function PreviewPricingModal() {
               bottom: "max(0.5rem, env(safe-area-inset-bottom))",
             }}
           >
-            {/* Header */}
             <div className="relative overflow-hidden bg-[#050816] px-4 pb-4 pt-4 text-white sm:px-5 sm:pb-5 sm:pt-5">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.24),transparent_60%),radial-gradient(circle_at_bottom_left,rgba(236,72,153,0.18),transparent_60%),linear-gradient(180deg,#050816_0%,#0a1030_60%,#050816_100%)]" />
 
@@ -161,7 +163,7 @@ export function PreviewPricingModal() {
                       Amenti AI
                     </div>
                     <div className="truncate text-[13px] font-semibold text-white/90">
-                      Websites & Local Growth
+                      Websites, Social & SEO
                     </div>
                   </div>
                 </div>
@@ -180,14 +182,14 @@ export function PreviewPricingModal() {
                   This preview is yours
                 </div>
                 <h2 className="mt-2 text-[17px] font-semibold leading-snug tracking-tight sm:mt-2.5 sm:text-[19px]">
-                  Launch your new website in{" "}
+                  Grow with{" "}
                   <span className="bg-gradient-to-r from-cyan-300 via-sky-300 to-pink-400 bg-clip-text text-transparent">
-                    7–10 days
+                    fixed pricing
                   </span>
                 </h2>
                 <p className="mt-1.5 text-[12px] leading-relaxed text-white/70">
-                  30-day out any time. No long-term contract. We build on the
-                  preview you&apos;re already looking at.
+                  Pick the package that fits. No long-term contract. Custom
+                  scope available on request.
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[11px] text-white/70">
                   <span className="inline-flex items-center gap-0.5">
@@ -202,57 +204,75 @@ export function PreviewPricingModal() {
               </div>
             </div>
 
-            {/* Plans — stacked to fit narrow popover */}
+            {/* Service tabs */}
+            <div className="flex gap-1 border-b border-slate-200 bg-white px-2 pt-2 sm:px-3">
+              {PRICING_SERVICES.map((s) => {
+                const active = s.key === activeService;
+                return (
+                  <button
+                    key={s.key}
+                    onClick={() => setActiveService(s.key)}
+                    className={`flex-1 rounded-t-md px-2 py-2 text-[11px] font-semibold transition ${
+                      active
+                        ? "bg-slate-50 text-slate-900 ring-1 ring-inset ring-slate-200"
+                        : "text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    {s.key === "website"
+                      ? "Website"
+                      : s.key === "social"
+                        ? "Social"
+                        : "SEO"}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Plans */}
             <div className="flex-1 overflow-y-auto overscroll-contain bg-slate-50 p-3 [-webkit-overflow-scrolling:touch] sm:p-4">
+              <div className="mb-3 text-[11px] text-slate-500">
+                {service.tagline}
+              </div>
               <div className="flex flex-col gap-3">
-                {PRICING_TIERS.map((tier) => {
-                  const popular = tier.badge === "Most Popular";
+                {service.tiers.map((tier) => {
+                  const popular = tier.badge === "Popular";
+                  const isCustom = tier.price == null;
                   return (
                     <div
                       key={tier.key}
                       className={`relative flex flex-col rounded-xl border p-3.5 transition sm:p-4 ${
                         popular
                           ? "border-indigo-500 bg-white shadow-[0_18px_40px_-24px_rgba(79,70,229,0.5)] ring-1 ring-indigo-500/40"
-                          : "border-slate-200 bg-white shadow-sm"
+                          : isCustom
+                            ? "border-cyan-300 bg-white shadow-sm ring-1 ring-cyan-200/60"
+                            : "border-slate-200 bg-white shadow-sm"
                       }`}
                     >
-                      {popular && (
+                      {tier.badge && (
                         <div className="absolute -top-2.5 left-3.5 whitespace-nowrap rounded-full bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-white shadow-md shadow-indigo-500/40 sm:left-4">
                           {tier.badge}
                         </div>
                       )}
                       <div className="flex items-center gap-2 text-[10.5px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        <span aria-hidden>{tier.emoji}</span>
                         <span>{tier.name}</span>
                       </div>
 
                       <div className="mt-2 flex items-baseline gap-1">
                         <span className="text-2xl font-black tracking-tight text-slate-950">
-                          {formatMonthly(tier)}
+                          {formatTierPrice(tier)}
                         </span>
-                        {tier.monthly != null && (
-                          <span className="text-xs font-semibold text-slate-500">
-                            /mo
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[11px] text-slate-500">
-                        {formatSetup(tier)
-                          ? `${formatSetup(tier)} one-time setup`
-                          : "Scoped to your business"}
+                        <span className="text-xs font-semibold text-slate-500">
+                          {formatTierUnit(tier)}
+                        </span>
                       </div>
 
-                      <p className="mt-2 text-[12px] leading-snug text-slate-600">
-                        {tier.tagline}
-                      </p>
+                      {tier.tagline && (
+                        <p className="mt-2 text-[12px] leading-snug text-slate-600">
+                          {tier.tagline}
+                        </p>
+                      )}
 
                       <ul className="mt-3 space-y-1.5 text-[12px] leading-snug text-slate-700">
-                        {tier.inheritsFrom && (
-                          <li className="flex items-start gap-1.5 font-semibold text-slate-900">
-                            <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                            Everything in {tier.inheritsFrom}
-                          </li>
-                        )}
                         {tier.features.slice(0, 4).map((f) => (
                           <li key={f} className="flex items-start gap-1.5">
                             <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
@@ -271,10 +291,19 @@ export function PreviewPricingModal() {
                         className={`mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-[13px] font-bold transition sm:text-[12.5px] ${
                           popular
                             ? "bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white shadow-md shadow-indigo-500/30 hover:brightness-110 active:brightness-95"
-                            : "bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-900"
+                            : isCustom
+                              ? "bg-cyan-600 text-white hover:bg-cyan-500 active:bg-cyan-700"
+                              : "bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-900"
                         }`}
                       >
-                        {tier.ctaLabel}
+                        {isCustom ? (
+                          <>
+                            <Sparkles className="h-3.5 w-3.5" />
+                            Request a quote
+                          </>
+                        ) : (
+                          `Start with ${tier.name}`
+                        )}
                       </button>
                     </div>
                   );
@@ -282,7 +311,6 @@ export function PreviewPricingModal() {
               </div>
             </div>
 
-            {/* Trust bar */}
             <div className="flex items-center justify-between gap-2 border-t border-slate-200 bg-white px-3 py-2.5 text-[11px] text-slate-600 sm:px-4 sm:py-3">
               <span className="inline-flex min-w-0 items-center gap-1.5 truncate font-semibold text-slate-700">
                 <Shield className="h-3 w-3 shrink-0 text-emerald-500" />

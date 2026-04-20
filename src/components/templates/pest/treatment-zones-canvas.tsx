@@ -205,7 +205,7 @@ export function TreatmentZonesCanvas({ className = "" }: Props) {
       ctx!.save();
       ctx!.translate(pos.x, pos.y);
       ctx!.rotate(pos.angle);
-      ctx!.fillStyle = "rgba(180, 135, 80, 0.96)";
+      ctx!.fillStyle = "rgba(248, 242, 224, 0.96)";
       // Ant: 3 body segments
       ctx!.beginPath();
       ctx!.arc(c.size * 0.55, 0, c.size * 0.28, 0, Math.PI * 2);
@@ -217,7 +217,7 @@ export function TreatmentZonesCanvas({ className = "" }: Props) {
       ctx!.ellipse(-c.size * 0.5, 0, c.size * 0.45, c.size * 0.3, 0, 0, Math.PI * 2);
       ctx!.fill();
       // Simple legs
-      ctx!.strokeStyle = "rgba(180, 135, 80, 0.96)";
+      ctx!.strokeStyle = "rgba(248, 242, 224, 0.96)";
       ctx!.lineWidth = 0.8;
       for (const sx of [-0.3, 0, 0.3]) {
         for (const dy of [-1, 1]) {
