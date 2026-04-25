@@ -8,6 +8,13 @@ import Link from "next/link";
 import { ArrowRight, BadgeCheck, Mail, MapPin, Phone, Quote, ShieldCheck, Sparkles, Star } from "lucide-react";
 import type { SiteData } from "@/lib/templates/site";
 import { SafeImg } from "@/components/safe-img";
+import {
+  DEFAULT_BANNER_ABOUT,
+  DEFAULT_BANNER_CTA,
+  DEFAULT_BANNER_SERVICES,
+  defaultGalleryAt,
+  defaultServiceAt,
+} from "@/lib/template-defaults";
 
 export function Hero({ data }: { data: SiteData }) {
   const { hero, business } = data;
@@ -117,6 +124,7 @@ export function AboutPreview({ data }: { data: SiteData }) {
               src={banners.about}
               alt="About us"
               className="absolute inset-0 h-full w-full object-cover"
+              defaultSrc={DEFAULT_BANNER_ABOUT}
               fallback={<div className="absolute inset-0" style={{ background: "var(--site-trust)" }} />}
             />
           ) : (
@@ -172,7 +180,7 @@ export function ServicesGrid({ data, compact = false }: { data: SiteData; compac
         </div>
 
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {services.map((s) => (
+          {services.map((s, i) => (
             <article
               key={s.title}
               className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-lg"
@@ -183,6 +191,7 @@ export function ServicesGrid({ data, compact = false }: { data: SiteData; compac
                     src={s.image}
                     alt={s.title}
                     className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    defaultSrc={defaultServiceAt(i)}
                     fallback={
                       <div
                         className="absolute inset-0"
@@ -232,6 +241,7 @@ export function ServicesBannerStrip({ data }: { data: SiteData }) {
             src={data.banners.services}
             alt="Services overview"
             className="h-64 w-full object-cover sm:h-80 md:h-[28rem]"
+            defaultSrc={DEFAULT_BANNER_SERVICES}
             fallback={<div className="h-64 w-full sm:h-80 md:h-[28rem]" style={{ background: "var(--site-base)" }} />}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent" />
@@ -311,6 +321,7 @@ export function GalleryStrip({ data, compact = false }: { data: SiteData; compac
                 src={g.src}
                 alt={g.alt}
                 className="absolute inset-0 h-full w-full object-cover transition hover:scale-105"
+                defaultSrc={defaultGalleryAt(i)}
                 fallback={<div className="absolute inset-0" style={{ background: "var(--site-trust)" }} aria-hidden />}
               />
             </div>
@@ -405,6 +416,7 @@ export function CTASection({ data }: { data: SiteData }) {
             alt=""
             className="h-full w-full object-cover"
             aria-hidden
+            defaultSrc={DEFAULT_BANNER_CTA}
             fallback={<div className="h-full w-full" style={{ background: "var(--site-base)" }} />}
           />
         ) : (

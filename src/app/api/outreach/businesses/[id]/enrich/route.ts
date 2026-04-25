@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { deepScrapeSite } from "@/lib/deep-scraper";
+import { bizLogger } from "@/lib/build-logger";
 
 export const maxDuration = 120;
 
@@ -9,14 +10,25 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+  const log = bizLogger(id);
   const b = await prisma.scrapedBusiness.findUnique({ where: { id } });
   if (!b) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (!b.website)
+  if (!b.website) {
+    await log.warn("enrich.skipped", "Enrich skipped — no website on record");
     return NextResponse.json({ error: "No website" }, { status: 400 });
+  }
+
+  await log.info("enrich.started", `Enrich started — scraping ${b.website}`, {
+    website: b.website,
+  });
+  const startedAt = Date.now();
 
   try {
     const scraped = await deepScrapeSite(b.website).catch(() => null);
     if (!scraped) {
+      await log.error("enrich.scrape_failed", `deepScrapeSite returned null for ${b.website}`, {
+        website: b.website,
+      });
       return NextResponse.json(
         { error: "Could not scrape site — check the URL" },
         { status: 502 },
@@ -121,6 +133,25 @@ export async function POST(
       },
     });
 
+    await log.info(
+      "enrich.completed",
+      `Enrich complete — ${mergedImages.length} images, ${scraped.pages.length} pages`,
+      {
+        durationMs: Date.now() - startedAt,
+        siteId,
+        imagesCount: mergedImages.length,
+        pagesScraped: scraped.pages.length,
+        sampleImages: mergedImages.slice(0, 5).map((i) => i.src),
+        logo: scraped.logo,
+        ogImage: scraped.ogImage,
+        paletteCount: scraped.palette?.length ?? 0,
+        fontsCount: scraped.fonts?.length ?? 0,
+        emailsFound: scraped.emails.length,
+        phonesFound: scraped.phones.length,
+        socialsFound: Object.entries(scraped.socials).filter(([, v]) => v).map(([k]) => k),
+      },
+    );
+
     return NextResponse.json({
       ok: true,
       siteId,
@@ -133,6 +164,10 @@ export async function POST(
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "unknown error";
+    await log.error("enrich.failed", "Enrich failed", {
+      error: msg,
+      durationMs: Date.now() - startedAt,
+    });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

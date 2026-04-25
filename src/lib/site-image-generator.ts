@@ -2,6 +2,13 @@ import { prisma } from "@/lib/db";
 import { buildImageBrief, type BusinessContext } from "@/lib/image-prompt";
 import { generateImage, ImageModerationError, type ImageQuality } from "@/lib/openai-image";
 import { inferServiceTitles, inferTradeLabel } from "@/lib/templates/site";
+import {
+  DEFAULT_BANNER_ABOUT,
+  DEFAULT_BANNER_CTA,
+  DEFAULT_BANNER_SERVICES,
+  DEFAULT_GALLERY,
+  DEFAULT_SERVICE_CARDS,
+} from "@/lib/template-defaults";
 
 /**
  * Generate a matched set of mockup-site images for a scraped business.
@@ -159,18 +166,34 @@ export async function getSiteImageSet(
   const ctaBanner = rows.find((r) => r.purpose === "banner-cta");
   const serviceCards = rows.filter((r) => r.purpose === "service-card");
   const gallery = rows.filter((r) => r.purpose === "gallery");
-  return {
+  return withDefaults({
     hero: rowToImg(hero),
     aboutBanner: rowToImg(aboutBanner),
     servicesBanner: rowToImg(servicesBanner),
     ctaBanner: rowToImg(ctaBanner),
     serviceCards: serviceCards.map((g) => ({ id: g.id, src: `/api/generated-image/${g.id}` })),
     gallery: gallery.map((g) => ({ id: g.id, src: `/api/generated-image/${g.id}` })),
-  };
+  });
 }
 
 function rowToImg(row: { id: string } | undefined | null): { id: string; src: string } | null {
   return row ? { id: row.id, src: `/api/generated-image/${row.id}` } : null;
+}
+
+function withDefaults(set: SiteImageSet): SiteImageSet {
+  const def = (id: string, src: string) => ({ id, src });
+  return {
+    hero: set.hero,
+    aboutBanner: set.aboutBanner ?? def("default-banner-about", DEFAULT_BANNER_ABOUT),
+    servicesBanner: set.servicesBanner ?? def("default-banner-services", DEFAULT_BANNER_SERVICES),
+    ctaBanner: set.ctaBanner ?? def("default-banner-cta", DEFAULT_BANNER_CTA),
+    serviceCards: set.serviceCards.length
+      ? set.serviceCards
+      : DEFAULT_SERVICE_CARDS.map((src, i) => def(`default-service-${i + 1}`, src)),
+    gallery: set.gallery.length
+      ? set.gallery
+      : DEFAULT_GALLERY.map((src, i) => def(`default-gallery-${i + 1}`, src)),
+  };
 }
 
 async function persistIfGenerated(

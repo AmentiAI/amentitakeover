@@ -14,6 +14,8 @@ import {
 } from "@/components/templates/site/sections";
 import { loadSiteData, loadSiteMetadata } from "@/lib/templates/site-loader";
 
+export const dynamic = "force-dynamic";
+
 export default async function SiteHomePage({
   params,
 }: {

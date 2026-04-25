@@ -19,6 +19,7 @@ import {
   Zap,
 } from "lucide-react";
 import { SafeImg } from "@/components/safe-img";
+import { defaultServiceAt } from "@/lib/template-defaults";
 import { BarrierShieldCanvas } from "@/components/templates/pest/barrier-shield-canvas";
 import { DetectionGridCanvas } from "@/components/templates/pest/detection-grid-canvas";
 import { HeroBugBanner } from "@/components/templates/pest/hero-bug-banner";
@@ -361,7 +362,7 @@ export function ServicesGrid({
           Every pest. Every property. <span className="italic text-emerald-700">One call.</span>
         </h2>
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {services.map((s) => (
+          {services.map((s, i) => (
             <article
               key={s.title}
               className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-emerald-300 hover:shadow-md"
@@ -372,6 +373,7 @@ export function ServicesGrid({
                     src={s.image}
                     alt={s.title}
                     className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    defaultSrc={defaultServiceAt(i)}
                     fallback={
                       <div
                         className="absolute inset-0"

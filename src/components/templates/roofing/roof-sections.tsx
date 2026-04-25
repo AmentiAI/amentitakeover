@@ -12,6 +12,7 @@ import {
   Star,
 } from "lucide-react";
 import { SafeImg } from "@/components/safe-img";
+import { defaultGalleryAt } from "@/lib/template-defaults";
 import { StormCanvas } from "@/components/templates/roofing/storm-canvas";
 import { RoofCounter } from "@/components/templates/roofing/roof-counter";
 import {
@@ -156,6 +157,7 @@ export function ResilienceEditorial({
                 src={gallery[0].src}
                 alt={gallery[0].alt || `${businessName} installation`}
                 className="h-full w-full object-cover"
+                defaultSrc={defaultGalleryAt(0)}
               />
             ) : (
               <div className="h-full w-full bg-gradient-to-br from-slate-800 to-slate-900" />
@@ -640,6 +642,7 @@ export function RecentProjects({
                 className={`h-full w-full object-cover ${
                   i === 0 ? "aspect-[4/3]" : "aspect-square"
                 }`}
+                defaultSrc={defaultGalleryAt(i)}
               />
             </figure>
           ))}

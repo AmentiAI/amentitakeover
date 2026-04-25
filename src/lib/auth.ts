@@ -5,7 +5,7 @@
  * Session cookie is an HMAC-signed "expiry.signature" pair so we don't have
  * to persist sessions in the DB. Any secret rotation invalidates all sessions.
  *
- * Uses Web Crypto so it works in the Edge Runtime (middleware).
+ * Uses Web Crypto so it works in the Edge Runtime (proxy).
  */
 
 export const SESSION_COOKIE = "signull_admin";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Props = Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src"> & {
   src: string;
@@ -9,15 +9,39 @@ type Props = Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src"> & {
   // for gallery grids where we'd rather drop a dead tile than show a
   // broken-image icon).
   fallback?: React.ReactNode;
+  // Optional secondary src tried before giving up. Use to substitute a
+  // local SVG placeholder when a scraped third-party URL fails — keeps the
+  // template visually populated instead of leaving holes.
+  defaultSrc?: string;
 };
 
 // Renders an <img> that swallows load errors. Scraped third-party photos
 // frequently return 403/404 (hotlink blocks, expired signed URLs, deleted
-// CDN assets). Rather than let the browser show a broken-image icon on a
-// prospect's preview, we render a transparent fallback and move on.
-export function SafeImg({ src, fallback = null, alt = "", ...rest }: Props) {
+// CDN assets). On error we try defaultSrc once, then fall through to the
+// fallback node.
+export function SafeImg({ src, fallback = null, defaultSrc, alt = "", ...rest }: Props) {
+  const [currentSrc, setCurrentSrc] = useState(src);
   const [broken, setBroken] = useState(false);
+
+  useEffect(() => {
+    setCurrentSrc(src);
+    setBroken(false);
+  }, [src]);
+
   if (broken) return <>{fallback}</>;
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt={alt} onError={() => setBroken(true)} {...rest} />;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={currentSrc}
+      alt={alt}
+      onError={() => {
+        if (defaultSrc && currentSrc !== defaultSrc) {
+          setCurrentSrc(defaultSrc);
+        } else {
+          setBroken(true);
+        }
+      }}
+      {...rest}
+    />
+  );
 }

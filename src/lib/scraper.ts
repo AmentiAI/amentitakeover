@@ -116,7 +116,8 @@ export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
     $('link[rel~="icon"]').attr("href") ||
     $('link[rel="shortcut icon"]').attr("href") ||
     "/favicon.ico";
-  const favicon = faviconRaw ? absolutize(faviconRaw, url) : null;
+  const faviconAbs = faviconRaw ? absolutize(faviconRaw, url) : null;
+  const favicon = faviconAbs ? normalizeImageUrl(faviconAbs) : null;
 
   const ogImageRaw =
     $('meta[property="og:image"]').attr("content") ||
@@ -124,9 +125,11 @@ export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
     $('meta[property="og:image:secure_url"]').attr("content") ||
     $('meta[name="twitter:image"]').attr("content") ||
     null;
-  const ogImage = ogImageRaw ? absolutize(ogImageRaw, url) : null;
+  const ogImageAbs = ogImageRaw ? absolutize(ogImageRaw, url) : null;
+  const ogImage = ogImageAbs ? normalizeImageUrl(ogImageAbs) : null;
 
-  const logoUrl = detectLogo($, url) ?? favicon;
+  const logoRaw = detectLogo($, url) ?? favicon;
+  const logoUrl = logoRaw ? normalizeImageUrl(logoRaw) : null;
 
   const headings: { tag: string; text: string }[] = [];
   $("h1, h2, h3").each((_i, el) => {
@@ -139,11 +142,13 @@ export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
   const pushImg = (rawSrc: string | undefined, alt: string | null) => {
     if (!rawSrc) return;
     const abs = absolutize(rawSrc.trim(), url);
-    if (!abs || imageSet.has(abs)) return;
-    if (isSocialAsset(abs, alt)) return;
-    if (isIrrelevantAsset(abs, alt)) return;
-    imageSet.add(abs);
-    images.push({ src: abs, alt, kind: "image" });
+    if (!abs) return;
+    const normalized = normalizeImageUrl(abs);
+    if (imageSet.has(normalized)) return;
+    if (isSocialAsset(normalized, alt)) return;
+    if (isIrrelevantAsset(normalized, alt)) return;
+    imageSet.add(normalized);
+    images.push({ src: normalized, alt, kind: "image" });
   };
   const pushVideo = (rawSrc: string | undefined, poster: string | null, alt: string | null) => {
     if (!rawSrc) return;
@@ -166,12 +171,8 @@ export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
     ];
     for (const c of candidates) {
       if (!c) continue;
-      // srcset can be a comma-separated list of "url 2x" entries — pull urls
-      if (c.includes(",") && /\s\d+[wx]/.test(c)) {
-        c.split(",")
-          .map((s) => s.trim().split(/\s+/)[0])
-          .filter(Boolean)
-          .forEach((s) => pushImg(s, alt));
+      if (looksLikeSrcset(c)) {
+        for (const url of parseSrcset(c)) pushImg(url, alt);
       } else {
         pushImg(c, alt);
       }
@@ -182,8 +183,8 @@ export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
   $("picture source").each((_i, el) => {
     const srcset = $(el).attr("srcset");
     if (!srcset) return;
-    const first = srcset.split(",")[0].trim().split(/\s+/)[0];
-    pushImg(first, null);
+    const first = parseSrcset(srcset)[0];
+    if (first) pushImg(first, null);
   });
 
   // Inline background-image in style attrs
@@ -445,6 +446,47 @@ async function fetchText(url: string, maxBytes: number): Promise<string> {
   } finally {
     clearTimeout(timer);
   }
+}
+
+// Strip CDN transform suffixes so we end up with canonical full-size images.
+// Wix serves a transform pipeline at /v1/<spec>/<derivedName>.<ext>; cutting
+// it leaves the original media URL. Squarespace ?format=...&w=... is similar
+// — drop the query string. Without this we keep tiny thumbnails AND inherit
+// derived filenames like "Untitled.png" that fail our gallery filters.
+function normalizeImageUrl(src: string): string {
+  if (/(^|\/\/)static\.wixstatic\.com\/media\//i.test(src)) {
+    const i = src.indexOf("/v1/");
+    if (i > 0) return src.slice(0, i);
+  }
+  if (/(^|\/\/)images\.squarespace-cdn\.com\//i.test(src)) {
+    const q = src.indexOf("?");
+    if (q > 0) return src.slice(0, q);
+  }
+  return src;
+}
+
+// True if the value looks like a srcset (URL + descriptor like "120w" / "1.5x"
+// + comma-separated candidates) and not a single URL that happens to contain
+// commas. Wix CDN paths embed commas inside path segments
+// (e.g. `/v1/fill/w_120,h_120,al_c,q_85/...`), so the old `.includes(",")` +
+// `.split(",")` heuristic shredded them into bogus fragments.
+function looksLikeSrcset(s: string): boolean {
+  return /\s\d+(?:\.\d+)?[wx](?:\s*,|\s*$)/.test(s);
+}
+
+// Parse a real srcset string into URLs. We split on commas that immediately
+// follow a width/density descriptor — never on commas inside URLs.
+function parseSrcset(s: string): string[] {
+  // Each candidate is `URL` then optional whitespace + descriptor (`120w` /
+  // `1.5x`). Candidates are comma-separated. We anchor splits on the
+  // descriptor boundary (lookbehind) so URL-internal commas survive.
+  const parts = s.split(/(?<=\s\d+(?:\.\d+)?[wx])\s*,\s*/);
+  const out: string[] = [];
+  for (const p of parts) {
+    const url = p.trim().split(/\s+/)[0];
+    if (url) out.push(url);
+  }
+  return out;
 }
 
 function extractFonts(html: string): string[] {

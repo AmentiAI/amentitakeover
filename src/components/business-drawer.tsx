@@ -25,6 +25,7 @@ import {
   getTemplatePreviewUrl,
   type TemplateChoice,
 } from "@/lib/site-url";
+import { BusinessActivityFeed } from "@/components/business-activity-feed";
 
 type DetailData = {
   id: string;
@@ -259,6 +260,8 @@ function GenerateWizard({
   const [imagesBusy, setImagesBusy] = useState(false);
   const [imageSet, setImageSet] = useState<ImageSet | null>(null);
   const [buildBusy, setBuildBusy] = useState(false);
+  // Bumped after each enrich/images/build call so the activity feed re-fetches.
+  const [feedKey, setFeedKey] = useState(0);
   const industrySignals = {
     category: business.category,
     name: business.name,
@@ -299,6 +302,7 @@ function GenerateWizard({
       setError(err instanceof Error ? err.message : "Enrich failed");
     } finally {
       setEnrichBusy(false);
+      setFeedKey((k) => k + 1);
     }
   }
 
@@ -327,6 +331,7 @@ function GenerateWizard({
       setError(err instanceof Error ? err.message : "Image generation failed");
     } finally {
       setImagesBusy(false);
+      setFeedKey((k) => k + 1);
     }
   }
 
@@ -348,6 +353,7 @@ function GenerateWizard({
       setError(err instanceof Error ? err.message : "Build failed");
     } finally {
       setBuildBusy(false);
+      setFeedKey((k) => k + 1);
     }
   }
 
@@ -550,6 +556,7 @@ function GenerateWizard({
           </div>
         </div>
       )}
+      <BusinessActivityFeed businessId={business.id} refreshKey={feedKey} />
     </div>
   );
 }

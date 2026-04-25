@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
 import { SiteChrome } from "@/components/templates/site/chrome";
+
+export const dynamic = "force-dynamic";
+
 import {
   ContactBlock,
   FaqSection,

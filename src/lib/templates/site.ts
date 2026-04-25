@@ -291,12 +291,17 @@ function looksLikeLogo(i: { src: string; alt: string }): boolean {
   return /logo|favicon|brand/i.test(i.alt) || /logo|favicon|brand/i.test(i.src);
 }
 
+// Substrings that, when present in image src/alt, indicate the image is
+// chrome (icons, badges, payment logos, social glyphs) rather than real
+// content. Site-builder names (wix/squarespace/shopify/etc.) are
+// intentionally NOT here — those CDN hostnames embed the builder name
+// (e.g. wixstatic.com), so excluding them dropped legit content imagery.
 const GALLERY_EXCLUDE_RE =
-  /(logo|favicon|brand|icon[-_/.]|sprite|avatar|badge|social|facebook|instagram|twitter|linkedin|youtube|tiktok|pinterest|yelp|google|bbb|angi|thumbtack|chamber|yext|bing|stars?\.|rating|trust|seal|award|mastercard|master-card|visa|amex|american[-_]?express|discover[-_]?card|diners[-_]?club|jcb|unionpay|paypal|stripe|square[-_](?:pay|cash|up)|apple[-_]?pay|google[-_]?pay|samsung[-_]?pay|venmo|cash[-_]?app|zelle|klarna|affirm|afterpay|bitcoin|crypto|cards?[-_](?:accepted|icons?|logos?)|payment[-_]?(?:methods?|icons?|logos?)|accepted[-_]?(?:cards?|payments?)|checkout|card[-_](?:brands?|icons?|logos?|types?)|powered[-_]?by|wordpress|elementor|wix|squarespace|shopify|duda|godaddy|weebly|webflow|site[-_]?builder|hamburger|menu[-_]?icon|chevron|arrow[-_](?:left|right|up|down)|play[-_]?button|spacer|divider|blank|placeholder|captcha|recaptcha|cloudflare|gtag|gtm|pixel[-_](?:tracker|tracking)|analytics|stock[-_]?photo|default[-_](?:image|photo|thumb))/i;
+  /(logo|favicon|brand|icon[-_/.]|sprite|avatar|badge|social|facebook|instagram|twitter|linkedin|youtube|tiktok|pinterest|yelp|google|bbb|angi|thumbtack|chamber|yext|bing|stars?\.|rating|trust|seal|award|mastercard|master-card|visa|amex|american[-_]?express|discover[-_]?card|diners[-_]?club|jcb|unionpay|paypal|stripe|square[-_](?:pay|cash|up)|apple[-_]?pay|google[-_]?pay|samsung[-_]?pay|venmo|cash[-_]?app|zelle|klarna|affirm|afterpay|bitcoin|crypto|cards?[-_](?:accepted|icons?|logos?)|payment[-_]?(?:methods?|icons?|logos?)|accepted[-_]?(?:cards?|payments?)|checkout|card[-_](?:brands?|icons?|logos?|types?)|powered[-_]?by|hamburger|menu[-_]?icon|chevron|arrow[-_](?:left|right|up|down)|play[-_]?button|spacer|divider|blank|placeholder|captcha|recaptcha|cloudflare|gtag|gtm|pixel[-_](?:tracker|tracking)|analytics|stock[-_]?photo|default[-_](?:image|photo|thumb)|untitled|unnamed|image[-_]?\d{0,3}\.|img[-_]?\d{0,3}\.|dsc[-_]?\d|temp[-_]?(?:image|file|upload)|new[-_]?image|copy[-_]?of|screen[-_]?shot|sloppyframe)/i;
 
 const TINY_DIMENSION_RE = /\b(?:16|24|32|48|64|80|96)x(?:16|24|32|48|64|80|96)\b/;
 
-function isGalleryCandidate(i: { src: string; alt: string }): boolean {
+export function isGalleryCandidate(i: { src: string; alt: string }): boolean {
   if (looksLikeLogo(i)) return false;
   if (GALLERY_EXCLUDE_RE.test(i.src)) return false;
   if (i.alt && GALLERY_EXCLUDE_RE.test(i.alt)) return false;

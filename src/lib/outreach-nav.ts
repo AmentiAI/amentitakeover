@@ -18,6 +18,7 @@ import {
   BarChart2,
   HeartPulse,
   Terminal,
+  LayoutTemplate,
   type LucideIcon,
 } from "lucide-react";
 
@@ -58,6 +59,16 @@ export const OUTREACH_NAV: OutreachNavGroup[] = [
     items: [
       { label: "Email Generation", href: "/outreach/email-gen", icon: Mail },
       { label: "Email Campaigns", href: "/outreach/email-campaigns", icon: Send },
+    ],
+  },
+  {
+    label: "Templates",
+    items: [
+      {
+        label: "Business Templates",
+        href: "/outreach/templates",
+        icon: LayoutTemplate,
+      },
     ],
   },
   {

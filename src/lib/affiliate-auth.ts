@@ -1,7 +1,7 @@
 /**
  * Session auth for the /a/<slug> affiliate portal. Separate cookie from
  * the admin session so an affiliate can't stumble into admin routes by
- * virtue of holding a session cookie — middleware checks the right one
+ * virtue of holding a session cookie — proxy checks the right one
  * based on URL prefix.
  *
  * Token format: "affiliateId.expiry.signature". Signature is an HMAC of

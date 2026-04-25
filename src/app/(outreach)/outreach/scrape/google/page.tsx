@@ -56,7 +56,7 @@ export default async function GoogleBusinessesPage({
             >
               <option value="">All States</option>
               {[
-                "AL","AK","AZ","AR","CA","CO","CT","FL","GA","IL","NY","TX","WA","OR","CO","MA",
+                "AL","AK","AZ","AR","CA","CO","CT","FL","GA","IL","NY","TX","WA","OR","MA",
               ].map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
