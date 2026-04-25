@@ -77,6 +77,10 @@ export async function POST(
       },
     });
 
+    // Always persist the contact-form schema when we find one — useful as
+    // an alternate channel even when email was also discovered.
+    const contactForm = scraped.contactForm;
+
     let siteId = b.siteId;
     if (siteId) {
       await prisma.site.update({
@@ -93,6 +97,7 @@ export async function POST(
           headings: scraped.headings,
           images: mergedImages,
           links: scraped.links,
+          contactForm: contactForm ?? undefined,
           businessId: crmBusiness.id,
         },
       });
@@ -110,6 +115,7 @@ export async function POST(
           headings: scraped.headings,
           images: mergedImages,
           links: scraped.links,
+          contactForm: contactForm ?? undefined,
           businessId: crmBusiness.id,
         },
       });
@@ -149,6 +155,19 @@ export async function POST(
         emailsFound: scraped.emails.length,
         phonesFound: scraped.phones.length,
         socialsFound: Object.entries(scraped.socials).filter(([, v]) => v).map(([k]) => k),
+        contactFormCaptured: Boolean(contactForm),
+        contactForm: contactForm
+          ? {
+              pageUrl: contactForm.pageUrl,
+              pageKind: contactForm.pageKind,
+              action: contactForm.action,
+              method: contactForm.method,
+              fieldCount: contactForm.fields.length,
+              hasEmailField: contactForm.hasEmailField,
+              hasMessageField: contactForm.hasMessageField,
+              fieldNames: contactForm.fields.map((f) => f.name),
+            }
+          : null,
       },
     );
 

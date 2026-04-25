@@ -26,6 +26,7 @@ import {
   type TemplateChoice,
 } from "@/lib/site-url";
 import { BusinessActivityFeed } from "@/components/business-activity-feed";
+import { BusinessFormSubmit } from "@/components/business-form-submit";
 
 type DetailData = {
   id: string;
@@ -556,6 +557,10 @@ function GenerateWizard({
           </div>
         </div>
       )}
+      <BusinessFormSubmit
+        businessId={business.id}
+        onSubmitted={() => setFeedKey((k) => k + 1)}
+      />
       <BusinessActivityFeed businessId={business.id} refreshKey={feedKey} />
     </div>
   );

@@ -27,6 +27,12 @@ export type DeepScrapeResult = ScrapeResult & {
   };
   logo: string | null;
   ogImage: string | null;
+  // Best contact-form schema we found while crawling. The build flow uses
+  // this as a fallback delivery channel when `emails` is empty — outreach
+  // can replay the POST instead of needing a mailto: address.
+  contactForm:
+    | (ScrapeResult["forms"][number] & { pageUrl: string; pageKind: SubpageKind })
+    | null;
 };
 
 const CONTACT_HINTS = ["contact", "get-in-touch", "reach-us", "quote", "book", "appointment", "estimate"];
@@ -111,6 +117,26 @@ export async function deepScrapeSite(inputUrl: string): Promise<DeepScrapeResult
 
   const extraImages: ScrapeResult["images"] = [];
   const extraHeadings: ScrapeResult["headings"] = [];
+  // Collect every href across the homepage + crawled subpages so the
+  // email/phone extractors see mailto:/tel: links that aren't echoed in
+  // the visible text.
+  const allHrefs: string[] = base.links.map((l) => l.href);
+  // Scan rawHtml across pages too — email addresses sometimes only appear
+  // in attributes (e.g. obfuscation, JSON-LD ContactPoint, microdata) and
+  // never in the rendered text.
+  const htmlFragments: string[] = [base.rawHtml];
+  // Carries every form we saw across the homepage + subpages. Each entry is
+  // tagged with the URL/kind of the page that hosted it so we can prefer
+  // contact/quote pages when picking the best form below.
+  type ScannedForm = ScrapeResult["forms"][number] & {
+    pageUrl: string;
+    pageKind: SubpageKind;
+  };
+  const scannedForms: ScannedForm[] = [];
+  const tallyForms = (list: ScrapeResult["forms"], pageUrl: string, kind: SubpageKind) => {
+    for (const f of list) scannedForms.push({ ...f, pageUrl, pageKind: kind });
+  };
+  tallyForms(base.forms, base.url, "home");
   // Preserve frequency when merging palettes across pages: page index ≈ usage
   // weight. Count how often a hex shows up in the ordered list from each
   // scrape, then re-sort by total count so primary brand colors win.
@@ -141,6 +167,9 @@ export async function deepScrapeSite(inputUrl: string): Promise<DeepScrapeResult
       extraHeadings.push(...sub.headings);
       tallyPalette(sub.palette);
       sub.fonts.forEach((f) => extraFonts.add(f));
+      tallyForms(sub.forms, sub.url, target.kind);
+      for (const l of sub.links) allHrefs.push(l.href);
+      htmlFragments.push(sub.rawHtml);
     } catch {
       // swallow per-page failures; we still have the homepage
     }
@@ -152,21 +181,44 @@ export async function deepScrapeSite(inputUrl: string): Promise<DeepScrapeResult
     .slice(0, 16);
 
   const joinedText = pages.map((p) => p.text).join("\n");
-  const joinedHtml = base.rawHtml;
+  const joinedHtml = htmlFragments.join("\n");
 
-  const emails = uniq(
-    (joinedText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) ?? []).map((e) =>
-      e.toLowerCase(),
-    ),
-  )
+  // Mine every signal: visible text, full HTML across all crawled pages,
+  // and explicit mailto:/tel: hrefs (which often have NO matching visible
+  // text — `<a href="mailto:foo@bar.com">Email us</a>`).
+  const emailRegex = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+  const emailHits: string[] = [];
+  for (const href of allHrefs) {
+    if (!/^mailto:/i.test(href)) continue;
+    // Strip mailto: scheme and any ?subject=&body= query so we keep the
+    // address only. Some sites encode it (mailto:foo%40bar.com).
+    const raw = href.replace(/^mailto:/i, "").split("?")[0];
+    let decoded = raw;
+    try {
+      decoded = decodeURIComponent(raw);
+    } catch {
+      // leave raw — best effort
+    }
+    if (decoded) emailHits.push(decoded);
+  }
+  emailHits.push(...(joinedText.match(emailRegex) ?? []));
+  emailHits.push(...(joinedHtml.match(emailRegex) ?? []));
+  const emails = uniq(emailHits.map((e) => e.toLowerCase()))
+    .filter((e) => /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(e))
     .filter((e) => !/\.(png|jpg|jpeg|gif|svg|webp)$/i.test(e))
+    .filter((e) => !/(sentry|cloudflare|wixpress|godaddy|squarespace)\./i.test(e))
     .slice(0, 10);
 
-  const phones = uniq(
-    (joinedText.match(/(\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g) ?? []).map((p) =>
-      p.trim(),
-    ),
-  ).slice(0, 8);
+  const phoneRegex = /(\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g;
+  const phoneHits: string[] = [];
+  for (const href of allHrefs) {
+    if (!/^tel:/i.test(href)) continue;
+    phoneHits.push(href.replace(/^tel:/i, "").trim());
+  }
+  phoneHits.push(...(joinedText.match(phoneRegex) ?? []));
+  const phones = uniq(phoneHits.map((p) => p.trim()))
+    .filter((p) => p.length >= 7)
+    .slice(0, 8);
 
   const socials = extractSocials(joinedHtml, base.links.map((l) => l.href));
 
@@ -182,6 +234,13 @@ export async function deepScrapeSite(inputUrl: string): Promise<DeepScrapeResult
     (h) => `${h.tag}|${h.text}`,
   ).slice(0, 80);
 
+  // Pick the best form across every page we crawled. Bias toward forms
+  // that came from contact-kind pages — that's the canonical place a real
+  // contact form lives. Within a page, we trust the heuristic score from
+  // the scraper (email + message fields, name/phone bonuses, search/
+  // newsletter penalties).
+  const contactForm = pickBestContactForm(scannedForms);
+
   return {
     ...base,
     images: mergedImages,
@@ -194,7 +253,27 @@ export async function deepScrapeSite(inputUrl: string): Promise<DeepScrapeResult
     socials,
     logo,
     ogImage: base.ogImage,
+    contactForm,
   };
+}
+
+function pickBestContactForm(
+  forms: (ScrapeResult["forms"][number] & {
+    pageUrl: string;
+    pageKind: SubpageKind;
+  })[],
+): DeepScrapeResult["contactForm"] {
+  if (!forms.length) return null;
+  const ranked = forms
+    .map((f) => ({
+      form: f,
+      // Page-kind bonus pushes the contact-page form ahead of the global
+      // newsletter form in the footer.
+      ranked: f.score + (f.pageKind === "contact" ? 12 : 0),
+    }))
+    .filter((entry) => entry.ranked > 0)
+    .sort((a, b) => b.ranked - a.ranked);
+  return ranked[0]?.form ?? null;
 }
 
 function pickLink(

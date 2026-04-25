@@ -31,6 +31,9 @@ export type SiteData = {
     eyebrow: string;
     subtitle: string;
     image: string | null;
+    // Transparent-background mascot generated from the business name.
+    // Templates overlay this on the hero canvas/photo.
+    character: string | null;
   };
   banners: {
     about: string | null;
@@ -104,6 +107,7 @@ type SiteIn = {
 
 export type GeneratedImagesIn = {
   hero: { src: string } | null;
+  heroCharacter: { src: string } | null;
   aboutBanner: { src: string } | null;
   servicesBanner: { src: string } | null;
   ctaBanner: { src: string } | null;
@@ -243,6 +247,7 @@ export function buildSiteData(
       title: heroTitle,
       subtitle: heroSubtitle,
       image: hero?.src ?? null,
+      character: generated?.heroCharacter?.src ?? null,
     },
     banners: {
       about: generated?.aboutBanner?.src ?? null,

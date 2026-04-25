@@ -34,7 +34,18 @@ export function Hero({ data }: { data: SiteData }) {
         <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-950/55 to-transparent" />
       </div>
 
-      <div className="relative mx-auto max-w-7xl px-5 py-20 sm:px-6 md:py-28 lg:py-36">
+      {hero.character && (
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] hidden w-[44%] max-w-[520px] items-end justify-end pb-2 pr-4 sm:flex">
+          <SafeImg
+            src={hero.character}
+            alt=""
+            className="h-[88%] w-auto max-h-[640px] object-contain drop-shadow-[0_18px_30px_rgba(0,0,0,0.45)]"
+            aria-hidden
+          />
+        </div>
+      )}
+
+      <div className="relative z-[2] mx-auto max-w-7xl px-5 py-20 sm:px-6 md:py-28 lg:py-36">
         <div className="max-w-3xl text-white">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10.5px] font-semibold uppercase tracking-[0.22em] backdrop-blur">
             <Sparkles className="h-3 w-3" />

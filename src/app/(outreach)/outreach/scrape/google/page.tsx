@@ -33,6 +33,8 @@ export default async function GoogleBusinessesPage({
     where,
     orderBy: { createdAt: "desc" },
     take: 200,
+    // Pull just contactForm so we can render a "Form" flag without a 2nd query.
+    include: { site: { select: { contactForm: true } } },
   });
 
   return (
@@ -117,6 +119,19 @@ export default async function GoogleBusinessesPage({
             qualified: b.qualified,
             hasEmail: !!b.email,
             hasWebsite: b.hasWebsite,
+            hasContactForm: !!b.site?.contactForm,
+            // True when the captured form has a textarea / "message" /
+            // "comments" / "details" field — i.e., the operator can convey
+            // intent. Falsy when it's a bare contact-info dropoff form.
+            formHasMessage:
+              !!(b.site?.contactForm as { hasMessageField?: boolean } | null)
+                ?.hasMessageField,
+            // Captcha vendor detected on the form / page (recaptcha,
+            // hcaptcha, turnstile, …). Non-null forms can't be submitted
+            // headlessly without solving the challenge.
+            formCaptcha:
+              ((b.site?.contactForm as { captcha?: { type?: string } | null } | null)
+                ?.captcha?.type) ?? null,
           }))}
         />
       </div>

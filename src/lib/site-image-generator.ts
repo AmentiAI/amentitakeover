@@ -9,6 +9,7 @@ import {
   DEFAULT_GALLERY,
   DEFAULT_SERVICE_CARDS,
 } from "@/lib/template-defaults";
+import { isBlobConfigured, uploadBytesToBlob } from "@/lib/blob-storage";
 
 /**
  * Generate a matched set of mockup-site images for a scraped business.
@@ -25,6 +26,7 @@ import {
 
 export type SiteImagePurpose =
   | "hero"
+  | "hero-character"
   | "banner-about"
   | "banner-services"
   | "banner-cta"
@@ -33,6 +35,9 @@ export type SiteImagePurpose =
 
 export type SiteImageSet = {
   hero: { id: string; src: string } | null;
+  // Transparent-background mascot/character generated from the business name.
+  // Rendered as an overlay on top of each template's hero canvas/image.
+  heroCharacter: { id: string; src: string } | null;
   aboutBanner: { id: string; src: string } | null;
   servicesBanner: { id: string; src: string } | null;
   ctaBanner: { id: string; src: string } | null;
@@ -79,10 +84,14 @@ export async function generateSiteImages(
     purpose: SiteImagePurpose;
     position: number;
     prompt: string;
-    size: "1024x1024" | "1536x1024";
+    size: "1024x1024" | "1536x1024" | "1024x1536";
+    background?: "auto" | "transparent";
+    useBlob?: boolean;
   };
   const jobs: Job[] = [
     { key: "hero", purpose: "hero", position: 0, prompt: brief.heroPrompt, size: "1536x1024" },
+    // Character generation disabled — pest/roofing templates rely on canvas
+    // and SVG for hero visuals; logo (or CSS text logo) covers brand.
     { key: "banner-about", purpose: "banner-about", position: 0, prompt: brief.aboutBannerPrompt, size: "1536x1024" },
     { key: "banner-services", purpose: "banner-services", position: 1, prompt: brief.servicesBannerPrompt, size: "1536x1024" },
     { key: "banner-cta", purpose: "banner-cta", position: 2, prompt: brief.ctaBannerPrompt, size: "1536x1024" },
@@ -103,24 +112,36 @@ export async function generateSiteImages(
   ];
 
   const results = await runParallel(jobs, 6, (job) =>
-    persistIfGenerated(scrapedBusinessId, job.purpose, job.position, job.prompt, job.size, quality, failures),
+    persistIfGenerated(
+      scrapedBusinessId,
+      job.purpose,
+      job.position,
+      job.prompt,
+      job.size,
+      quality,
+      failures,
+      job.background,
+      job.useBlob,
+    ),
   );
 
-  const byKey = new Map<string, { id: string } | null>();
+  type RowResult = { id: string; blobUrl: string | null };
+  const byKey = new Map<string, RowResult | null>();
   jobs.forEach((j, i) => byKey.set(j.key, results[i]));
 
   const heroRow = byKey.get("hero") ?? null;
-  const bannerRows: Partial<Record<SiteImagePurpose, { id: string }>> = {};
+  const heroCharacterRow = byKey.get("hero-character") ?? null;
+  const bannerRows: Partial<Record<SiteImagePurpose, RowResult>> = {};
   if (byKey.get("banner-about")) bannerRows["banner-about"] = byKey.get("banner-about")!;
   if (byKey.get("banner-services")) bannerRows["banner-services"] = byKey.get("banner-services")!;
   if (byKey.get("banner-cta")) bannerRows["banner-cta"] = byKey.get("banner-cta")!;
 
-  const serviceCardRows: { id: string }[] = [];
+  const serviceCardRows: RowResult[] = [];
   for (let i = 0; i < DEFAULT_SERVICE_CARD_COUNT; i++) {
     const row = byKey.get(`service-card-${i}`);
     if (row) serviceCardRows.push(row);
   }
-  const galleryRows: { id: string }[] = [];
+  const galleryRows: RowResult[] = [];
   for (let i = 0; i < galleryCount; i++) {
     const row = byKey.get(`gallery-${i}`);
     if (row) galleryRows.push(row);
@@ -144,11 +165,12 @@ export async function generateSiteImages(
 
   return {
     hero: rowToImg(heroRow),
+    heroCharacter: rowToImg(heroCharacterRow),
     aboutBanner: rowToImg(bannerRows["banner-about"]),
     servicesBanner: rowToImg(bannerRows["banner-services"]),
     ctaBanner: rowToImg(bannerRows["banner-cta"]),
-    serviceCards: serviceCardRows.map((r) => ({ id: r.id, src: `/api/generated-image/${r.id}` })),
-    gallery: galleryRows.map((r) => ({ id: r.id, src: `/api/generated-image/${r.id}` })),
+    serviceCards: serviceCardRows.map((r) => ({ id: r.id, src: srcFromRow(r) })),
+    gallery: galleryRows.map((r) => ({ id: r.id, src: srcFromRow(r) })),
   };
 }
 
@@ -157,10 +179,11 @@ export async function getSiteImageSet(
 ): Promise<SiteImageSet> {
   const rows = await prisma.generatedImage.findMany({
     where: { scrapedBusinessId },
-    select: { id: true, purpose: true, position: true },
+    select: { id: true, purpose: true, position: true, blobUrl: true },
     orderBy: [{ purpose: "asc" }, { position: "asc" }],
   });
   const hero = rows.find((r) => r.purpose === "hero");
+  const heroCharacter = rows.find((r) => r.purpose === "hero-character");
   const aboutBanner = rows.find((r) => r.purpose === "banner-about");
   const servicesBanner = rows.find((r) => r.purpose === "banner-services");
   const ctaBanner = rows.find((r) => r.purpose === "banner-cta");
@@ -168,22 +191,77 @@ export async function getSiteImageSet(
   const gallery = rows.filter((r) => r.purpose === "gallery");
   return withDefaults({
     hero: rowToImg(hero),
+    heroCharacter: rowToImg(heroCharacter),
     aboutBanner: rowToImg(aboutBanner),
     servicesBanner: rowToImg(servicesBanner),
     ctaBanner: rowToImg(ctaBanner),
-    serviceCards: serviceCards.map((g) => ({ id: g.id, src: `/api/generated-image/${g.id}` })),
-    gallery: gallery.map((g) => ({ id: g.id, src: `/api/generated-image/${g.id}` })),
+    serviceCards: serviceCards.map((g) => ({ id: g.id, src: srcFromRow(g) })),
+    gallery: gallery.map((g) => ({ id: g.id, src: srcFromRow(g) })),
   });
 }
 
-function rowToImg(row: { id: string } | undefined | null): { id: string; src: string } | null {
-  return row ? { id: row.id, src: `/api/generated-image/${row.id}` } : null;
+// Generates ONLY the transparent-bg hero character. Cheap (~1 image call),
+// idempotent unless `force` is set. Used by /api/build so each Build click
+// can produce a name-driven mascot without paying for the full 16-image set.
+export async function generateHeroCharacter(
+  scrapedBusinessId: string,
+  opts?: { force?: boolean; quality?: ImageQuality },
+): Promise<{ id: string; blobUrl: string | null; prompt: string } | null> {
+  const business = await prisma.scrapedBusiness.findUnique({
+    where: { id: scrapedBusinessId },
+    include: { site: true },
+  });
+  if (!business) throw new Error(`ScrapedBusiness ${scrapedBusinessId} not found`);
+
+  if (opts?.force) {
+    await prisma.generatedImage.deleteMany({
+      where: { scrapedBusinessId, purpose: "hero-character" },
+    });
+  } else {
+    const existing = await prisma.generatedImage.findFirst({
+      where: { scrapedBusinessId, purpose: "hero-character" },
+      select: { id: true, blobUrl: true, prompt: true },
+    });
+    if (existing) return existing;
+  }
+
+  const ctx = buildContext(business);
+  const prompt = buildCharacterPrompt(ctx);
+  const failures: { prompt: string; error: string }[] = [];
+  const row = await persistIfGenerated(
+    scrapedBusinessId,
+    "hero-character",
+    0,
+    prompt,
+    "1024x1536",
+    opts?.quality ?? "high",
+    failures,
+    "transparent",
+    true,
+  );
+  if (!row) {
+    const err = failures[0]?.error ?? "image generation failed";
+    throw new Error(err);
+  }
+  return { id: row.id, blobUrl: row.blobUrl, prompt };
+}
+
+function rowToImg(
+  row: { id: string; blobUrl?: string | null } | undefined | null,
+): { id: string; src: string } | null {
+  return row ? { id: row.id, src: srcFromRow(row) } : null;
+}
+
+function srcFromRow(row: { id: string; blobUrl?: string | null }): string {
+  return row.blobUrl ? row.blobUrl : `/api/generated-image/${row.id}`;
 }
 
 function withDefaults(set: SiteImageSet): SiteImageSet {
   const def = (id: string, src: string) => ({ id, src });
   return {
     hero: set.hero,
+    // No SVG fallback for the character — hero just renders without it.
+    heroCharacter: set.heroCharacter,
     aboutBanner: set.aboutBanner ?? def("default-banner-about", DEFAULT_BANNER_ABOUT),
     servicesBanner: set.servicesBanner ?? def("default-banner-services", DEFAULT_BANNER_SERVICES),
     ctaBanner: set.ctaBanner ?? def("default-banner-cta", DEFAULT_BANNER_CTA),
@@ -204,23 +282,44 @@ async function persistIfGenerated(
   size: "1024x1024" | "1536x1024" | "1024x1536",
   quality: ImageQuality,
   failures: { prompt: string; error: string }[],
-): Promise<{ id: string } | null> {
-  const result = await safeGenerate({ prompt, size, quality }, failures);
+  background: "auto" | "transparent" = "auto",
+  useBlob: boolean = false,
+): Promise<{ id: string; blobUrl: string | null } | null> {
+  const result = await safeGenerate({ prompt, size, quality, background }, failures);
   if (!result) return null;
-  return prisma.generatedImage.create({
+
+  let blobUrl: string | null = null;
+  if (useBlob && isBlobConfigured()) {
+    try {
+      const ext = extFromMime(result.mimeType);
+      const pathname = `generated-images/${scrapedBusinessId}/${purpose}-${position}-${Date.now()}.${ext}`;
+      blobUrl = await uploadBytesToBlob({
+        pathname,
+        bytes: result.bytes,
+        contentType: result.mimeType,
+      });
+    } catch (err) {
+      // Blob upload failure shouldn't lose the image — fall back to bytes.
+      console.error("[site-image-generator] blob upload failed:", err);
+    }
+  }
+
+  const row = await prisma.generatedImage.create({
     data: {
       scrapedBusinessId,
       purpose,
       position,
       prompt,
-      bytes: result.bytes,
+      bytes: blobUrl ? null : Buffer.from(result.bytes),
+      blobUrl,
       mimeType: result.mimeType,
       width: result.width,
       height: result.height,
       model: result.model,
     },
-    select: { id: true },
+    select: { id: true, blobUrl: true },
   });
+  return { id: row.id, blobUrl: row.blobUrl };
 }
 
 function buildContext(
@@ -269,6 +368,69 @@ function buildContext(
     textContent: business.site?.textContent ?? null,
     serviceTitles,
   };
+}
+
+// Builds a brand-mascot prompt anchored on the business name and trade so the
+// character feels purpose-built for this specific company. Strict transparent-
+// background instructions because we composite the cutout over each template's
+// hero canvas — any solid background would frame it as a sticker.
+function buildCharacterPrompt(ctx: BusinessContext): string {
+  const trade = (ctx.industry || ctx.category || "local services").toLowerCase();
+  const tradeOutfit = pickTradeOutfit(trade);
+  // gpt-image-2 doesn't accept the `background` API param, so transparency
+  // has to live in the prompt. We over-specify the cutout intent and ask
+  // for PNG so any alpha the model produces survives.
+  return [
+    `Subject: a friendly cartoon mascot character representing "${ctx.name}".`,
+    `${tradeOutfit}.`,
+    "Full body, three-quarter front pose, professional brand illustration",
+    "with bold clean linework, modern flat-design shading, vibrant brand",
+    "colors. Friendly approachable expression — small smile, eye contact",
+    "with the viewer. Centered in the frame with generous empty space",
+    "the character must not touch the edges of the canvas.",
+    "",
+    "Make the background behind the character true transparency.",
+  ].join(" ");
+}
+
+// Maps a sniffed mime-type back to the file extension we should use when
+// uploading to blob storage. Defaults to `bin` so a future format we don't
+// recognize still gets a sane URL — the actual content-type header is what
+// drives browser rendering.
+function extFromMime(mime: string): string {
+  if (mime === "image/png") return "png";
+  if (mime === "image/jpeg") return "jpg";
+  if (mime === "image/webp") return "webp";
+  if (mime === "image/gif") return "gif";
+  return "bin";
+}
+
+function pickTradeOutfit(trade: string): string {
+  if (/roof/.test(trade)) {
+    return "A cheerful roofer in a hard hat, work boots, and tool belt, holding a roofing hammer";
+  }
+  if (/pest|extermin|termite/.test(trade)) {
+    return "A cheerful exterminator in a clean uniform with a small spray-applicator wand, holding a clipboard";
+  }
+  if (/plumb/.test(trade)) {
+    return "A cheerful plumber in coveralls with a wrench in one hand and a clipboard in the other";
+  }
+  if (/electric/.test(trade)) {
+    return "A cheerful electrician in a polo shirt with a tool belt, holding a voltage tester";
+  }
+  if (/hvac|heating|cooling|air/.test(trade)) {
+    return "A cheerful HVAC technician in a uniform with a service tablet and a small refrigerant gauge";
+  }
+  if (/landsc|lawn|garden|tree/.test(trade)) {
+    return "A cheerful landscaper in a polo shirt, holding small pruning shears, with a smile";
+  }
+  if (/clean/.test(trade)) {
+    return "A cheerful cleaner in a tidy uniform with a microfiber cloth and spray bottle";
+  }
+  if (/paint/.test(trade)) {
+    return "A cheerful painter in white coveralls holding a paint brush and a color swatch fan";
+  }
+  return "A cheerful service professional in a polo shirt, holding a clipboard, with a friendly smile";
 }
 
 async function safeGenerate(

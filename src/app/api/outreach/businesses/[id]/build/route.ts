@@ -69,6 +69,10 @@ export async function POST(
         const joinedText = scraped.pages
           .map((p) => `# ${p.kind.toUpperCase()}\n${p.text}`)
           .join("\n\n");
+        // Always save the contact-form schema when we find one — it's
+        // useful even if an email was also discovered (alternate channel,
+        // visibility into form structure, future automation).
+        const contactForm = scraped.contactForm;
         site = await prisma.site.update({
           where: { id: site.id },
           data: {
@@ -83,6 +87,7 @@ export async function POST(
             headings: scraped.headings,
             images: merged,
             links: scraped.links,
+            contactForm: contactForm ?? undefined,
           },
         });
         const galleryEligible = merged.filter(isGalleryCandidate);
@@ -98,6 +103,20 @@ export async function POST(
             galleryCandidatesSample: galleryEligible.slice(0, 5).map((i) => i.src),
             ogImage: scraped.ogImage,
             logo: scraped.logo,
+            emailFound: scraped.emails.length > 0,
+            contactFormCaptured: Boolean(contactForm),
+            contactForm: contactForm
+              ? {
+                  pageUrl: contactForm.pageUrl,
+                  pageKind: contactForm.pageKind,
+                  action: contactForm.action,
+                  method: contactForm.method,
+                  fieldCount: contactForm.fields.length,
+                  hasEmailField: contactForm.hasEmailField,
+                  hasMessageField: contactForm.hasMessageField,
+                  fieldNames: contactForm.fields.map((f) => f.name),
+                }
+              : null,
           },
         );
       }

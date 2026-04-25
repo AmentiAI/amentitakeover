@@ -13,9 +13,13 @@ export async function GET(
   const { id } = await ctx.params;
   const img = await prisma.generatedImage.findUnique({
     where: { id },
-    select: { bytes: true, mimeType: true },
+    select: { bytes: true, mimeType: true, blobUrl: true },
   });
   if (!img) return new Response("Not found", { status: 404 });
+  // Blob-stored rows skip Postgres bytes — redirect to the CDN URL so this
+  // proxy stays a fallback for legacy bytes-in-DB rows.
+  if (img.blobUrl) return Response.redirect(img.blobUrl, 308);
+  if (!img.bytes) return new Response("No content", { status: 410 });
 
   const body = new Uint8Array(img.bytes);
   return new Response(body, {

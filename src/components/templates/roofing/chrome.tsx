@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Home, Phone } from "lucide-react";
 import { SafeImg } from "@/components/safe-img";
+import { CompanyTextLogo } from "@/components/company-text-logo";
 import { SocialLinks } from "@/components/templates/site/chrome";
 import { StormCanvas } from "@/components/templates/roofing/storm-canvas";
 import { RoofRidgeCanvas } from "@/components/templates/roofing/roof-ridge-canvas";
@@ -33,10 +34,15 @@ export function RoofingNav({
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
         <Link
           href={`/p/roofing/${id}`}
-          className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[0.22em] text-white"
+          className="inline-flex items-center text-sm font-bold uppercase tracking-[0.22em]"
         >
-          <Home className="h-4 w-4 text-amber-400" />
-          <span>{business.name}</span>
+          <CompanyTextLogo
+            name={business.name}
+            logoUrl={business.logoUrl}
+            accent="#fbbf24"
+            tone="light"
+            className="text-[13px] tracking-[0.22em]"
+          />
         </Link>
         <div className="hidden items-center gap-7 text-[11px] uppercase tracking-[0.22em] md:flex">
           {items.map((it) => {
@@ -85,7 +91,6 @@ export function RoofingBanner({
   eyebrow,
   title,
   subtitle,
-  heroImage,
   svg,
   children,
 }: {
@@ -93,7 +98,6 @@ export function RoofingBanner({
   eyebrow: string;
   title: React.ReactNode;
   subtitle?: string;
-  heroImage?: string | null;
   svg?: React.ReactNode;
   children?: React.ReactNode;
 }) {
@@ -106,21 +110,11 @@ export function RoofingBanner({
   return (
     <section className="relative isolate overflow-hidden bg-[#0b1220] text-white">
       <div className={`relative w-full ${heightClass}`}>
-        {heroImage && (
-          <div className="absolute inset-0">
-            <SafeImg
-              src={heroImage}
-              alt="hero"
-              className="h-full w-full object-cover opacity-20"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#0b1220]/60 via-[#0b1220]/70 to-[#0b1220]" />
-          </div>
-        )}
-        {!heroImage && !svg && (
+        {!svg && (
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_60%_30%,rgba(251,191,36,0.15),transparent_60%)]" />
         )}
 
-        {/* SVG banner — layered above the image tint, below ridge/storm */}
+        {/* SVG banner — layered above the base tint, below ridge/storm */}
         {svg && (
           <div className="absolute inset-0">
             {svg}

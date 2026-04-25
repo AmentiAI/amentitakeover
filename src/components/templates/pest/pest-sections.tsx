@@ -19,7 +19,7 @@ import {
   Zap,
 } from "lucide-react";
 import { SafeImg } from "@/components/safe-img";
-import { defaultServiceAt } from "@/lib/template-defaults";
+import { defaultGalleryAt, defaultServiceAt } from "@/lib/template-defaults";
 import { BarrierShieldCanvas } from "@/components/templates/pest/barrier-shield-canvas";
 import { DetectionGridCanvas } from "@/components/templates/pest/detection-grid-canvas";
 import { HeroBugBanner } from "@/components/templates/pest/hero-bug-banner";
@@ -1249,5 +1249,145 @@ function FAQRow({
       </summary>
       <p className="mt-3 text-[14.5px] leading-relaxed text-slate-600">{a}</p>
     </details>
+  );
+}
+
+// ---------- Editorial single-image section ----------
+
+// Counterpart to the roofing template's ResilienceEditorial. Shows the first
+// scraped photo as a tall, framed feature image with overlaid quote next to
+// trust copy. Falls back to the SVG default via SafeImg.defaultSrc when the
+// scraped URL fails (hotlink-blocked or 404).
+const PEST_TRUST_POINTS: { label: string; body: string }[] = [
+  {
+    label: "Inspection-first",
+    body: "Every visit starts with a written report — entry points, harborage zones, conducive conditions.",
+  },
+  {
+    label: "EPA-registered chemistries",
+    body: "Targeted bait stations and barrier sprays — no broad-spectrum fogging, no residue near food prep.",
+  },
+  {
+    label: "Pet & kid friendly",
+    body: "Dry-time and re-entry windows are documented per product so families know exactly when it's safe.",
+  },
+  {
+    label: "Service guarantee",
+    body: "If pests come back between visits, we come back at no charge until they're gone.",
+  },
+];
+
+export function PestEditorial({
+  gallery,
+  businessName,
+}: {
+  gallery: SiteData["gallery"];
+  businessName: string;
+}) {
+  return (
+    <section className="relative bg-white">
+      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 sm:px-8 md:grid-cols-[1.1fr_1fr] md:py-24">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.26em] text-emerald-600">
+            Why it matters
+          </p>
+          <h2 className="mt-4 font-serif text-[36px] leading-[1.05] tracking-tight text-slate-900 sm:text-[46px]">
+            Pests don&apos;t need an invitation —{" "}
+            <span className="italic text-emerald-700">they need an opening.</span>
+          </h2>
+          <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-slate-600">
+            One unsealed dryer vent, a single hairline gap under the siding,
+            standing water behind the AC pad — that&apos;s all it takes for
+            a colony to move in. We find the openings, close them, and put a
+            chemistry plan around your perimeter so the next colony goes
+            looking somewhere else.
+          </p>
+          <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+            {PEST_TRUST_POINTS.map((p) => (
+              <li
+                key={p.label}
+                className="flex gap-3 border-l-2 border-emerald-500/60 pl-4"
+              >
+                <div className="text-slate-700">
+                  <div className="text-[13px] font-bold uppercase tracking-[0.18em] text-slate-900">
+                    {p.label}
+                  </div>
+                  <div className="mt-1 text-[13px] leading-relaxed text-slate-600">
+                    {p.body}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="relative">
+          <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+            {gallery[0]?.src ? (
+              <SafeImg
+                src={gallery[0].src}
+                alt={gallery[0].alt || `${businessName} crew on site`}
+                className="h-full w-full object-cover"
+                defaultSrc={defaultGalleryAt(0)}
+              />
+            ) : (
+              <div className="h-full w-full bg-gradient-to-br from-emerald-50 to-emerald-100" />
+            )}
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-emerald-950/90 via-emerald-950/40 to-transparent p-6">
+              <p className="font-serif text-[15px] italic text-emerald-50">
+                &ldquo;We don&apos;t leave a property until the report,
+                the perimeter, and the family all check out.&rdquo;
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ---------- Recent-jobs photo grid ----------
+
+// Counterpart to the roofing template's RecentProjects. Renders up to 6
+// scraped photos in a responsive grid with the first cell spanning 2x2 for
+// editorial weight. Hidden when fewer than 2 photos are available so we
+// don't show a one-tile "grid".
+export function RecentJobs({
+  gallery,
+  businessName,
+}: {
+  gallery: SiteData["gallery"];
+  businessName: string;
+}) {
+  if (gallery.length < 2) return null;
+  return (
+    <section className="relative bg-slate-50">
+      <div className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
+        <p className="text-[11px] font-bold uppercase tracking-[0.26em] text-emerald-600">
+          Recent service calls
+        </p>
+        <h2 className="mt-3 font-serif text-[32px] leading-tight tracking-tight text-slate-900 sm:text-[40px]">
+          Routes we ran <span className="italic text-emerald-700">this season.</span>
+        </h2>
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {gallery.slice(0, 6).map((g, i) => (
+            <figure
+              key={`${g.src}-${i}`}
+              className={`relative overflow-hidden rounded-2xl border border-slate-200 bg-white ${
+                i === 0 ? "sm:col-span-2 sm:row-span-2" : ""
+              }`}
+            >
+              <SafeImg
+                src={g.src}
+                alt={g.alt || `${businessName} service call`}
+                className={`h-full w-full object-cover ${
+                  i === 0 ? "aspect-[4/3]" : "aspect-square"
+                }`}
+                defaultSrc={defaultGalleryAt(i)}
+              />
+            </figure>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

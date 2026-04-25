@@ -11,8 +11,6 @@ import {
   InspectionReport,
   LicenseBadges,
   MaterialCatalog,
-  RecentProjects,
-  ResilienceEditorial,
   RoofingHeroCtas,
   RoofStatBand,
   ServicesGrid,
@@ -33,9 +31,12 @@ export default async function RoofingHomePage({
   const data = await loadSiteData(id);
   if (!data) notFound();
 
-  const { business, hero, services, gallery, testimonials, serviceArea, headlines } = data;
+  const { business, hero, services, testimonials, serviceArea, headlines } = data;
   const loc = [business.city, business.state].filter(Boolean).join(", ");
   const parts = splitHero(hero.title);
+  // Roofing template renders no scraped photos; service cards fall through
+  // to gradient/icon panels when image is null.
+  const cleanServices = services.map((s) => ({ ...s, image: null }));
 
   return (
     <>
@@ -44,7 +45,6 @@ export default async function RoofingHomePage({
       <RoofingBanner
         variant="hero"
         eyebrow={hero.eyebrow || "Roofing, built to outlast the weather"}
-        heroImage={hero.image}
         svg={<RoofSkylineBanner />}
         title={
           <>
@@ -66,15 +66,13 @@ export default async function RoofingHomePage({
       </RoofingBanner>
 
       <RoofStatBand reviewsCount={business.reviewsCount} />
-      <ResilienceEditorial gallery={gallery} businessName={business.name} />
       <InspectionReport />
       <MaterialCatalog />
       <WarrantyTiers />
-      {services.length > 3 && (
-        <ServicesGrid services={services} headline={headlines.services} />
+      {cleanServices.length > 3 && (
+        <ServicesGrid services={cleanServices} headline={headlines.services} />
       )}
       <CoverageMap serviceArea={serviceArea} loc={loc} />
-      <RecentProjects gallery={gallery} businessName={business.name} />
       <LicenseBadges />
       <Testimonials
         testimonials={testimonials}

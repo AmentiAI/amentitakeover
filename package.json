@@ -18,6 +18,7 @@
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@prisma/client": "^6.1.0",
+    "@vercel/blob": "^2.3.3",
     "cheerio": "^1.0.0",
     "clsx": "^2.1.1",
     "d3-scale": "^4.0.2",

@@ -21,6 +21,40 @@ export type ScrapeResult = {
   links: { href: string; text: string }[];
   palette: string[];
   fonts: string[];
+  forms: FormSchema[];
+};
+
+// Captured shape of a `<form>` element on the page. We persist this so that
+// downstream "submit on the prospect's behalf" flows can replay the POST
+// without scraping the contact page again. `action` is absolute; `fields`
+// includes hidden inputs (CSRF tokens, etc.) so the replay carries them.
+export type FormField = {
+  name: string;
+  type: string; // text | email | tel | textarea | select | checkbox | radio | hidden | ...
+  placeholder?: string;
+  required?: boolean;
+  label?: string;
+  value?: string;
+  options?: { value: string; label: string }[];
+};
+
+export type FormSchema = {
+  action: string;
+  method: "GET" | "POST";
+  encoding: string | null;
+  fields: FormField[];
+  hasEmailField: boolean;
+  hasMessageField: boolean;
+  score: number;
+  // Detected human-verification challenge — null when the form is a clean
+  // dropoff target. Replaying a captcha-protected form without solving the
+  // challenge will be silently rejected by the recipient.
+  captcha: CaptchaInfo | null;
+};
+
+export type CaptchaInfo = {
+  type: "recaptcha" | "hcaptcha" | "turnstile" | "wpcf7-recaptcha" | "unknown";
+  signals: string[];
 };
 
 // Hosts we never want to pull imagery from — these are always social-brand
@@ -228,6 +262,10 @@ export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
     links.push({ href: absolutize(href, url), text: $(el).text().trim() });
   });
 
+  // Capture <form> elements before stripping scripts/styles — we want field
+  // metadata (including hidden CSRF inputs) for replay.
+  const forms = extractForms($, url);
+
   $("script, style, noscript, svg").remove();
   const textContent = $("body").text().replace(/\s+/g, " ").trim().slice(0, 20000);
 
@@ -244,10 +282,11 @@ export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
     rawHtml: rawHtml.slice(0, 200_000),
     textContent,
     headings: headings.slice(0, 60),
-    images: images.slice(0, 120),
+    images: dedupeImagesBySize(images).slice(0, 120),
     links: links.slice(0, 120),
     palette,
     fonts,
+    forms,
   };
 }
 
@@ -448,6 +487,208 @@ async function fetchText(url: string, maxBytes: number): Promise<string> {
   }
 }
 
+// Pulls every <form> on the page into a structured schema. Skips submit
+// buttons (they're triggers, not data) but keeps hidden inputs because they
+// frequently carry CSRF / nonce tokens required by the form's backend.
+// Each form gets a heuristic score so deep-scraper can pick the best one.
+// Also stamps each form with detected captcha info so downstream code can
+// flag forms that won't submit cleanly without a human.
+function extractForms(
+  $: cheerio.CheerioAPI,
+  baseUrl: string,
+): FormSchema[] {
+  // Detect captcha vendors at the page level — most challenges are loaded
+  // via a script src then JS-injected into the form, so the script tag is
+  // the most reliable signal regardless of whether the widget div has
+  // been rendered yet.
+  const pageScripts = $("script[src]")
+    .map((_i, el) => ($(el).attr("src") ?? "").toLowerCase())
+    .get();
+  const pageCaptcha = pageLevelCaptcha(pageScripts);
+
+  const forms: FormSchema[] = [];
+  $("form").each((_i, formEl) => {
+    const $form = $(formEl);
+    const rawAction = ($form.attr("action") ?? "").trim();
+    const action = rawAction ? absolutize(rawAction, baseUrl) : baseUrl;
+    const methodRaw = ($form.attr("method") ?? "post").trim().toUpperCase();
+    const method: "GET" | "POST" = methodRaw === "GET" ? "GET" : "POST";
+    const encoding = ($form.attr("enctype") ?? "").trim() || null;
+
+    const fields: FormField[] = [];
+    $form.find("input, textarea, select").each((_j, fieldEl) => {
+      const $field = $(fieldEl);
+      const tag = (fieldEl as { tagName?: string }).tagName?.toLowerCase() ?? "";
+      const typeAttr = ($field.attr("type") ?? "").toLowerCase();
+      // Skip purely structural / trigger inputs — they aren't data fields.
+      if (
+        tag === "input" &&
+        ["submit", "button", "image", "reset"].includes(typeAttr)
+      ) {
+        return;
+      }
+      const name = ($field.attr("name") ?? "").trim();
+      // Anonymous fields can't be POSTed back; skip them.
+      if (!name) return;
+      const type =
+        tag === "textarea"
+          ? "textarea"
+          : tag === "select"
+            ? "select"
+            : typeAttr || "text";
+      const placeholder = ($field.attr("placeholder") ?? "").trim() || undefined;
+      const required = $field.is("[required]") || undefined;
+      const value = ($field.attr("value") ?? "").trim() || undefined;
+      // Resolve label text — prefer aria-label, then a wrapping <label>, then
+      // a <label for="..."> elsewhere in the form.
+      const ariaLabel = ($field.attr("aria-label") ?? "").trim();
+      let label: string | undefined = ariaLabel || undefined;
+      if (!label) {
+        const id = $field.attr("id");
+        if (id) {
+          const lbl = $form.find(`label[for="${id}"]`).first().text().trim();
+          if (lbl) label = lbl;
+        }
+      }
+      if (!label) {
+        const wrap = $field.parent("label").text().trim();
+        if (wrap) label = wrap;
+      }
+      const field: FormField = { name, type };
+      if (placeholder) field.placeholder = placeholder;
+      if (required) field.required = required;
+      if (value) field.value = value;
+      if (label) field.label = label;
+      if (tag === "select") {
+        const options: { value: string; label: string }[] = [];
+        $field.find("option").each((_k, optEl) => {
+          const $opt = $(optEl);
+          const v = ($opt.attr("value") ?? $opt.text() ?? "").trim();
+          const l = $opt.text().trim();
+          if (v || l) options.push({ value: v, label: l });
+        });
+        if (options.length) field.options = options;
+      }
+      fields.push(field);
+    });
+
+    if (fields.length === 0) return;
+
+    const hasEmailField = fields.some(
+      (f) => f.type === "email" || /e[-_]?mail/i.test(f.name) || /e[-_]?mail/i.test(f.label ?? ""),
+    );
+    // Any <textarea> qualifies as a message field — that's the universal
+    // affordance for free-text intent in HTML forms, regardless of the
+    // name the site chose. The keyword regex covers single-line inputs
+    // labelled "comment" / "your message" / etc. as a secondary signal.
+    const hasMessageField = fields.some(
+      (f) =>
+        f.type === "textarea" ||
+        /message|comments?|details|inquiry|notes|describe|question|project[-_ ]?description/i.test(f.name) ||
+        /message|comments?|details|inquiry|notes|describe|question|project[-_ ]?description/i.test(f.label ?? ""),
+    );
+    const looksLikeSearch = fields.length === 1 && /search|q/i.test(fields[0].name);
+    const looksLikeNewsletter =
+      fields.length <= 2 && fields.every((f) => f.type === "email" || /name/i.test(f.name));
+
+    let score = fields.length * 1;
+    if (hasEmailField) score += 5;
+    if (hasMessageField) score += 4;
+    if (fields.some((f) => /name/i.test(f.name))) score += 1;
+    if (fields.some((f) => /phone|tel/i.test(f.name) || f.type === "tel")) score += 2;
+    if (looksLikeSearch) score = -10;
+    if (looksLikeNewsletter) score -= 4;
+
+    const captcha = detectFormCaptcha($, $form, pageCaptcha);
+    // Captcha doesn't disqualify a form from being captured — we still
+    // want the schema and field list — but a small score nudge lets a
+    // captcha-free form on the same page win when scoring is otherwise
+    // close.
+    if (captcha) score -= 1;
+
+    forms.push({
+      action,
+      method,
+      encoding,
+      fields,
+      hasEmailField,
+      hasMessageField,
+      score,
+      captcha,
+    });
+  });
+  return forms;
+}
+
+function pageLevelCaptcha(scriptSrcs: string[]): CaptchaInfo | null {
+  const signals: string[] = [];
+  let type: CaptchaInfo["type"] | null = null;
+  for (const src of scriptSrcs) {
+    if (/google\.com\/recaptcha\/(api|enterprise)/i.test(src)) {
+      signals.push(`script:${src}`);
+      type = "recaptcha";
+    } else if (/(?:^|\.)hcaptcha\.com\//i.test(src)) {
+      signals.push(`script:${src}`);
+      type = type ?? "hcaptcha";
+    } else if (/challenges\.cloudflare\.com\/turnstile/i.test(src)) {
+      signals.push(`script:${src}`);
+      type = type ?? "turnstile";
+    }
+  }
+  return type ? { type, signals } : null;
+}
+
+function detectFormCaptcha(
+  $: cheerio.CheerioAPI,
+  $form: cheerio.Cheerio<cheerio.Element>,
+  pageCaptcha: CaptchaInfo | null,
+): CaptchaInfo | null {
+  const signals: string[] = [];
+  let type: CaptchaInfo["type"] | null = null;
+
+  // Hidden response inputs injected by the captcha widgets — most reliable
+  // form-internal signal because the widget mounts with that input name.
+  if ($form.find('[name="g-recaptcha-response"]').length) {
+    signals.push("input:g-recaptcha-response");
+    type = "recaptcha";
+  }
+  if ($form.find('[name="h-captcha-response"]').length) {
+    signals.push("input:h-captcha-response");
+    type = type ?? "hcaptcha";
+  }
+  if ($form.find('[name="cf-turnstile-response"]').length) {
+    signals.push("input:cf-turnstile-response");
+    type = type ?? "turnstile";
+  }
+
+  // Widget container divs (often empty pre-render but the class is still
+  // there in the SSR'd HTML).
+  if ($form.find(".g-recaptcha, [data-sitekey]").length) {
+    signals.push("widget:g-recaptcha");
+    type = type ?? "recaptcha";
+  }
+  if ($form.find(".h-captcha").length) {
+    signals.push("widget:h-captcha");
+    type = type ?? "hcaptcha";
+  }
+  if ($form.find(".cf-turnstile, .turnstile").length) {
+    signals.push("widget:cf-turnstile");
+    type = type ?? "turnstile";
+  }
+  if ($form.find(".wpcf7-recaptcha").length) {
+    signals.push("widget:wpcf7-recaptcha");
+    type = type ?? "wpcf7-recaptcha";
+  }
+
+  if (!type && pageCaptcha) {
+    // No form-internal evidence, but the page loads a captcha script. We
+    // assume any meaningful contact form on that page is gated by it.
+    return { type: pageCaptcha.type, signals: ["page-script-only", ...pageCaptcha.signals] };
+  }
+  if (!type) return null;
+  return { type, signals };
+}
+
 // Strip CDN transform suffixes so we end up with canonical full-size images.
 // Wix serves a transform pipeline at /v1/<spec>/<derivedName>.<ext>; cutting
 // it leaves the original media URL. Squarespace ?format=...&w=... is similar
@@ -463,6 +704,49 @@ function normalizeImageUrl(src: string): string {
     if (q > 0) return src.slice(0, q);
   }
   return src;
+}
+
+// CMSes (WordPress most often) generate size variants of every uploaded
+// image: `photo-300x200.jpg`, `photo-768x512.jpg`, `photo-1024x683.jpg`.
+// They're the same picture at different resolutions. We treat them as one
+// logical asset and keep the largest variant so the template gets the
+// sharpest version.
+function logicalImageKey(src: string): string {
+  // Strip `-WxH` or `_WxH` immediately before the extension (e.g.,
+  // `-300x200.webp`). Leaves the path otherwise intact so different photos
+  // remain distinct.
+  return src.replace(/[-_]\d{2,4}x\d{2,4}(?=\.[a-z0-9]{2,5}(?:$|\?))/i, "");
+}
+
+function imageSizeScore(src: string): number {
+  // Larger pixel area = higher score. Falls back to URL length so URLs
+  // with no size hint at all don't get displaced by tiny variants.
+  const m = src.match(/[-_](\d{2,4})x(\d{2,4})(?=\.[a-z0-9]{2,5}(?:$|\?))/i);
+  if (m) return Number(m[1]) * Number(m[2]);
+  return Number.MAX_SAFE_INTEGER; // no size hint -> assume full-size original
+}
+
+function dedupeImagesBySize<T extends { src: string }>(items: T[]): T[] {
+  const best = new Map<string, { item: T; score: number }>();
+  for (const item of items) {
+    const key = logicalImageKey(item.src);
+    const score = imageSizeScore(item.src);
+    const prev = best.get(key);
+    if (!prev || score > prev.score) {
+      best.set(key, { item, score });
+    }
+  }
+  // Preserve original order based on FIRST appearance per logical key.
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const item of items) {
+    const key = logicalImageKey(item.src);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const winner = best.get(key);
+    if (winner) out.push(winner.item);
+  }
+  return out;
 }
 
 // True if the value looks like a srcset (URL + descriptor like "120w" / "1.5x"

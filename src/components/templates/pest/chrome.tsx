@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Phone, ShieldCheck } from "lucide-react";
+import { CompanyTextLogo } from "@/components/company-text-logo";
 import { HeroBugBanner } from "@/components/templates/pest/hero-bug-banner";
 import { RadarSweepCanvas } from "@/components/templates/pest/radar-sweep-canvas";
 import { SocialLinks } from "@/components/templates/site/chrome";
@@ -38,10 +39,15 @@ export function PestNav({
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
         <Link
           href={`/p/pest/${id}`}
-          className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[0.22em] text-white"
+          className="inline-flex items-center text-sm font-bold uppercase tracking-[0.22em]"
         >
-          <ShieldCheck className="h-4 w-4 text-emerald-300" />
-          <span>{business.name}</span>
+          <CompanyTextLogo
+            name={business.name}
+            logoUrl={business.logoUrl}
+            accent="#10b981"
+            tone="light"
+            className="text-[13px] tracking-[0.22em]"
+          />
         </Link>
         <div className="hidden items-center gap-7 text-[11px] uppercase tracking-[0.22em] md:flex">
           {items.map((it) => {
@@ -100,14 +106,12 @@ export function PestBanner({
   eyebrow,
   title,
   subtitle,
-  heroImage,
   children,
 }: {
   variant: "hero" | "page";
   eyebrow: string;
   title: React.ReactNode;
   subtitle?: string;
-  heroImage?: string | null;
   children?: React.ReactNode;
 }) {
   const heightClass =

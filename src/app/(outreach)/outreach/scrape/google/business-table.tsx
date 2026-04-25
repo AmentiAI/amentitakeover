@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Star, Trash2 } from "lucide-react";
+import { Loader2, RefreshCcw, Star, Trash2 } from "lucide-react";
 import { BusinessDrawer } from "@/components/business-drawer";
 
 export type Row = {
@@ -18,6 +18,9 @@ export type Row = {
   qualified: boolean;
   hasEmail: boolean;
   hasWebsite: boolean;
+  hasContactForm: boolean;
+  formHasMessage: boolean;
+  formCaptcha: string | null;
 };
 
 export function BusinessTable({ businesses }: { businesses: Row[] }) {
@@ -27,6 +30,10 @@ export function BusinessTable({ businesses }: { businesses: Row[] }) {
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [rowBusy, setRowBusy] = useState<string | null>(null);
+  // Re-scrape progress for the bulk button — `done` increments as each
+  // /api/enrich call finishes so the user sees forward motion when scraping
+  // a dozen sites takes a couple minutes.
+  const [rescrapeProgress, setRescrapeProgress] = useState<{ done: number; total: number } | null>(null);
 
   const visible = useMemo(
     () => businesses.filter((b) => !hiddenIds.has(b.id)),
@@ -70,6 +77,42 @@ export function BusinessTable({ businesses }: { businesses: Row[] }) {
     }
   }
 
+  async function rescrapeSelected() {
+    if (bulkBusy || selected.size === 0) return;
+    const ids = Array.from(selected);
+    setBulkBusy(true);
+    setRescrapeProgress({ done: 0, total: ids.length });
+    try {
+      // Cap parallelism so a 50-row selection doesn't fan out 50 deep
+      // crawls at once. Each enrich call is ~10–15s; 4 in flight is the
+      // sweet spot for outbound HTTP without DOSing ourselves.
+      const CONCURRENCY = 4;
+      let cursor = 0;
+      let completed = 0;
+      const worker = async () => {
+        while (true) {
+          const i = cursor++;
+          if (i >= ids.length) return;
+          const id = ids[i];
+          try {
+            await fetch(`/api/outreach/businesses/${id}/enrich`, {
+              method: "POST",
+            });
+          } catch {
+            // swallow per-business failures; activity log captures details
+          }
+          completed++;
+          setRescrapeProgress({ done: completed, total: ids.length });
+        }
+      };
+      await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+    } finally {
+      setBulkBusy(false);
+      setRescrapeProgress(null);
+      router.refresh();
+    }
+  }
+
   async function deleteSelected() {
     if (bulkBusy || selected.size === 0) return;
     const ids = Array.from(selected);
@@ -105,20 +148,39 @@ export function BusinessTable({ businesses }: { businesses: Row[] }) {
           <div className="text-xs text-slate-300">
             <span className="font-semibold text-white">{selected.size}</span>{" "}
             selected
+            {rescrapeProgress && (
+              <span className="ml-2 text-[11px] text-slate-400">
+                · re-scraping {rescrapeProgress.done}/{rescrapeProgress.total}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSelected(new Set())}
-              className="rounded-md border border-slate-700 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-slate-800"
+              disabled={bulkBusy}
+              className="rounded-md border border-slate-700 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-slate-800 disabled:opacity-50"
             >
               Clear
+            </button>
+            <button
+              onClick={rescrapeSelected}
+              disabled={bulkBusy}
+              title="Re-scrape selected sites — refreshes contact form fields, submit URL, palette, and content"
+              className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+            >
+              {rescrapeProgress ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <RefreshCcw className="h-3 w-3" />
+              )}
+              Re-scrape
             </button>
             <button
               onClick={deleteSelected}
               disabled={bulkBusy}
               className="inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-rose-500 disabled:opacity-50"
             >
-              {bulkBusy ? (
+              {bulkBusy && !rescrapeProgress ? (
                 <Loader2 className="h-3 w-3 animate-spin" />
               ) : (
                 <Trash2 className="h-3 w-3" />
@@ -208,6 +270,27 @@ export function BusinessTable({ businesses }: { businesses: Row[] }) {
                     <div className="flex flex-wrap gap-1">
                       {b.hasWebsite && <Badge color="sky">Web</Badge>}
                       {b.hasEmail && <Badge color="teal">Email</Badge>}
+                      {b.hasContactForm && !b.formCaptcha && (
+                        <Badge
+                          color="emerald"
+                          title="Captured contact form, no captcha — pushable headlessly"
+                        >
+                          Form
+                        </Badge>
+                      )}
+                      {b.hasContactForm && b.formCaptcha && (
+                        <Badge
+                          color="amber"
+                          title={`Captured contact form, gated by ${b.formCaptcha} — needs human / solver to submit`}
+                        >
+                          Form ({b.formCaptcha})
+                        </Badge>
+                      )}
+                      {b.hasContactForm && !b.formHasMessage && (
+                        <Badge color="rose" title="Form has no message/textarea field — contact-info dropoff only">
+                          no-msg
+                        </Badge>
+                      )}
                       {b.enriched && <Badge color="emerald">Enriched</Badge>}
                       {b.qualified && <Badge color="violet">Qualified</Badge>}
                     </div>
@@ -247,18 +330,25 @@ export function BusinessTable({ businesses }: { businesses: Row[] }) {
 function Badge({
   children,
   color,
+  title,
 }: {
   children: React.ReactNode;
-  color: "sky" | "teal" | "emerald" | "violet";
+  color: "sky" | "teal" | "emerald" | "violet" | "amber" | "rose";
+  title?: string;
 }) {
   const map: Record<string, string> = {
     sky: "bg-sky-500/10 text-sky-300 border-sky-500/30",
     teal: "bg-teal-500/10 text-teal-300 border-teal-500/30",
     emerald: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
     violet: "bg-violet-500/10 text-violet-300 border-violet-500/30",
+    amber: "bg-amber-500/10 text-amber-300 border-amber-500/30",
+    rose: "bg-rose-500/10 text-rose-300 border-rose-500/30",
   };
   return (
-    <span className={`rounded-full border px-1.5 py-0.5 text-[10px] ${map[color]}`}>
+    <span
+      title={title}
+      className={`rounded-full border px-1.5 py-0.5 text-[10px] ${map[color]}`}
+    >
       {children}
     </span>
   );

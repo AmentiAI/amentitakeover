@@ -65,7 +65,17 @@ export default async function EditorialHomePage({
             <div className="h-full w-full" style={{ background: "var(--ed-base)" }} />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-[#1a1814]/75 via-[#1a1814]/25 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-6 sm:p-12">
+          {hero.character && (
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] hidden w-[42%] max-w-[480px] items-end justify-end pb-2 pr-4 sm:flex">
+              <SafeImg
+                src={hero.character}
+                alt=""
+                className="h-[88%] w-auto max-h-[600px] object-contain drop-shadow-[0_18px_30px_rgba(0,0,0,0.45)]"
+                aria-hidden
+              />
+            </div>
+          )}
+          <div className="absolute inset-x-0 bottom-0 z-[2] p-6 sm:p-12">
             <div className="mx-auto max-w-6xl">
               <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#faf8f3]/75">
                 {hero.eyebrow}

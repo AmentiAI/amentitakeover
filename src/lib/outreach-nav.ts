@@ -19,6 +19,7 @@ import {
   HeartPulse,
   Terminal,
   LayoutTemplate,
+  ClipboardEdit,
   type LucideIcon,
 } from "lucide-react";
 
@@ -59,6 +60,7 @@ export const OUTREACH_NAV: OutreachNavGroup[] = [
     items: [
       { label: "Email Generation", href: "/outreach/email-gen", icon: Mail },
       { label: "Email Campaigns", href: "/outreach/email-campaigns", icon: Send },
+      { label: "Form Prefill", href: "/outreach/prefill", icon: ClipboardEdit },
     ],
   },
   {

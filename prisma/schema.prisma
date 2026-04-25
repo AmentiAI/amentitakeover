@@ -278,6 +278,10 @@ model Site {
   headings   Json?
   images     Json?
   links      Json?
+  // Captured contact/quote form schema — used as a fallback delivery channel
+  // when scraping returns no email. Stores action, method, encoding, page,
+  // and a list of input fields so we can replay submissions later.
+  contactForm Json?
   status     String   @default("scraped") // scraped | failed
   businessId String?
   business   Business? @relation(fields: [businessId], references: [id])
@@ -566,13 +570,43 @@ model AffiliateApplication {
 // /api/generated-image/[id] so the template can reference them like any
 // other URL. Keyed by scrapedBusinessId so we can swap in new artwork
 // without touching anything else.
+// Outreach-wide defaults used by the form-replay engine. Singleton: there's
+// only ever one row keyed by id="default". The drawer's "Push contact form"
+// panel pre-populates from these so the operator doesn't retype the same
+// payload for every prospect. Per-intent fields (referralSource, service,
+// projectType, address, ...) feed the heuristic mapper too — when a form
+// has a "How did you hear about us?" field, we drop in `referralSource`.
+model OutreachPrefill {
+  id             String   @id @default("default")
+  name           String?
+  email          String?
+  phone          String?
+  subject        String?
+  message        String?
+  referralSource String?  // "How did you hear about us?"
+  service        String?  // "Service of interest" dropdowns
+  projectType    String?  // "Project type" dropdowns
+  address        String?
+  city           String?
+  state          String?
+  zip            String?
+  // Escape-hatch overrides keyed by exact field name, for sites whose form
+  // labels are too obscure for the intent mapper to catch.
+  fieldOverrides Json?
+  updatedAt      DateTime @updatedAt
+}
+
 model GeneratedImage {
   id                  String   @id @default(cuid())
   scrapedBusinessId   String
-  purpose             String   // hero | gallery
+  purpose             String   // hero | hero-character | banner-* | service-card | gallery
   position            Int      @default(0)
   prompt              String
-  bytes               Bytes
+  // Either bytes (legacy DB-backed) or blobUrl (Vercel Blob) — when blobUrl
+  // is set we skip storing bytes to keep Postgres lean, since blob assets
+  // serve directly from the CDN.
+  bytes               Bytes?
+  blobUrl             String?
   mimeType            String   @default("image/png")
   width               Int
   height              Int

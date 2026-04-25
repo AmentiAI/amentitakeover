@@ -68,6 +68,7 @@ export async function POST(
         },
       });
 
+      const contactForm = scraped.contactForm;
       const site = await prisma.site.create({
         data: {
           url: scraped.url,
@@ -81,6 +82,7 @@ export async function POST(
           headings: scraped.headings,
           images: mergedImages,
           links: scraped.links,
+          contactForm: contactForm ?? undefined,
           businessId: crmBusiness.id,
         },
       });

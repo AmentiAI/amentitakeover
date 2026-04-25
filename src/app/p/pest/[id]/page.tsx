@@ -34,6 +34,9 @@ export default async function PestHomePage({
   if (!data) notFound();
 
   const { business, hero, services, testimonials, headlines, faqs } = data;
+  // Strip scraped photos — pest template renders no real-photo sections;
+  // service cards fall through to their gradient/icon styling when image is null.
+  const cleanServices = services.map((s) => ({ ...s, image: null }));
   const loc = [business.city, business.state].filter(Boolean).join(", ");
   const rating = business.rating;
   const parts = splitHero(hero.title);
@@ -50,7 +53,6 @@ export default async function PestHomePage({
       <PestBanner
         variant="hero"
         eyebrow="Detect · Treat · Protect"
-        heroImage={hero.image}
         title={
           <>
             {parts.before && (
@@ -150,7 +152,7 @@ export default async function PestHomePage({
 
       <ValueBar />
 
-      <ServicesTeaser services={services} id={id} />
+      <ServicesTeaser services={cleanServices} id={id} />
 
       <ProcessSteps />
 
