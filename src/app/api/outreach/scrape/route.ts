@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { searchGoogleMaps, serpApiAvailable } from "@/lib/serpapi";
+import { findApexOwner } from "@/lib/website-dedup";
 import { z } from "zod";
 
 const Body = z.object({
@@ -75,6 +76,13 @@ export async function POST(req: NextRequest) {
             },
           });
         } else {
+          // Reject if any other visible row already owns this apex domain.
+          // Same business often appears in adjacent city searches; this
+          // check stops us re-importing them under fresh sourceIds.
+          if (r.website) {
+            const owner = await findApexOwner(prisma, r.website);
+            if (owner) continue;
+          }
           await prisma.scrapedBusiness.create({
             data: {
               source: "google",

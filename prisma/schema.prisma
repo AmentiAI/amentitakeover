@@ -282,6 +282,14 @@ model Site {
   // when scraping returns no email. Stores action, method, encoding, page,
   // and a list of input fields so we can replay submissions later.
   contactForm Json?
+  // Pass/fail heading hygiene snapshot of the homepage —
+  // {h1Count, h2Count, passed}. Pass = exactly one <h1> AND more than 4
+  // <h2>s. Quick proxy for "the page has real content structure."
+  contentScore Json?
+  // Pitch-ammo signals from the homepage scrape — CMS, copyright year,
+  // mobile viewport flag, SEO completeness, analytics + booking + chat
+  // stack, schema.org presence, stock-photo count. See src/lib/site-signals.ts.
+  signals Json?
   status     String   @default("scraped") // scraped | failed
   businessId String?
   business   Business? @relation(fields: [businessId], references: [id])
@@ -358,6 +366,13 @@ model ScrapedBusiness {
   industry       String?
   website        String?
   phone          String?
+  // Full audit trail of every phone number we've discovered for this
+  // business, each tagged with where it came from (initial GMB / OSM /
+  // Foursquare import, website scrape, contact-form action, etc.). The
+  // single `phone` column above stays as the primary callable number;
+  // this is the deduped accumulation across every source we've hit.
+  // Shape: [{number, source, scrapedAt}]
+  phones         Json?
   email          String?
   address        String?
   city           String?

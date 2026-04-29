@@ -181,17 +181,7 @@ export function PreviewPricingModal() {
                   <Sparkles className="h-3 w-3 text-cyan-300" />
                   This preview is yours
                 </div>
-                <h2 className="mt-2 text-[17px] font-semibold leading-snug tracking-tight sm:mt-2.5 sm:text-[19px]">
-                  Grow with{" "}
-                  <span className="bg-gradient-to-r from-cyan-300 via-sky-300 to-pink-400 bg-clip-text text-transparent">
-                    fixed pricing
-                  </span>
-                </h2>
-                <p className="mt-1.5 text-[12px] leading-relaxed text-white/70">
-                  Pick the package that fits. No long-term contract. Custom
-                  scope available on request.
-                </p>
-                <div className="mt-2 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[11px] text-white/70">
+                <div className="mt-3 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[11px] text-white/70">
                   <span className="inline-flex items-center gap-0.5">
                     <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                     <Star className="h-3 w-3 fill-amber-400 text-amber-400" />

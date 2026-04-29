@@ -27,6 +27,7 @@ import {
 } from "@/lib/site-url";
 import { BusinessActivityFeed } from "@/components/business-activity-feed";
 import { BusinessFormSubmit } from "@/components/business-form-submit";
+import { BusinessSignalsPanel } from "@/components/business-signals-panel";
 
 type DetailData = {
   id: string;
@@ -35,6 +36,7 @@ type DetailData = {
   city: string | null;
   state: string | null;
   phone: string | null;
+  phones: { number: string; source: string; scrapedAt: string }[] | null;
   email: string | null;
   website: string | null;
   rating: number | null;
@@ -557,6 +559,7 @@ function GenerateWizard({
           </div>
         </div>
       )}
+      <BusinessSignalsPanel businessId={business.id} />
       <BusinessFormSubmit
         businessId={business.id}
         onSubmitted={() => setFeedKey((k) => k + 1)}
@@ -646,10 +649,40 @@ function Overview({ data }: { data: DetailData }) {
 
       <Section title="Contact Information">
         <div className="space-y-1 text-sm">
+          {/* Primary phone — what gets used for outreach. The full
+              accumulated list lives in data.phones with source tags. */}
           {data.phone && (
             <a href={`tel:${data.phone}`} className="block text-sky-400 hover:text-sky-300">
               {data.phone}
             </a>
+          )}
+          {Array.isArray(data.phones) && data.phones.length > 1 && (
+            <details className="text-[12px] text-slate-400">
+              <summary className="cursor-pointer hover:text-slate-200">
+                + {data.phones.length - 1} more phone
+                {data.phones.length - 1 === 1 ? "" : "s"} discovered
+              </summary>
+              <ul className="mt-1 space-y-0.5">
+                {data.phones
+                  .filter((p) => p.number !== data.phone)
+                  .map((p, i) => (
+                    <li key={`${p.number}-${i}`} className="flex items-baseline justify-between gap-3">
+                      <a
+                        href={`tel:${p.number}`}
+                        className="text-sky-400 hover:text-sky-300"
+                      >
+                        {p.number}
+                      </a>
+                      <span
+                        title={`Scraped ${new Date(p.scrapedAt).toLocaleString()}`}
+                        className="text-[10px] uppercase tracking-wider text-slate-500"
+                      >
+                        {p.source}
+                      </span>
+                    </li>
+                  ))}
+              </ul>
+            </details>
           )}
           {data.email && (
             <a

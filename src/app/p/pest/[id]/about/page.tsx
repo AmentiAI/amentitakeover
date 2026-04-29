@@ -6,6 +6,7 @@ import {
   FinalCta,
   InspectionReport,
   LicenseBadges,
+  PestEditorial,
   ThreatAssessment,
 } from "@/components/templates/pest/pest-sections";
 
@@ -33,7 +34,7 @@ export default async function PestAboutPage({
         heroImage={hero.image}
         title={
           <>
-            <span className="italic text-emerald-200/90">How we work</span>
+            <span className="italic text-emerald-200/90 [.pest-light_&]:text-emerald-800/90">How we work</span>
             <span className="block font-sans font-black uppercase tracking-tight">
               behind the barrier.
             </span>
@@ -49,6 +50,7 @@ export default async function PestAboutPage({
         aboutLong={about.long}
         loc={loc}
       />
+      <PestEditorial gallery={data.gallery} businessName={business.name} />
       <InspectionReport />
       <LicenseBadges />
 

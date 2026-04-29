@@ -3,6 +3,11 @@ import { prisma } from "@/lib/db";
 import { deepScrapeSite } from "@/lib/deep-scraper";
 import { rebuildSite } from "@/lib/rebuilder";
 import { generateSiteImages } from "@/lib/site-image-generator";
+import {
+  extractCityState,
+  hasDomainChanged,
+  mergePhones,
+} from "@/lib/business-merge";
 
 export const maxDuration = 300;
 
@@ -21,17 +26,12 @@ export async function POST(
     let siteId: string | null = null;
 
     if (scraped) {
-      const mergedImages: { src: string; alt: string }[] = [];
-      if (scraped.logo) {
-        mergedImages.push({ src: scraped.logo, alt: "logo" });
-      }
-      if (scraped.ogImage && scraped.ogImage !== scraped.logo) {
-        mergedImages.push({ src: scraped.ogImage, alt: "hero" });
-      }
-      for (const img of scraped.images) {
-        if (mergedImages.some((m) => m.src === img.src)) continue;
-        mergedImages.push({ src: img.src, alt: img.alt ?? "" });
-      }
+      // Logo only — templates render via canvas + SVG. Skipping the bulk
+      // <img> sweep keeps Site.images small and avoids storing a pile of
+      // CDN URLs we'll never reference.
+      const mergedImages: { src: string; alt: string }[] = scraped.logo
+        ? [{ src: scraped.logo, alt: "logo" }]
+        : [];
 
       const joinedText = scraped.pages
         .map((p) => `# ${p.kind.toUpperCase()}\n${p.text}`)
@@ -83,6 +83,8 @@ export async function POST(
           images: mergedImages,
           links: scraped.links,
           contactForm: contactForm ?? undefined,
+          contentScore: scraped.contentScore,
+          signals: scraped.signals,
           businessId: crmBusiness.id,
         },
       });
@@ -97,7 +99,7 @@ export async function POST(
             scrapedBusinessId: b.id,
             crmBusinessId: crmBusiness.id,
             pages: scraped.pages.length,
-            images: mergedImages.length,
+            logoCaptured: Boolean(scraped.logo),
           },
         },
       });
@@ -135,6 +137,21 @@ export async function POST(
       }
     }
 
+    // Same backfill rules as /api/enrich. Only run them when we
+    // actually got fresh scrape data this turn.
+    const cityState = scraped && (!b.city || !b.state)
+      ? extractCityState(
+          scraped.pages.map((p) => p.text).join("\n"),
+        )
+      : { city: null, state: null };
+    const newWebsite =
+      scraped && b.website && hasDomainChanged(b.website, scraped.url)
+        ? scraped.url
+        : undefined;
+    const mergedPhones = scraped
+      ? mergePhones(b.phones, b.phone ?? null, scraped.phones, "website-scrape")
+      : null;
+
     const updated = await prisma.scrapedBusiness.update({
       where: { id },
       data: {
@@ -146,6 +163,10 @@ export async function POST(
         // Enrich from deep scrape when the DB row is missing info
         email: b.email ?? scraped?.emails[0] ?? null,
         phone: b.phone ?? scraped?.phones[0] ?? null,
+        ...(mergedPhones ? { phones: mergedPhones } : {}),
+        ...(cityState.city && !b.city ? { city: cityState.city } : {}),
+        ...(cityState.state && !b.state ? { state: cityState.state } : {}),
+        ...(newWebsite ? { website: newWebsite } : {}),
         instagram: b.instagram ?? scraped?.socials.instagram ?? null,
         facebook: b.facebook ?? scraped?.socials.facebook ?? null,
         twitter: b.twitter ?? scraped?.socials.twitter ?? null,
@@ -158,7 +179,7 @@ export async function POST(
       ...updated,
       _scrape: scraped
         ? {
-            imagesCount: mergedImagesCount(scraped),
+            logoCaptured: Boolean(scraped.logo),
             pagesCount: scraped.pages.length,
             emails: scraped.emails.length,
             phones: scraped.phones.length,
@@ -169,12 +190,4 @@ export async function POST(
     const msg = err instanceof Error ? err.message : "unknown error";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
-
-function mergedImagesCount(scraped: NonNullable<Awaited<ReturnType<typeof deepScrapeSite>>>): number {
-  const set = new Set<string>();
-  if (scraped.logo) set.add(scraped.logo);
-  if (scraped.ogImage) set.add(scraped.ogImage);
-  for (const img of scraped.images) set.add(img.src);
-  return set.size;
 }

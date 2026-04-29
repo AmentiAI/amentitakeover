@@ -172,7 +172,7 @@ export function BusinessFormSubmit({
   const dryResult = result && "dryRun" in result ? result : null;
 
   return (
-    <details className="group rounded-md border border-slate-800 bg-slate-950" open>
+    <details className="group rounded-md border border-slate-800 bg-slate-950">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2">
         <div className="flex flex-wrap items-center gap-2">
           <Send className="h-3.5 w-3.5 text-emerald-400" />

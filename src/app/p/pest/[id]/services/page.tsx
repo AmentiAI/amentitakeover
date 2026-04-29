@@ -4,10 +4,10 @@ import { PestBanner, PestFooter, PestNav } from "@/components/templates/pest/chr
 import {
   FinalCta,
   PestCatalog,
-  ServicesGrid,
   TreatmentPlans,
-  buildTreatmentPlans,
 } from "@/components/templates/pest/pest-sections";
+import { ReviewsWallSection } from "@/components/templates/pest/reviews-wall";
+import { buildTreatmentPlans } from "@/lib/templates/pest-plans";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,7 @@ export default async function PestServicesPage({
   const data = await loadSiteData(id);
   if (!data) notFound();
 
-  const { business, hero, services, headlines } = data;
+  const { business, hero, services, testimonials, headlines } = data;
   const loc = [business.city, business.state].filter(Boolean).join(", ");
   const plans = buildTreatmentPlans(services);
   const callHref = business.phone ? `tel:${business.phone}` : "#";
@@ -35,7 +35,7 @@ export default async function PestServicesPage({
         heroImage={hero.image}
         title={
           <>
-            <span className="italic text-emerald-200/90">Treatment plans</span>
+            <span className="italic text-emerald-200/90 [.pest-light_&]:text-emerald-800/90">Treatment plans</span>
             <span className="block font-sans font-black uppercase tracking-tight">
               for every pressure.
             </span>
@@ -50,7 +50,12 @@ export default async function PestServicesPage({
         callHref={callHref}
       />
       <PestCatalog />
-      <ServicesGrid services={services} callHref={callHref} />
+      <ReviewsWallSection
+        testimonials={testimonials}
+        rating={business.rating}
+        reviewCountHint={business.reviewsCount}
+        loc={loc}
+      />
 
       <FinalCta business={business} ctaHeadline={headlines.cta} />
       <PestFooter business={business} loc={loc} socials={data.socials} />

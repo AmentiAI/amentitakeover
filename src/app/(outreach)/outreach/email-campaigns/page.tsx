@@ -1,5 +1,9 @@
+import Link from "next/link";
 import { OutreachTopbar } from "@/components/outreach-topbar";
 import { prisma } from "@/lib/db";
+import { NewCampaignButton } from "./new-campaign-button";
+
+export const dynamic = "force-dynamic";
 
 export default async function OutreachCampaignsPage() {
   const campaigns = await prisma.campaign.findMany({
@@ -13,9 +17,7 @@ export default async function OutreachCampaignsPage() {
           <div className="text-sm text-slate-400">
             {campaigns.length} campaign{campaigns.length === 1 ? "" : "s"}
           </div>
-          <button className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500">
-            New campaign
-          </button>
+          <NewCampaignButton />
         </div>
         <div className="overflow-hidden rounded-lg border border-slate-800 bg-slate-950">
           <table className="w-full border-collapse text-sm">
@@ -30,22 +32,58 @@ export default async function OutreachCampaignsPage() {
               </tr>
             </thead>
             <tbody>
+              {campaigns.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-6 text-center text-xs text-slate-500">
+                    No campaigns yet. Click <span className="text-slate-300">New campaign</span> to create one.
+                  </td>
+                </tr>
+              )}
               {campaigns.map((c) => {
                 const openRate = c.sent ? Math.round((c.opened / c.sent) * 100) : 0;
                 const replyRate = c.sent ? Math.round((c.replied / c.sent) * 100) : 0;
                 return (
-                  <tr key={c.id} className="border-b border-slate-800">
-                    <td className="px-4 py-2 font-medium text-slate-100">{c.name}</td>
-                    <td className="px-4 py-2">
-                      <span className="rounded-full border border-slate-700 bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
-                        {c.status}
-                      </span>
+                  <tr
+                    key={c.id}
+                    className="border-b border-slate-800 transition hover:bg-slate-900/60"
+                  >
+                    <td className="px-4 py-2 font-medium text-slate-100">
+                      <Link
+                        href={`/outreach/email-campaigns/${c.id}`}
+                        className="block hover:text-indigo-300"
+                      >
+                        {c.name}
+                      </Link>
                     </td>
-                    <td className="px-4 py-2 text-slate-400">{c.sent}</td>
-                    <td className="px-4 py-2 text-slate-400">{c.opened}</td>
-                    <td className="px-4 py-2 text-slate-400">{c.replied}</td>
+                    <td className="px-4 py-2">
+                      <Link
+                        href={`/outreach/email-campaigns/${c.id}`}
+                        className="block"
+                      >
+                        <span className="rounded-full border border-slate-700 bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
+                          {c.status}
+                        </span>
+                      </Link>
+                    </td>
                     <td className="px-4 py-2 text-slate-400">
-                      {openRate}% open · {replyRate}% reply
+                      <Link href={`/outreach/email-campaigns/${c.id}`} className="block">
+                        {c.sent}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-2 text-slate-400">
+                      <Link href={`/outreach/email-campaigns/${c.id}`} className="block">
+                        {c.opened}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-2 text-slate-400">
+                      <Link href={`/outreach/email-campaigns/${c.id}`} className="block">
+                        {c.replied}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-2 text-slate-400">
+                      <Link href={`/outreach/email-campaigns/${c.id}`} className="block">
+                        {openRate}% open · {replyRate}% reply
+                      </Link>
                     </td>
                   </tr>
                 );

@@ -7,7 +7,12 @@ import {
   normalizeTemplateChoice,
 } from "@/lib/site-url";
 import { bizLogger } from "@/lib/build-logger";
-import { isGalleryCandidate } from "@/lib/templates/site";
+import { BotChallengeError } from "@/lib/scraper";
+import {
+  extractCityState,
+  hasDomainChanged,
+  mergePhones,
+} from "@/lib/business-merge";
 
 export const maxDuration = 300;
 
@@ -44,6 +49,12 @@ export async function POST(
   });
   const startedAt = Date.now();
 
+  // Hoisted so the post-rebuild ScrapedBusiness update can run the same
+  // city/state/website/phone backfills that /api/enrich does, when this
+  // route is hit standalone (i.e., outside the Run all flow).
+  let scraped: Awaited<ReturnType<typeof deepScrapeSite>> | null = null;
+  let scrapedJoinedText = "";
+
   try {
     // Re-scrape so each Build click freshens images, copy, palette, etc.
     // Without this, a stale Untitled.png or 404'd asset sticks until the
@@ -51,24 +62,29 @@ export async function POST(
     // "Build mockup" to be a do-it-now action.
     if (b.website) {
       const rescrapeStart = Date.now();
-      const scraped = await deepScrapeSite(b.website).catch((err) => {
-        const msg = err instanceof Error ? err.message : "scrape error";
-        log.warn("build.rescrape_failed", `Re-scrape failed, using cached site data: ${msg}`);
+      scraped = await deepScrapeSite(b.website).catch((err) => {
+        if (err instanceof BotChallengeError) {
+          log.warn(
+            "build.bot_challenge",
+            `Re-scrape blocked by ${err.vendor} — falling back to cached site data`,
+            { website: b.website, vendor: err.vendor },
+          );
+        } else {
+          const msg = err instanceof Error ? err.message : "scrape error";
+          log.warn("build.rescrape_failed", `Re-scrape failed, using cached site data: ${msg}`);
+        }
         return null;
       });
       if (scraped) {
-        const merged: { src: string; alt: string }[] = [];
-        if (scraped.logo) merged.push({ src: scraped.logo, alt: "logo" });
-        if (scraped.ogImage && scraped.ogImage !== scraped.logo) {
-          merged.push({ src: scraped.ogImage, alt: "hero" });
-        }
-        for (const img of scraped.images) {
-          if (merged.some((m) => m.src === img.src)) continue;
-          merged.push({ src: img.src, alt: img.alt ?? "" });
-        }
+        // Logo only — templates render visuals via canvas + SVG, so the
+        // bulk-images-from-the-site list is dead weight in Site.images.
+        const merged: { src: string; alt: string }[] = scraped.logo
+          ? [{ src: scraped.logo, alt: "logo" }]
+          : [];
         const joinedText = scraped.pages
           .map((p) => `# ${p.kind.toUpperCase()}\n${p.text}`)
           .join("\n\n");
+        scrapedJoinedText = joinedText;
         // Always save the contact-form schema when we find one — it's
         // useful even if an email was also discovered (alternate channel,
         // visibility into form structure, future automation).
@@ -88,22 +104,22 @@ export async function POST(
             images: merged,
             links: scraped.links,
             contactForm: contactForm ?? undefined,
+            contentScore: scraped.contentScore,
+            signals: scraped.signals,
           },
         });
-        const galleryEligible = merged.filter(isGalleryCandidate);
         await log.info(
           "build.rescraped",
-          `Re-scraped ${b.website} — ${merged.length} images, ${galleryEligible.length} pass gallery filter`,
+          `Re-scraped ${b.website} — logo=${scraped.logo ? "yes" : "no"}, ${scraped.pages.length} pages`,
           {
             durationMs: Date.now() - rescrapeStart,
-            imagesCount: merged.length,
-            galleryCandidatesCount: galleryEligible.length,
+            logoCaptured: Boolean(scraped.logo),
             pagesScraped: scraped.pages.length,
-            sampleImages: merged.slice(0, 5).map((i) => i.src),
-            galleryCandidatesSample: galleryEligible.slice(0, 5).map((i) => i.src),
-            ogImage: scraped.ogImage,
             logo: scraped.logo,
+            ogImage: scraped.ogImage,
             emailFound: scraped.emails.length > 0,
+            contentScore: scraped.contentScore,
+            signals: scraped.signals,
             contactFormCaptured: Boolean(contactForm),
             contactForm: contactForm
               ? {
@@ -158,12 +174,33 @@ export async function POST(
       },
     });
 
+    // Apply the same backfill rules as /api/enrich, gated on having
+    // fresh scrape data this run. Skipped silently when re-scrape was
+    // blocked (Cloudflare etc.) — Run all hits enrich first anyway.
+    const backfill: Record<string, unknown> = {
+      siteGenerated: true,
+      templateChoice,
+    };
+    if (scraped) {
+      const cityState = (!b.city || !b.state)
+        ? extractCityState(scrapedJoinedText)
+        : { city: null, state: null };
+      const newWebsite =
+        b.website && hasDomainChanged(b.website, scraped.url) ? scraped.url : undefined;
+      const mergedPhones = mergePhones(
+        b.phones,
+        b.phone ?? null,
+        scraped.phones,
+        "website-scrape",
+      );
+      backfill.phones = mergedPhones;
+      if (cityState.city && !b.city) backfill.city = cityState.city;
+      if (cityState.state && !b.state) backfill.state = cityState.state;
+      if (newWebsite) backfill.website = newWebsite;
+    }
     await prisma.scrapedBusiness.update({
       where: { id },
-      data: {
-        siteGenerated: true,
-        templateChoice,
-      },
+      data: backfill,
     });
 
     const previewUrl = getTemplatePreviewUrl(id, { template: templateChoice });

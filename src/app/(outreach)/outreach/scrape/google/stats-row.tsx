@@ -11,6 +11,8 @@ export async function StatsRow() {
     hqConfidence,
     withForm,
     withFormCaptcha,
+    contentPass,
+    contentFail,
   ] = await Promise.all([
     prisma.scrapedBusiness.count({ where: { archived: false } }),
     prisma.scrapedBusiness.count({ where: { enriched: true } }),
@@ -41,6 +43,19 @@ export async function StatsRow() {
         site: { contactForm: { path: ["captcha"], not: Prisma.JsonNull } },
       },
     }),
+    // Homepage heading hygiene — single h1 + at least 3 h2 → passed.
+    prisma.scrapedBusiness.count({
+      where: {
+        archived: false,
+        site: { contentScore: { path: ["passed"], equals: true } },
+      },
+    }),
+    prisma.scrapedBusiness.count({
+      where: {
+        archived: false,
+        site: { contentScore: { path: ["passed"], equals: false } },
+      },
+    }),
   ]);
 
   const formClean = Math.max(0, withForm - withFormCaptcha);
@@ -53,6 +68,8 @@ export async function StatsRow() {
     { label: "Has Email", value: hasEmail, color: "bg-teal-500/10 text-teal-300 border-teal-500/30" },
     { label: "Form", value: formClean, color: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" },
     { label: "Form +captcha", value: withFormCaptcha, color: "bg-amber-500/10 text-amber-300 border-amber-500/30" },
+    { label: "Content ✓", value: contentPass, color: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" },
+    { label: "Content ✗", value: contentFail, color: "bg-rose-500/10 text-rose-300 border-rose-500/30" },
     { label: "HQ Confidence", value: hqConfidence, color: "bg-amber-500/10 text-amber-300 border-amber-500/30" },
   ];
 

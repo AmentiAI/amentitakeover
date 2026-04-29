@@ -264,11 +264,23 @@ function pickBestContactForm(
   })[],
 ): DeepScrapeResult["contactForm"] {
   if (!forms.length) return null;
-  const ranked = forms
+
+  // Hard preference: if any form on any crawled page has a real <textarea>
+  // field, only those are eligible. A contact page with just name/email/phone
+  // (no message box) shouldn't beat a homepage form that actually lets a
+  // visitor write us a message — even though it's "more contact-y" by URL.
+  // Only when zero forms have a textarea do we fall back to keyword-matched
+  // message fields and finally everything else.
+  const withTextarea = forms.filter((f) =>
+    f.fields.some((field) => field.type === "textarea"),
+  );
+  const pool = withTextarea.length > 0 ? withTextarea : forms;
+
+  const ranked = pool
     .map((f) => ({
       form: f,
       // Page-kind bonus pushes the contact-page form ahead of the global
-      // newsletter form in the footer.
+      // newsletter form in the footer when both have textareas.
       ranked: f.score + (f.pageKind === "contact" ? 12 : 0),
     }))
     .filter((entry) => entry.ranked > 0)
@@ -385,6 +397,7 @@ async function fetchWithTimeout(url: string, timeoutMs: number): Promise<string 
     const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; AmentiAffiliateBot/1.0)" },
       signal: ctrl.signal,
+      redirect: "follow",
     });
     if (!res.ok) return null;
     return await res.text();

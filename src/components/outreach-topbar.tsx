@@ -11,6 +11,7 @@ const TABS = [
   { label: "Batch Jobs", href: "/outreach/batch" },
   { label: "Email Generation", href: "/outreach/email-gen" },
   { label: "Email Campaigns", href: "/outreach/email-campaigns" },
+  { label: "Form Submissions", href: "/outreach/form-submissions" },
 ];
 
 export function OutreachTopbar({ activeHref }: { activeHref: string }) {

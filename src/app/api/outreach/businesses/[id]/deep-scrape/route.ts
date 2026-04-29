@@ -13,17 +13,11 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   try {
     const result = await deepScrapeSite(biz.website);
 
-    const mergedImages: { src: string; alt: string }[] = [];
-    if (result.logo) {
-      mergedImages.push({ src: result.logo, alt: "logo" });
-    }
-    if (result.ogImage && result.ogImage !== result.logo) {
-      mergedImages.push({ src: result.ogImage, alt: "hero" });
-    }
-    for (const img of result.images) {
-      if (mergedImages.some((m) => m.src === img.src)) continue;
-      mergedImages.push({ src: img.src, alt: img.alt ?? "" });
-    }
+    // Logo only — templates render visuals via canvas + SVG, so we no
+    // longer hoard every <img> on the prospect's site.
+    const mergedImages: { src: string; alt: string }[] = result.logo
+      ? [{ src: result.logo, alt: "logo" }]
+      : [];
 
     const site = await prisma.site.create({
       data: {
@@ -38,6 +32,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
         headings: result.headings as any,
         images: mergedImages as any,
         links: result.links as any,
+        contactForm: result.contactForm ?? undefined,
+        contentScore: result.contentScore,
+        signals: result.signals,
         status: "scraped",
       },
     });
@@ -59,6 +56,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
         enriched: true,
         hasWebsite: true,
         audited: true,
+        // Demo pages render on the fly from scraped data — see the same
+        // comment in /enrich/route.ts. Scrape completion = demo-ready.
+        siteGenerated: true,
       },
     });
 
@@ -68,7 +68,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       emails: result.emails,
       phones: result.phones,
       socials: result.socials,
-      imagesCount: result.images.length,
+      logoCaptured: Boolean(result.logo),
       palette: result.palette,
     });
   } catch (err) {

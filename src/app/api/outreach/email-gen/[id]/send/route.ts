@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendEmail, textToHtml } from "@/lib/email";
 import { getTemplatePreviewUrl, normalizeTemplateChoice } from "@/lib/site-url";
+import { bodyHasDemoUrlToken, replaceDemoUrlToken } from "@/lib/default-campaign";
 
 export const maxDuration = 60;
 
@@ -43,12 +44,19 @@ export async function POST(
     : null;
   const businessName = draft.scrapedBusiness?.name ?? "your business";
   const cleanedBody = stripStaleMockupUrls(draft.body, draft.scrapedBusinessId);
-  const textWithLink = siteUrl
-    ? appendSiteLinkText(cleanedBody, siteUrl, businessName)
+  // If the author dropped a [demo-url] token inline, swap it for the tracked
+  // URL and skip the auto-appended P.S. block — otherwise we'd send the link
+  // twice. Falls through to the legacy P.S. behavior when no token is present.
+  const hasInlineToken = bodyHasDemoUrlToken(cleanedBody);
+  const inlinedBody = siteUrl && hasInlineToken
+    ? replaceDemoUrlToken(cleanedBody, siteUrl)
     : cleanedBody;
-  const htmlWithLink = siteUrl
-    ? appendSiteLinkHtml(textToHtml(cleanedBody), siteUrl, businessName)
-    : textToHtml(cleanedBody);
+  const textWithLink = siteUrl && !hasInlineToken
+    ? appendSiteLinkText(inlinedBody, siteUrl, businessName)
+    : inlinedBody;
+  const htmlWithLink = siteUrl && !hasInlineToken
+    ? appendSiteLinkHtml(textToHtml(inlinedBody), siteUrl, businessName)
+    : textToHtml(inlinedBody);
 
   const result = await sendEmail({
     to,

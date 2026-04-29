@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -25,6 +27,9 @@ import { DetectionGridCanvas } from "@/components/templates/pest/detection-grid-
 import { HeroBugBanner } from "@/components/templates/pest/hero-bug-banner";
 import { RadarSweepCanvas } from "@/components/templates/pest/radar-sweep-canvas";
 import { TreatmentZonesCanvas } from "@/components/templates/pest/treatment-zones-canvas";
+import { usePestTheme } from "@/components/templates/pest/use-pest-theme";
+import { splitHero } from "@/lib/templates/split-hero";
+import type { Plan } from "@/lib/templates/pest-plans";
 import {
   AntIcon,
   BedBugIcon,
@@ -45,25 +50,25 @@ import type { SiteData } from "@/lib/templates/site";
 
 export function BarrierSection() {
   return (
-    <section className="relative bg-white py-20 sm:py-28">
+    <section className="relative bg-[var(--pest-bg-accent)] py-20 sm:py-28">
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 sm:px-8 md:grid-cols-[1.1fr_1fr] md:gap-16">
-        <div className="relative h-[360px] overflow-hidden rounded-3xl border border-slate-200 bg-[#060c09] sm:h-[440px]">
+        <div className="relative h-[360px] overflow-hidden rounded-3xl border border-[var(--pest-border)] bg-[#060c09] sm:h-[440px]">
           <BarrierShieldCanvas
             color="rgba(134, 239, 172, 0.9)"
             glowColor="rgba(52, 211, 153, 0.35)"
           />
         </div>
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+          <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--pest-emerald)]">
             The invisible perimeter
           </div>
-          <h2 className="mt-3 font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
-            A <span className="italic text-emerald-700">living barrier</span> around your home.
+          <h2 className="mt-3 font-serif text-4xl font-normal leading-[1.05] tracking-tight text-[var(--pest-text-strong)] sm:text-5xl">
+            A <span className="italic text-[var(--pest-emerald)]">living barrier</span> around your home.
           </h2>
-          <p className="mt-5 max-w-lg text-base leading-relaxed text-slate-600 sm:text-lg">
+          <p className="mt-5 max-w-lg text-base leading-relaxed text-[var(--pest-text-mid)] sm:text-lg">
             We apply a precision-targeted treatment along entry points, foundation lines, eaves, and voids — then come back on a quarterly cadence to keep it fresh. Pests hit the edge of the property and turn around.
           </p>
-          <ul className="mt-7 space-y-3 text-[14.5px] text-slate-700">
+          <ul className="mt-7 space-y-3 text-[14.5px] text-[var(--pest-text-soft)]">
             <BarrierItem icon={<Radar className="h-3.5 w-3.5" />}>
               Property walk-through identifies conducive conditions before you ever see a pest.
             </BarrierItem>
@@ -92,7 +97,7 @@ function BarrierItem({
 }) {
   return (
     <li className="flex items-start gap-3">
-      <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+      <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-[var(--pest-emerald)]">
         {icon}
       </span>
       <span>{children}</span>
@@ -114,26 +119,26 @@ export function ThreatAssessment({
   loc: string;
 }) {
   return (
-    <section className="relative border-y border-slate-200 bg-slate-50 py-20 sm:py-28">
+    <section className="relative border-y border-[var(--pest-border)] bg-[var(--pest-bg-base)] py-20 sm:py-28">
       <div className="mx-auto grid max-w-7xl gap-12 px-5 sm:px-8 md:grid-cols-[1fr_2fr] md:gap-16">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+          <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--pest-emerald)]">
             Threat assessment
           </div>
-          <div className="mt-3 text-[12px] uppercase tracking-[0.22em] text-slate-500">
+          <div className="mt-3 text-[12px] uppercase tracking-[0.22em] text-[var(--pest-text-faint)]">
             {loc || "Your neighborhood"}
           </div>
-          <div className="mt-5 text-[13px] leading-relaxed text-slate-500">
+          <div className="mt-5 text-[13px] leading-relaxed text-[var(--pest-text-faint)]">
             Climate, geography, and season all change the pest pressure on a property. We tailor every treatment to what we actually find on your walk-through.
           </div>
         </div>
         <div>
-          <h2 className="max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-[56px]">
+          <h2 className="max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-[var(--pest-text-strong)] sm:text-[56px]">
             {headline}
           </h2>
-          <div className="mt-6 grid gap-6 text-base leading-relaxed text-slate-600 md:grid-cols-2 md:gap-10">
+          <div className="mt-6 grid gap-6 text-base leading-relaxed text-[var(--pest-text-mid)] md:grid-cols-2 md:gap-10">
             <p>{aboutShort}</p>
-            <p className="text-slate-500">{aboutLong}</p>
+            <p className="text-[var(--pest-text-faint)]">{aboutLong}</p>
           </div>
         </div>
       </div>
@@ -145,20 +150,20 @@ export function ThreatAssessment({
 
 export function InspectionReport() {
   return (
-    <section className="relative bg-white py-20 sm:py-28">
+    <section className="relative bg-[var(--pest-bg-accent)] py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="max-w-2xl">
-          <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+          <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--pest-emerald)]">
             Your free inspection
           </div>
-          <h2 className="mt-3 font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
-            What our tech <span className="italic text-emerald-700">actually checks.</span>
+          <h2 className="mt-3 font-serif text-4xl font-normal leading-[1.05] tracking-tight text-[var(--pest-text-strong)] sm:text-5xl">
+            What our tech <span className="italic text-[var(--pest-emerald)]">actually checks.</span>
           </h2>
-          <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
+          <p className="mt-4 text-base leading-relaxed text-[var(--pest-text-mid)] sm:text-lg">
             A real inspection takes 45–60 minutes. Here&apos;s what gets documented on every visit — so you know exactly what you&apos;re paying for.
           </p>
         </div>
-        <div className="mt-12 overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-sm">
+        <div className="mt-12 overflow-hidden rounded-3xl border border-[var(--pest-border)] bg-[var(--pest-bg-base)] shadow-sm">
           <div className="grid divide-y divide-slate-200 md:grid-cols-2 md:divide-x md:divide-y-0">
             <InspectionColumn
               title="Exterior survey"
@@ -181,7 +186,7 @@ export function InspectionReport() {
               ]}
             />
           </div>
-          <div className="border-t border-slate-200 bg-white px-6 py-5 text-center text-[12.5px] uppercase tracking-[0.22em] text-slate-500 sm:px-8">
+          <div className="border-t border-[var(--pest-border)] bg-[var(--pest-bg-accent)] px-6 py-5 text-center text-[12.5px] uppercase tracking-[0.22em] text-[var(--pest-text-faint)] sm:px-8">
             Findings are emailed to you the same day with photos, maps, and a written plan.
           </div>
         </div>
@@ -193,13 +198,13 @@ export function InspectionReport() {
 function InspectionColumn({ title, items }: { title: string; items: string[] }) {
   return (
     <div className="p-7 sm:p-9">
-      <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-emerald-600">
+      <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--pest-emerald)]">
         {title}
       </div>
-      <ul className="mt-5 space-y-3 text-[14.5px] leading-relaxed text-slate-700">
+      <ul className="mt-5 space-y-3 text-[14.5px] leading-relaxed text-[var(--pest-text-soft)]">
         {items.map((item) => (
           <li key={item} className="flex items-start gap-3">
-            <ClipboardCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+            <ClipboardCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--pest-emerald)]" />
             <span>{item}</span>
           </li>
         ))}
@@ -212,18 +217,18 @@ function InspectionColumn({ title, items }: { title: string; items: string[] }) 
 
 export function PestCatalog() {
   return (
-    <section id="pests" className="relative border-y border-slate-200 bg-slate-50 py-20 sm:py-28">
+    <section id="pests" className="relative border-y border-[var(--pest-border)] bg-[var(--pest-bg-base)] py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--pest-emerald)]">
               Pest catalog
             </div>
-            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
-              Know <span className="italic text-emerald-700">what you&apos;re up against.</span>
+            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-[var(--pest-text-strong)] sm:text-5xl">
+              Know <span className="italic text-[var(--pest-emerald)]">what you&apos;re up against.</span>
             </h2>
           </div>
-          <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-[var(--pest-text-faint)]">
             {PEST_CATALOG.length.toString().padStart(2, "0")} species we handle
           </div>
         </div>
@@ -231,29 +236,29 @@ export function PestCatalog() {
           {PEST_CATALOG.map((p) => (
             <article
               key={p.name}
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-lg"
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-[var(--pest-border)] bg-[var(--pest-bg-accent)] p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-400/40 hover:shadow-lg"
             >
               <div className="flex items-start justify-between">
-                <span className="grid h-12 w-12 place-items-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+                <span className="grid h-12 w-12 place-items-center rounded-xl bg-emerald-500/10 text-[var(--pest-emerald)] ring-1 ring-emerald-400/30">
                   {p.icon}
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-slate-400">
+                <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--pest-text-veryfaint)]">
                   {p.tier}
                 </span>
               </div>
-              <h3 className="mt-5 text-lg font-bold tracking-tight text-slate-900">{p.name}</h3>
-              <p className="mt-2 text-[13px] leading-relaxed text-slate-600">{p.body}</p>
-              <div className="mt-5 border-t border-slate-200 pt-4 text-[11.5px] leading-relaxed">
-                <div className="font-bold uppercase tracking-[0.2em] text-emerald-700">
+              <h3 className="mt-5 text-lg font-bold tracking-tight text-[var(--pest-text-strong)]">{p.name}</h3>
+              <p className="mt-2 text-[13px] leading-relaxed text-[var(--pest-text-mid)]">{p.body}</p>
+              <div className="mt-5 border-t border-[var(--pest-border)] pt-4 text-[11.5px] leading-relaxed">
+                <div className="font-bold uppercase tracking-[0.2em] text-[var(--pest-emerald)]">
                   Signs
                 </div>
-                <div className="mt-1 text-slate-600">{p.signs}</div>
+                <div className="mt-1 text-[var(--pest-text-mid)]">{p.signs}</div>
               </div>
               <div className="mt-3 text-[11.5px] leading-relaxed">
-                <div className="font-bold uppercase tracking-[0.2em] text-emerald-700">
+                <div className="font-bold uppercase tracking-[0.2em] text-[var(--pest-emerald)]">
                   Our approach
                 </div>
-                <div className="mt-1 text-slate-600">{p.approach}</div>
+                <div className="mt-1 text-[var(--pest-text-mid)]">{p.approach}</div>
               </div>
             </article>
           ))}
@@ -275,18 +280,18 @@ export function TreatmentPlans({
   callHref: string;
 }) {
   return (
-    <section id="plans" className="relative bg-white py-20 sm:py-28">
+    <section id="plans" className="relative bg-[var(--pest-bg-accent)] py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--pest-emerald)]">
               Treatment plans
             </div>
-            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
+            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-[var(--pest-text-strong)] sm:text-5xl">
               {headline}
             </h2>
           </div>
-          <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
+          <div className="text-[11px] uppercase tracking-[0.22em] text-[var(--pest-text-faint)]">
             Pick a cadence · switch anytime
           </div>
         </div>
@@ -297,39 +302,39 @@ export function TreatmentPlans({
               key={p.title}
               className={`group relative flex flex-col overflow-hidden rounded-2xl border p-7 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl ${
                 p.highlight
-                  ? "border-emerald-500 bg-emerald-50/50 ring-1 ring-emerald-200"
-                  : "border-slate-200 bg-white hover:border-emerald-300"
+                  ? "border-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-400/30"
+                  : "border-[var(--pest-border)] bg-[var(--pest-bg-accent)] hover:border-emerald-400/40"
               }`}
             >
               {p.highlight && (
-                <div className="absolute -top-3 right-6 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white">
+                <div className="absolute -top-3 right-6 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--pest-text-strong)]">
                   Most chosen
                 </div>
               )}
-              <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.24em] text-emerald-700">
+              <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--pest-emerald)]">
                 <span>{String(i + 1).padStart(2, "0")}</span>
                 <span className="h-px flex-1 bg-emerald-200" />
                 <span>{p.cadence}</span>
               </div>
-              <h3 className="mt-4 font-serif text-3xl font-normal leading-[1.05] tracking-tight text-slate-900">
+              <h3 className="mt-4 font-serif text-3xl font-normal leading-[1.05] tracking-tight text-[var(--pest-text-strong)]">
                 {p.title}
               </h3>
-              <p className="mt-2 text-[14px] leading-relaxed text-slate-600">{p.body}</p>
-              <ul className="mt-5 space-y-2 text-[13.5px] text-slate-700">
+              <p className="mt-2 text-[14px] leading-relaxed text-[var(--pest-text-mid)]">{p.body}</p>
+              <ul className="mt-5 space-y-2 text-[13.5px] text-[var(--pest-text-soft)]">
                 {p.features.map((f) => (
                   <li key={f} className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--pest-emerald)]" />
                     <span>{f}</span>
                   </li>
                 ))}
               </ul>
-              <div className="mt-7 flex items-center justify-between border-t border-slate-200 pt-4">
-                <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
+              <div className="mt-7 flex items-center justify-between border-t border-[var(--pest-border)] pt-4">
+                <div className="text-[11px] uppercase tracking-[0.22em] text-[var(--pest-text-faint)]">
                   {p.targets}
                 </div>
                 <a
                   href={callHref}
-                  className="inline-flex items-center gap-1.5 text-[12.5px] font-bold text-emerald-700 hover:text-emerald-600"
+                  className="inline-flex items-center gap-1.5 text-[12.5px] font-bold text-[var(--pest-emerald)] hover:text-[var(--pest-emerald)]"
                 >
                   Book <ArrowRight className="h-3.5 w-3.5" />
                 </a>
@@ -344,6 +349,75 @@ export function TreatmentPlans({
 
 // -------- Full services grid (services) --------
 
+// Decorative fallback used in place of a scraped image when the service has
+// no `image` URL (or the URL fails to load). Hex grid + radial spotlight +
+// a centered emerald icon — keeps the cards looking finished instead of
+// rendering as a flat pale rectangle. Variant is picked by index so a grid
+// of fallbacks doesn't repeat the same icon.
+function ServiceCardArt({ index }: { index: number }) {
+  const variant = index % 4;
+  const Icon =
+    variant === 0
+      ? Shield
+      : variant === 1
+        ? Radar
+        : variant === 2
+          ? ShieldCheck
+          : Sparkles;
+  const patternId = `pest-service-hex-${index}`;
+  return (
+    <div className="absolute inset-0 bg-gradient-to-br from-[#082016] via-[#0a1612] to-[#06140e]">
+      <svg
+        className="absolute inset-0 h-full w-full opacity-35"
+        viewBox="0 0 200 120"
+        preserveAspectRatio="none"
+        aria-hidden
+      >
+        <defs>
+          <pattern
+            id={patternId}
+            width="20"
+            height="22"
+            patternUnits="userSpaceOnUse"
+          >
+            <path
+              d="M10 0 L20 5.5 L20 16.5 L10 22 L0 16.5 L0 5.5 Z"
+              fill="none"
+              stroke="rgba(110, 231, 183, 0.5)"
+              strokeWidth="0.6"
+            />
+          </pattern>
+        </defs>
+        <rect width="200" height="120" fill={`url(#${patternId})`} />
+      </svg>
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle at 70% 50%, rgba(52, 211, 153, 0.22), transparent 60%)",
+        }}
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 opacity-55"
+        style={{
+          background:
+            "conic-gradient(from 200deg at 70% 50%, transparent 0deg, rgba(110, 231, 183, 0.22) 30deg, transparent 60deg)",
+        }}
+        aria-hidden
+      />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="grid h-16 w-16 place-items-center rounded-2xl border border-emerald-400/30 bg-emerald-400/10 text-emerald-200 backdrop-blur-sm">
+          <Icon className="h-7 w-7" />
+        </div>
+      </div>
+      <div className="absolute left-3 top-3 rounded-full bg-black/35 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.22em] text-emerald-200/85 backdrop-blur">
+        Service
+      </div>
+    </div>
+  );
+}
+
 export function ServicesGrid({
   services,
   callHref,
@@ -353,54 +427,44 @@ export function ServicesGrid({
 }) {
   if (services.length <= 3) return null;
   return (
-    <section className="relative border-t border-slate-200 bg-slate-50 py-20 sm:py-28">
+    <section className="relative border-t border-[var(--pest-border)] bg-[var(--pest-bg-base)] py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+        <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--pest-emerald)]">
           Full service list
         </div>
-        <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
-          Every pest. Every property. <span className="italic text-emerald-700">One call.</span>
+        <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-[var(--pest-text-strong)] sm:text-5xl">
+          Every pest. Every property. <span className="italic text-[var(--pest-emerald)]">One call.</span>
         </h2>
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((s, i) => (
             <article
               key={s.title}
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-emerald-300 hover:shadow-md"
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-[var(--pest-border)] bg-[var(--pest-bg-accent)] shadow-sm transition hover:border-emerald-400/40 hover:shadow-md"
             >
-              <div className="relative aspect-[5/3] w-full overflow-hidden bg-slate-100">
+              <div className="relative aspect-[5/3] w-full overflow-hidden bg-[#0a1612]">
                 {s.image ? (
                   <SafeImg
                     src={s.image}
                     alt={s.title}
                     className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     defaultSrc={defaultServiceAt(i)}
-                    fallback={
-                      <div
-                        className="absolute inset-0"
-                        style={{ background: "linear-gradient(135deg,#ecfdf5,#d1fae5)" }}
-                        aria-hidden
-                      />
-                    }
+                    fallback={<ServiceCardArt index={i} />}
                   />
                 ) : (
-                  <div
-                    className="absolute inset-0"
-                    style={{ background: "linear-gradient(135deg,#ecfdf5,#d1fae5)" }}
-                    aria-hidden
-                  />
+                  <ServiceCardArt index={i} />
                 )}
-                <div className="absolute inset-x-0 bottom-0 h-0.5 bg-emerald-500" aria-hidden />
+                <div className="absolute inset-x-0 bottom-0 h-0.5 bg-emerald-500/100" aria-hidden />
               </div>
               <div className="flex flex-1 flex-col p-5">
-                <h3 className="text-[17px] font-bold tracking-tight text-slate-900">
+                <h3 className="text-[17px] font-bold tracking-tight text-[var(--pest-text-strong)]">
                   {s.title}
                 </h3>
-                <p className="mt-2 flex-1 text-[13.5px] leading-relaxed text-slate-600">
+                <p className="mt-2 flex-1 text-[13.5px] leading-relaxed text-[var(--pest-text-mid)]">
                   {s.body}
                 </p>
                 <a
                   href={callHref}
-                  className="mt-4 inline-flex items-center gap-1.5 text-[12.5px] font-bold text-emerald-700 hover:text-emerald-600"
+                  className="mt-4 inline-flex items-center gap-1.5 text-[12.5px] font-bold text-[var(--pest-emerald)] hover:text-[var(--pest-emerald)]"
                 >
                   Get a quote <ArrowRight className="h-3.5 w-3.5" />
                 </a>
@@ -424,25 +488,25 @@ export function CoverageSection({
 }) {
   if (serviceArea.length === 0) return null;
   return (
-    <section id="coverage" className="relative bg-white py-20 sm:py-28">
+    <section id="coverage" className="relative bg-[var(--pest-bg-accent)] py-20 sm:py-28">
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 sm:px-8 md:grid-cols-[1.1fr_1fr] md:gap-16">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+          <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--pest-emerald)]">
             Coverage map
           </div>
-          <h2 className="mt-3 font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
-            Protecting <span className="italic text-emerald-700">{loc || "your area"}.</span>
+          <h2 className="mt-3 font-serif text-4xl font-normal leading-[1.05] tracking-tight text-[var(--pest-text-strong)] sm:text-5xl">
+            Protecting <span className="italic text-[var(--pest-emerald)]">{loc || "your area"}.</span>
           </h2>
-          <p className="mt-5 max-w-lg text-base leading-relaxed text-slate-600 sm:text-lg">
+          <p className="mt-5 max-w-lg text-base leading-relaxed text-[var(--pest-text-mid)] sm:text-lg">
             Active service zones across the region — routed weekly so quarterly customers stay on a tight cadence and emergency calls get a truck out the same day.
           </p>
           <div className="mt-7 flex flex-wrap gap-2">
             {serviceArea.map((a) => (
               <span
                 key={a}
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[13px] font-semibold text-slate-700"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--pest-border)] bg-[var(--pest-bg-base)] px-3 py-1.5 text-[13px] font-semibold text-[var(--pest-text-soft)]"
               >
-                <MapPin className="h-3 w-3 text-emerald-600" /> {a}
+                <MapPin className="h-3 w-3 text-[var(--pest-emerald)]" /> {a}
               </span>
             ))}
           </div>
@@ -461,7 +525,7 @@ function CoverageMap({ areas }: { areas: string[] }) {
     return { label, x, y, i };
   });
   return (
-    <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-slate-200 bg-[#0a1612] md:aspect-square">
+    <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-[var(--pest-border)] bg-[var(--pest-bg-accent)] md:aspect-square">
       <svg viewBox="0 0 100 100" className="h-full w-full" aria-hidden>
         <defs>
           <radialGradient id="map-glow-light" cx="55%" cy="55%" r="70%">
@@ -528,22 +592,22 @@ function CoverageMap({ areas }: { areas: string[] }) {
 
 export function LicenseBadges() {
   return (
-    <section className="relative bg-slate-50 py-16 sm:py-20">
+    <section className="relative bg-[var(--pest-bg-base)] py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {LICENSE_BADGES.map((b) => (
             <div
               key={b.label}
-              className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              className="flex items-start gap-3 rounded-2xl border border-[var(--pest-border)] bg-[var(--pest-bg-accent)] p-5 shadow-sm"
             >
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-[var(--pest-emerald)]">
                 {b.icon}
               </span>
               <div>
-                <div className="text-[13px] font-bold tracking-tight text-slate-900">
+                <div className="text-[13px] font-bold tracking-tight text-[var(--pest-text-strong)]">
                   {b.label}
                 </div>
-                <div className="mt-1 text-[12px] leading-relaxed text-slate-600">
+                <div className="mt-1 text-[12px] leading-relaxed text-[var(--pest-text-mid)]">
                   {b.body}
                 </div>
               </div>
@@ -566,31 +630,31 @@ export function TestimonialsSection({
 }) {
   if (testimonials.length === 0) return null;
   return (
-    <section className="relative border-t border-slate-200 bg-slate-50 py-20 sm:py-28">
+    <section className="relative border-t border-[var(--pest-border)] bg-[var(--pest-bg-base)] py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+        <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--pest-emerald)]">
           What neighbors say
         </div>
-        <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
+        <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-[var(--pest-text-strong)] sm:text-5xl">
           {headline}
         </h2>
         <div className="mt-10 grid gap-5 md:grid-cols-3">
           {testimonials.slice(0, 3).map((t, i) => (
             <figure
               key={i}
-              className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+              className="relative rounded-2xl border border-[var(--pest-border)] bg-[var(--pest-bg-accent)] p-6 shadow-sm"
             >
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: t.rating }).map((_, idx) => (
                   <Star key={idx} className="h-4 w-4 fill-emerald-500 text-emerald-500" />
                 ))}
               </div>
-              <blockquote className="mt-3 font-serif text-[17px] italic leading-[1.55] text-slate-800">
+              <blockquote className="mt-3 font-serif text-[17px] italic leading-[1.55] text-[var(--pest-text-soft)]">
                 &ldquo;{t.quote}&rdquo;
               </blockquote>
-              <figcaption className="mt-4 text-[12px] font-semibold text-slate-700">
+              <figcaption className="mt-4 text-[12px] font-semibold text-[var(--pest-text-soft)]">
                 {t.author}{" "}
-                <span className="font-normal text-slate-400">· {t.location}</span>
+                <span className="font-normal text-[var(--pest-text-veryfaint)]">· {t.location}</span>
               </figcaption>
             </figure>
           ))}
@@ -614,20 +678,41 @@ export function FinalCta({
   backdrop?: "radar" | "bugs";
 }) {
   const { before, after } = splitHero(ctaHeadline);
+  const { theme } = usePestTheme();
+  const isDark = theme === "dark";
+
+  const sectionBg = isDark
+    ? "relative overflow-hidden bg-[#060c09] py-24 text-white sm:py-32"
+    : "relative overflow-hidden bg-[#ede2c8] py-24 text-stone-900 sm:py-32";
+  const radarColor = isDark ? "rgba(134, 239, 172, 0.55)" : "rgba(4, 120, 87, 0.55)";
+  const radarGrid = isDark ? "rgba(134, 239, 172, 0.08)" : "rgba(4, 120, 87, 0.18)";
+  const bugColor = isDark ? "rgba(248, 242, 224, 0.96)" : "rgba(46, 32, 12, 0.85)";
+  const bugAccent = isDark ? "rgba(134, 239, 172, 0.95)" : "rgba(4, 120, 87, 0.95)";
+  const eyebrowChip = isDark
+    ? "inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.26em] text-emerald-200 backdrop-blur"
+    : "inline-flex items-center gap-2 rounded-full border border-emerald-700/40 bg-emerald-700/10 px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.26em] text-emerald-800 backdrop-blur";
+  const accentItalic = isDark ? "italic text-emerald-300/90" : "italic text-emerald-800/90";
+  const subtitleClass = isDark
+    ? "mx-auto mt-6 max-w-xl font-serif text-lg italic leading-[1.55] text-emerald-100/80 sm:text-xl"
+    : "mx-auto mt-6 max-w-xl font-serif text-lg italic leading-[1.55] text-stone-700 sm:text-xl";
+  const phoneCta = isDark
+    ? "group inline-flex items-center gap-2 rounded-full bg-emerald-400 px-7 py-3 text-[15px] font-bold text-[#060c09] shadow-lg shadow-emerald-400/30 transition hover:bg-emerald-300"
+    : "group inline-flex items-center gap-2 rounded-full bg-emerald-700 px-7 py-3 text-[15px] font-bold text-[#f6efde] shadow-lg shadow-emerald-700/30 transition hover:bg-emerald-800";
+  const emailCta = isDark
+    ? "inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-white/5 px-7 py-3 text-[15px] font-bold text-emerald-100 backdrop-blur transition hover:bg-white/10"
+    : "inline-flex items-center gap-2 rounded-full border border-emerald-700/40 bg-stone-900/5 px-7 py-3 text-[15px] font-bold text-emerald-900 backdrop-blur transition hover:bg-stone-900/10";
+
   return (
-    <section className="relative overflow-hidden bg-[#060c09] py-24 text-white sm:py-32">
+    <section className={sectionBg}>
       {backdrop === "radar" ? (
         <div className="pointer-events-none absolute inset-0 opacity-60">
-          <RadarSweepCanvas
-            color="rgba(134, 239, 172, 0.55)"
-            gridColor="rgba(134, 239, 172, 0.08)"
-          />
+          <RadarSweepCanvas color={radarColor} gridColor={radarGrid} />
         </div>
       ) : (
         <div className="absolute inset-0 opacity-90">
           <HeroBugBanner
-            color="rgba(248, 242, 224, 0.96)"
-            accent="rgba(134, 239, 172, 0.95)"
+            color={bugColor}
+            accent={bugAccent}
             count={28}
             reactToCursor
             scatterRadius={140}
@@ -635,37 +720,31 @@ export function FinalCta({
         </div>
       )}
       <div className="relative z-10 mx-auto max-w-4xl px-5 text-center sm:px-8">
-        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.26em] text-emerald-300 backdrop-blur">
+        <div className={eyebrowChip}>
           <Shield className="h-3 w-3" />
           Free inspection · no obligation
         </div>
         <h2 className="mt-6 font-serif text-5xl font-normal leading-[1.02] tracking-tight sm:text-6xl">
           {before && (
             <>
-              <span className="italic text-emerald-200/90">{before}</span>
+              <span className={accentItalic}>{before}</span>
               <br />
             </>
           )}
           <span className="font-sans font-black uppercase">{after}</span>
         </h2>
-        <p className="mx-auto mt-6 max-w-xl font-serif text-lg italic leading-[1.55] text-emerald-100/80 sm:text-xl">
+        <p className={subtitleClass}>
           Pick up the phone. We&apos;ll walk your property, map every pressure point, and send you a written treatment plan — at no cost.
         </p>
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
           {business.phone && (
-            <a
-              href={`tel:${business.phone}`}
-              className="group inline-flex items-center gap-2 rounded-full bg-emerald-400 px-7 py-3 text-[15px] font-bold text-[#060c09] shadow-lg shadow-emerald-400/30 transition hover:bg-emerald-300"
-            >
+            <a href={`tel:${business.phone}`} className={phoneCta}>
               <Phone className="h-4 w-4" /> {business.phone}
               <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
             </a>
           )}
           {business.email && (
-            <a
-              href={`mailto:${business.email}`}
-              className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-white/5 px-7 py-3 text-[15px] font-bold text-emerald-100 backdrop-blur transition hover:bg-white/10"
-            >
+            <a href={`mailto:${business.email}`} className={emailCta}>
               Email us
             </a>
           )}
@@ -686,20 +765,20 @@ export function ServicesTeaser({
 }) {
   const top = services.slice(0, 3);
   return (
-    <section className="relative bg-white py-20 sm:py-24">
+    <section className="relative bg-[var(--pest-bg-accent)] py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--pest-emerald)]">
               Services
             </div>
-            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
-              Plans matched to <span className="italic text-emerald-700">your pressure.</span>
+            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-[var(--pest-text-strong)] sm:text-5xl">
+              Plans matched to <span className="italic text-[var(--pest-emerald)]">your pressure.</span>
             </h2>
           </div>
           <Link
             href={`/p/pest/${id}/services`}
-            className="inline-flex items-center gap-1.5 text-[13px] font-bold text-emerald-700 hover:text-emerald-600"
+            className="inline-flex items-center gap-1.5 text-[13px] font-bold text-[var(--pest-emerald)] hover:text-[var(--pest-emerald)]"
           >
             See all plans <ArrowRight className="h-4 w-4" />
           </Link>
@@ -708,15 +787,15 @@ export function ServicesTeaser({
           {top.map((s) => (
             <article
               key={s.title}
-              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-emerald-300"
+              className="rounded-2xl border border-[var(--pest-border)] bg-[var(--pest-bg-accent)] p-6 shadow-sm transition hover:border-emerald-400/40"
             >
-              <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-700">
+              <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--pest-emerald)]">
                 Plan
               </div>
-              <h3 className="mt-3 text-[18px] font-bold tracking-tight text-slate-900">
+              <h3 className="mt-3 text-[18px] font-bold tracking-tight text-[var(--pest-text-strong)]">
                 {s.title}
               </h3>
-              <p className="mt-2 text-[14px] leading-relaxed text-slate-600">{s.body}</p>
+              <p className="mt-2 text-[14px] leading-relaxed text-[var(--pest-text-mid)]">{s.body}</p>
             </article>
           ))}
         </div>
@@ -727,12 +806,6 @@ export function ServicesTeaser({
 
 // -------- Helpers / data --------
 
-export function splitHero(title: string): { before: string; after: string } {
-  const m = title.match(/^(.{4,40}?)[:—-]\s+(.+)$/);
-  if (m) return { before: m[1].trim(), after: m[2].trim() };
-  return { before: "", after: title };
-}
-
 function hashSeed(s: string): number {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) {
@@ -742,62 +815,6 @@ function hashSeed(s: string): number {
   return Math.abs(h);
 }
 
-export type Plan = {
-  title: string;
-  body: string;
-  cadence: string;
-  targets: string;
-  features: string[];
-  highlight?: boolean;
-};
-
-export function buildTreatmentPlans(services: { title: string; body: string }[]): Plan[] {
-  const firstThree = services.slice(0, 3);
-  return [
-    {
-      title: firstThree[0]?.title || "One-time treatment",
-      body:
-        firstThree[0]?.body ||
-        "Targeted treatment for an active problem. We identify the pest, locate entry points, and eliminate the colony.",
-      cadence: "Single visit",
-      targets: "Active problem",
-      features: [
-        "Full property inspection + written plan",
-        "Targeted interior + exterior treatment",
-        "30-day callback guarantee",
-      ],
-    },
-    {
-      title: firstThree[1]?.title || "Quarterly protection",
-      body:
-        firstThree[1]?.body ||
-        "Our most popular plan. Four visits per year keep a fresh perimeter barrier around your home and stop problems before they start.",
-      cadence: "Every 3 months",
-      targets: "Year-round coverage",
-      features: [
-        "4 scheduled treatments per year",
-        "Interior + exterior perimeter barrier",
-        "Free re-treats between visits",
-        "Priority scheduling + weather reschedules",
-      ],
-      highlight: true,
-    },
-    {
-      title: firstThree[2]?.title || "Commercial program",
-      body:
-        firstThree[2]?.body ||
-        "Custom-cadence service for restaurants, offices, multifamily, and warehouses. Compliance-ready documentation on request.",
-      cadence: "Custom cadence",
-      targets: "Businesses & multifamily",
-      features: [
-        "IPM-compliant documentation",
-        "Scheduled service windows",
-        "Dedicated account technician",
-        "Emergency call-outs",
-      ],
-    },
-  ];
-}
 
 const PEST_CATALOG: {
   name: string;
@@ -922,15 +939,15 @@ export function ValueBar() {
     },
   ];
   return (
-    <section className="relative bg-white py-20 sm:py-24">
+    <section className="relative bg-[var(--pest-bg-accent)] py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--pest-emerald)]">
               Why us
             </div>
-            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
-              Four things we do <span className="italic text-emerald-700">every single visit.</span>
+            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-[var(--pest-text-strong)] sm:text-5xl">
+              Four things we do <span className="italic text-[var(--pest-emerald)]">every single visit.</span>
             </h2>
           </div>
         </div>
@@ -938,15 +955,15 @@ export function ValueBar() {
           {items.map((it) => (
             <div
               key={it.title}
-              className="group relative flex flex-col rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-white hover:shadow-lg"
+              className="group relative flex flex-col rounded-2xl border border-[var(--pest-border)] bg-[var(--pest-bg-base)] p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-400/40 hover:bg-[var(--pest-bg-accent)] hover:shadow-lg"
             >
-              <span className="grid h-11 w-11 place-items-center rounded-full bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 transition group-hover:bg-emerald-600 group-hover:text-white">
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-emerald-500/15 text-[var(--pest-emerald)] ring-1 ring-emerald-400/30 transition group-hover:bg-emerald-600 group-hover:text-[var(--pest-text-strong)]">
                 {it.icon}
               </span>
-              <h3 className="mt-5 text-[17px] font-bold tracking-tight text-slate-900">
+              <h3 className="mt-5 text-[17px] font-bold tracking-tight text-[var(--pest-text-strong)]">
                 {it.title}
               </h3>
-              <p className="mt-2 text-[13.5px] leading-relaxed text-slate-600">
+              <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--pest-text-mid)]">
                 {it.body}
               </p>
             </div>
@@ -1001,52 +1018,71 @@ export function ProcessSteps() {
       ],
     },
   ];
+  const { theme } = usePestTheme();
+  const isDark = theme === "dark";
+  const sectionClass = isDark
+    ? "relative bg-black py-20 sm:py-28 text-white"
+    : "relative bg-[#ede2c8] py-20 sm:py-28 text-stone-900";
+  const cardClass = isDark
+    ? "relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0a1612] p-7 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-400/40 hover:shadow-xl"
+    : "relative flex flex-col overflow-hidden rounded-2xl border border-stone-900/15 bg-[#fbf6e7] p-7 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-700/40 hover:shadow-xl";
+  const iconBubble = isDark
+    ? "grid h-11 w-11 place-items-center rounded-full bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
+    : "grid h-11 w-11 place-items-center rounded-full bg-emerald-700 text-[#f6efde] shadow-md shadow-emerald-700/25";
+  const stepNumber = isDark
+    ? "font-serif text-4xl italic text-emerald-300"
+    : "font-serif text-4xl italic text-emerald-800";
+  const cardTitle = isDark
+    ? "mt-5 font-serif text-[26px] font-normal leading-tight tracking-tight text-white"
+    : "mt-5 font-serif text-[26px] font-normal leading-tight tracking-tight text-stone-900";
+  const cardBody = isDark
+    ? "mt-2 text-[14.5px] leading-relaxed text-white/70"
+    : "mt-2 text-[14.5px] leading-relaxed text-stone-700";
+  const bulletList = isDark
+    ? "mt-5 space-y-2 text-[13px] text-white/85"
+    : "mt-5 space-y-2 text-[13px] text-stone-800";
+  const checkColor = isDark ? "text-emerald-300" : "text-emerald-700";
+  const headingEyebrow = isDark
+    ? "text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-300"
+    : "text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-800";
+  const headingTitle = isDark
+    ? "mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-white sm:text-5xl"
+    : "mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-stone-900 sm:text-5xl";
+  const accentItalic = isDark ? "italic text-emerald-300" : "italic text-emerald-800";
+  const cornerNote = isDark
+    ? "text-[11px] uppercase tracking-[0.22em] text-white/50"
+    : "text-[11px] uppercase tracking-[0.22em] text-stone-600";
+  const dashLine = isDark
+    ? "pointer-events-none absolute left-0 right-0 top-14 hidden h-px bg-[linear-gradient(to_right,transparent,rgba(16,185,129,0.35)_12%,rgba(16,185,129,0.35)_88%,transparent)] lg:block"
+    : "pointer-events-none absolute left-0 right-0 top-14 hidden h-px bg-[linear-gradient(to_right,transparent,rgba(4,120,87,0.4)_12%,rgba(4,120,87,0.4)_88%,transparent)] lg:block";
+
   return (
-    <section className="relative border-y border-slate-200 bg-slate-50 py-20 sm:py-28">
+    <section className={sectionClass}>
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
-              How it works
-            </div>
-            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
-              Three steps, <span className="italic text-emerald-700">one written plan.</span>
+            <div className={headingEyebrow}>How it works</div>
+            <h2 className={headingTitle}>
+              Three steps, <span className={accentItalic}>one written plan.</span>
             </h2>
           </div>
-          <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
-            Inspection · treatment · guarantee
-          </div>
+          <div className={cornerNote}>Inspection · treatment · guarantee</div>
         </div>
         <div className="relative mt-12">
-          {/* Connecting dashed line between step numbers on desktop */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute left-0 right-0 top-14 hidden h-px bg-[linear-gradient(to_right,transparent,rgba(16,185,129,0.35)_12%,rgba(16,185,129,0.35)_88%,transparent)] lg:block"
-          />
+          <div aria-hidden className={dashLine} />
           <div className="relative grid gap-5 md:grid-cols-3">
             {steps.map((s) => (
-              <article
-                key={s.step}
-                className="relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-xl"
-              >
+              <article key={s.step} className={cardClass}>
                 <div className="flex items-center gap-3">
-                  <span className="grid h-11 w-11 place-items-center rounded-full bg-emerald-600 text-white shadow-md shadow-emerald-600/30">
-                    {s.icon}
-                  </span>
-                  <span className="font-serif text-4xl italic text-emerald-700">
-                    {s.step}
-                  </span>
+                  <span className={iconBubble}>{s.icon}</span>
+                  <span className={stepNumber}>{s.step}</span>
                 </div>
-                <h3 className="mt-5 font-serif text-[26px] font-normal leading-tight tracking-tight text-slate-900">
-                  {s.title}
-                </h3>
-                <p className="mt-2 text-[14.5px] leading-relaxed text-slate-600">
-                  {s.body}
-                </p>
-                <ul className="mt-5 space-y-2 text-[13px] text-slate-700">
+                <h3 className={cardTitle}>{s.title}</h3>
+                <p className={cardBody}>{s.body}</p>
+                <ul className={bulletList}>
                   {s.bullets.map((b) => (
                     <li key={b} className="flex items-start gap-2">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                      <CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${checkColor}`} />
                       <span>{b}</span>
                     </li>
                   ))}
@@ -1064,19 +1100,19 @@ export function ProcessSteps() {
 
 export function TreatmentZonesSection() {
   return (
-    <section className="relative overflow-hidden bg-white py-20 sm:py-28">
+    <section className="relative overflow-hidden bg-[var(--pest-bg-accent)] py-20 sm:py-28">
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+          <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--pest-emerald)]">
             Treatment coverage
           </div>
-          <h2 className="mt-3 font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
-            Every <span className="italic text-emerald-700">entry point</span> — mapped, monitored, treated.
+          <h2 className="mt-3 font-serif text-4xl font-normal leading-[1.05] tracking-tight text-[var(--pest-text-strong)] sm:text-5xl">
+            Every <span className="italic text-[var(--pest-emerald)]">entry point</span> — mapped, monitored, treated.
           </h2>
-          <p className="mt-5 max-w-lg text-base leading-relaxed text-slate-600 sm:text-lg">
+          <p className="mt-5 max-w-lg text-base leading-relaxed text-[var(--pest-text-mid)] sm:text-lg">
             A quarterly visit treats four zones in parallel: attic voids, kitchen harborage, living-space thresholds, and the foundation perimeter. Nothing gets skipped.
           </p>
-          <ul className="mt-7 grid gap-3 text-[14px] text-slate-700 sm:grid-cols-2">
+          <ul className="mt-7 grid gap-3 text-[14px] text-[var(--pest-text-soft)] sm:grid-cols-2">
             <ZoneLegend color="rgba(16, 185, 129, 1)" label="Attic voids + vents" />
             <ZoneLegend color="rgba(16, 185, 129, 1)" label="Kitchen harborage" />
             <ZoneLegend color="rgba(16, 185, 129, 1)" label="Living thresholds" />
@@ -1085,7 +1121,7 @@ export function TreatmentZonesSection() {
         </div>
         <div className="relative aspect-[5/4] w-full overflow-hidden rounded-3xl border border-emerald-900/30 bg-[#060c09] shadow-2xl shadow-emerald-900/20">
           <TreatmentZonesCanvas />
-          <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-200/85 backdrop-blur">
+          <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--pest-emerald)]/85 backdrop-blur">
             Live coverage
           </div>
         </div>
@@ -1096,7 +1132,7 @@ export function TreatmentZonesSection() {
 
 function ZoneLegend({ color, label }: { color: string; label: string }) {
   return (
-    <li className="flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-[13px] font-semibold text-slate-700">
+    <li className="flex items-center gap-3 rounded-full border border-[var(--pest-border)] bg-[var(--pest-bg-base)] px-4 py-2 text-[13px] font-semibold text-[var(--pest-text-soft)]">
       <span
         className="h-2.5 w-2.5 rounded-full"
         style={{ background: color, boxShadow: `0 0 12px ${color}` }}
@@ -1111,7 +1147,16 @@ function ZoneLegend({ color, label }: { color: string; label: string }) {
 export function PestTeaser({ id }: { id: string }) {
   const top = PEST_CATALOG.slice(0, 4);
   return (
-    <section className="relative overflow-hidden bg-[#060c09] py-20 text-white sm:py-28">
+    <section
+      className="relative overflow-hidden bg-[#060c09] py-20 text-white sm:py-28"
+      style={{
+        "--pest-emerald": "#6ee7b7",
+        "--pest-text-strong": "#ffffff",
+        "--pest-text-soft": "rgba(255, 255, 255, 0.85)",
+        "--pest-text-mid": "rgba(255, 255, 255, 0.65)",
+        "--pest-text-faint": "rgba(255, 255, 255, 0.5)",
+      } as React.CSSProperties}
+    >
       {/* Live detection grid overlay sets the mood for the pest callouts */}
       <div className="pointer-events-none absolute inset-0 opacity-70">
         <DetectionGridCanvas />
@@ -1119,11 +1164,11 @@ export function PestTeaser({ id }: { id: string }) {
       <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-300">
+            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--pest-emerald)]">
               Most flagged
             </div>
-            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-white sm:text-5xl">
-              What we&apos;re <span className="italic text-emerald-300">catching this season.</span>
+            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-[var(--pest-text-strong)] sm:text-5xl">
+              What we&apos;re <span className="italic text-[var(--pest-emerald)]">catching this season.</span>
             </h2>
           </div>
           <Link
@@ -1137,17 +1182,17 @@ export function PestTeaser({ id }: { id: string }) {
           {top.map((p) => (
             <article
               key={p.name}
-              className="group relative flex flex-col rounded-2xl border border-emerald-900/40 bg-[#0a1612]/70 p-6 backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-emerald-400/60 hover:bg-[#0a1612]"
+              className="group relative flex flex-col rounded-2xl border border-emerald-900/40 bg-[var(--pest-bg-accent)]/70 p-6 backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-emerald-400/60 hover:bg-[var(--pest-bg-accent)]"
             >
               <div className="flex items-center justify-between">
-                <span className="grid h-12 w-12 place-items-center rounded-xl bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30">
+                <span className="grid h-12 w-12 place-items-center rounded-xl bg-emerald-500/15 text-[var(--pest-emerald)] ring-1 ring-emerald-400/30">
                   {p.icon}
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-300/70">
+                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--pest-emerald)]/70">
                   {p.tier}
                 </span>
               </div>
-              <h3 className="mt-5 text-[17px] font-bold tracking-tight text-white">{p.name}</h3>
+              <h3 className="mt-5 text-[17px] font-bold tracking-tight text-[var(--pest-text-strong)]">{p.name}</h3>
               <p className="mt-2 text-[13px] leading-relaxed text-emerald-100/80">{p.body}</p>
             </article>
           ))}
@@ -1160,21 +1205,39 @@ export function PestTeaser({ id }: { id: string }) {
 // -------- Guarantee / pledge (home) --------
 
 export function GuaranteePledge() {
+  const { theme } = usePestTheme();
+  const isDark = theme === "dark";
+  const cardClass = isDark
+    ? "relative overflow-hidden rounded-3xl border border-emerald-400/30 bg-gradient-to-br from-emerald-950/40 via-slate-900 to-emerald-950/40 p-10 shadow-sm sm:p-14"
+    : "relative overflow-hidden rounded-3xl border border-emerald-700/30 bg-gradient-to-br from-emerald-50 via-[#fbf6e7] to-emerald-100 p-10 shadow-sm sm:p-14";
+  const shieldBubble = isDark
+    ? "absolute -right-10 -top-10 grid h-40 w-40 place-items-center rounded-full bg-emerald-500/20"
+    : "absolute -right-10 -top-10 grid h-40 w-40 place-items-center rounded-full bg-emerald-700/15";
+  const shieldIcon = isDark ? "h-16 w-16 text-emerald-300/80" : "h-16 w-16 text-emerald-700/80";
+  const eyebrow = isDark
+    ? "text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-300"
+    : "text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-800";
+  const titleClass = isDark
+    ? "mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-white sm:text-5xl"
+    : "mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-stone-900 sm:text-5xl";
+  const accentItalic = isDark ? "italic text-emerald-300" : "italic text-emerald-800";
+  const bodyClass = isDark
+    ? "mt-5 max-w-2xl text-[15.5px] leading-relaxed text-white/70"
+    : "mt-5 max-w-2xl text-[15.5px] leading-relaxed text-stone-700";
+
   return (
-    <section className="relative bg-white py-20 sm:py-28">
+    <section className="relative bg-[var(--pest-bg-accent)] py-20 sm:py-28">
       <div className="mx-auto max-w-5xl px-5 sm:px-8">
-        <div className="relative overflow-hidden rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 p-10 shadow-sm sm:p-14">
-          <div className="absolute -right-10 -top-10 grid h-40 w-40 place-items-center rounded-full bg-emerald-100/70">
-            <Shield className="h-16 w-16 text-emerald-600/80" />
+        <div className={cardClass}>
+          <div className={shieldBubble}>
+            <Shield className={shieldIcon} />
           </div>
           <div className="relative">
-            <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-700">
-              Our pledge
-            </div>
-            <h2 className="mt-3 max-w-2xl font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
-              If the pests come back, <span className="italic text-emerald-700">so do we.</span>
+            <div className={eyebrow}>Our pledge</div>
+            <h2 className={titleClass}>
+              If the pests come back, <span className={accentItalic}>so do we.</span>
             </h2>
-            <p className="mt-5 max-w-2xl text-[15.5px] leading-relaxed text-slate-600">
+            <p className={bodyClass}>
               Between scheduled visits, you get unlimited free re-treats. No trip fee, no deductible, no fine print. The only guarantee we know how to write is the one we&apos;d want as a homeowner ourselves.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -1190,8 +1253,13 @@ export function GuaranteePledge() {
 }
 
 function PledgeChip({ icon, label }: { icon: React.ReactNode; label: string }) {
+  const { theme } = usePestTheme();
+  const isDark = theme === "dark";
+  const chipClass = isDark
+    ? "inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-950/40 px-3.5 py-1.5 text-[12.5px] font-semibold text-emerald-300"
+    : "inline-flex items-center gap-1.5 rounded-full border border-emerald-700/30 bg-white/70 px-3.5 py-1.5 text-[12.5px] font-semibold text-emerald-800";
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-white px-3.5 py-1.5 text-[12.5px] font-semibold text-emerald-800">
+    <span className={chipClass}>
       {icon} {label}
     </span>
   );
@@ -1207,15 +1275,15 @@ export function FAQSection({
   if (faqs.length === 0) return null;
   const shown = faqs.slice(0, 6);
   return (
-    <section className="relative border-t border-slate-200 bg-slate-50 py-20 sm:py-28">
+    <section className="relative border-t border-[var(--pest-border)] bg-[var(--pest-bg-base)] py-20 sm:py-28">
       <div className="mx-auto max-w-4xl px-5 sm:px-8">
-        <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-600">
+        <div className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--pest-emerald)]">
           Questions we hear often
         </div>
-        <h2 className="mt-3 font-serif text-4xl font-normal leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
-          Straight answers, <span className="italic text-emerald-700">no jargon.</span>
+        <h2 className="mt-3 font-serif text-4xl font-normal leading-[1.05] tracking-tight text-[var(--pest-text-strong)] sm:text-5xl">
+          Straight answers, <span className="italic text-[var(--pest-emerald)]">no jargon.</span>
         </h2>
-        <div className="mt-10 divide-y divide-slate-200 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="mt-10 divide-y divide-slate-200 overflow-hidden rounded-3xl border border-[var(--pest-border)] bg-[var(--pest-bg-accent)] shadow-sm">
           {shown.map((f, i) => (
             <FAQRow key={i} q={f.q} a={f.a} defaultOpen={i === 0} />
           ))}
@@ -1240,14 +1308,14 @@ function FAQRow({
       open={defaultOpen}
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-left">
-        <span className="text-[15.5px] font-bold tracking-tight text-slate-900">
+        <span className="text-[15.5px] font-bold tracking-tight text-[var(--pest-text-strong)]">
           {q}
         </span>
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 transition group-open:rotate-45 group-open:bg-emerald-600 group-open:text-white">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-500/15 text-[var(--pest-emerald)] transition group-open:rotate-45 group-open:bg-emerald-600 group-open:text-[var(--pest-text-strong)]">
           <Plus className="h-4 w-4" />
         </span>
       </summary>
-      <p className="mt-3 text-[14.5px] leading-relaxed text-slate-600">{a}</p>
+      <p className="mt-3 text-[14.5px] leading-relaxed text-[var(--pest-text-mid)]">{a}</p>
     </details>
   );
 }
@@ -1285,17 +1353,17 @@ export function PestEditorial({
   businessName: string;
 }) {
   return (
-    <section className="relative bg-white">
+    <section className="relative bg-[var(--pest-bg-accent)]">
       <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 sm:px-8 md:grid-cols-[1.1fr_1fr] md:py-24">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.26em] text-emerald-600">
+          <p className="text-[11px] font-bold uppercase tracking-[0.26em] text-[var(--pest-emerald)]">
             Why it matters
           </p>
-          <h2 className="mt-4 font-serif text-[36px] leading-[1.05] tracking-tight text-slate-900 sm:text-[46px]">
+          <h2 className="mt-4 font-serif text-[36px] leading-[1.05] tracking-tight text-[var(--pest-text-strong)] sm:text-[46px]">
             Pests don&apos;t need an invitation —{" "}
-            <span className="italic text-emerald-700">they need an opening.</span>
+            <span className="italic text-[var(--pest-emerald)]">they need an opening.</span>
           </h2>
-          <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-slate-600">
+          <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-[var(--pest-text-mid)]">
             One unsealed dryer vent, a single hairline gap under the siding,
             standing water behind the AC pad — that&apos;s all it takes for
             a colony to move in. We find the openings, close them, and put a
@@ -1308,11 +1376,11 @@ export function PestEditorial({
                 key={p.label}
                 className="flex gap-3 border-l-2 border-emerald-500/60 pl-4"
               >
-                <div className="text-slate-700">
-                  <div className="text-[13px] font-bold uppercase tracking-[0.18em] text-slate-900">
+                <div className="text-[var(--pest-text-soft)]">
+                  <div className="text-[13px] font-bold uppercase tracking-[0.18em] text-[var(--pest-text-strong)]">
                     {p.label}
                   </div>
-                  <div className="mt-1 text-[13px] leading-relaxed text-slate-600">
+                  <div className="mt-1 text-[13px] leading-relaxed text-[var(--pest-text-mid)]">
                     {p.body}
                   </div>
                 </div>
@@ -1321,17 +1389,20 @@ export function PestEditorial({
           </ul>
         </div>
         <div className="relative">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
-            {gallery[0]?.src ? (
-              <SafeImg
-                src={gallery[0].src}
-                alt={gallery[0].alt || `${businessName} crew on site`}
-                className="h-full w-full object-cover"
-                defaultSrc={defaultGalleryAt(0)}
-              />
-            ) : (
-              <div className="h-full w-full bg-gradient-to-br from-emerald-50 to-emerald-100" />
-            )}
+          <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-[var(--pest-border)] bg-slate-800">
+            {/* Always render the bundled stand-in here — scraped gallery
+                photos rarely include a curated crew shot, so this slot is
+                reserved as the operator's "drop the real team photo here"
+                placeholder. Scraped images still surface in the RecentJobs
+                grid that uses the same gallery array. */}
+            <img
+              src="/pest-company.png"
+              alt={`${businessName} crew — sample photo`}
+              className="h-full w-full object-cover"
+            />
+            <div className="absolute left-3 top-3 rounded-full bg-black/55 px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-[0.22em] text-emerald-200 backdrop-blur">
+              Sample · replace with your team photo
+            </div>
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-emerald-950/90 via-emerald-950/40 to-transparent p-6">
               <p className="font-serif text-[15px] italic text-emerald-50">
                 &ldquo;We don&apos;t leave a property until the report,
@@ -1360,19 +1431,19 @@ export function RecentJobs({
 }) {
   if (gallery.length < 2) return null;
   return (
-    <section className="relative bg-slate-50">
+    <section className="relative bg-[var(--pest-bg-base)]">
       <div className="mx-auto max-w-7xl px-5 py-20 sm:px-8">
-        <p className="text-[11px] font-bold uppercase tracking-[0.26em] text-emerald-600">
+        <p className="text-[11px] font-bold uppercase tracking-[0.26em] text-[var(--pest-emerald)]">
           Recent service calls
         </p>
-        <h2 className="mt-3 font-serif text-[32px] leading-tight tracking-tight text-slate-900 sm:text-[40px]">
-          Routes we ran <span className="italic text-emerald-700">this season.</span>
+        <h2 className="mt-3 font-serif text-[32px] leading-tight tracking-tight text-[var(--pest-text-strong)] sm:text-[40px]">
+          Routes we ran <span className="italic text-[var(--pest-emerald)]">this season.</span>
         </h2>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {gallery.slice(0, 6).map((g, i) => (
             <figure
               key={`${g.src}-${i}`}
-              className={`relative overflow-hidden rounded-2xl border border-slate-200 bg-white ${
+              className={`relative overflow-hidden rounded-2xl border border-[var(--pest-border)] bg-[var(--pest-bg-accent)] ${
                 i === 0 ? "sm:col-span-2 sm:row-span-2" : ""
               }`}
             >

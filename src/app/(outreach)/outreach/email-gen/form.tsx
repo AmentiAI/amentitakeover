@@ -2,8 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, PenLine, Sparkles, LayoutTemplate } from "lucide-react";
+import { Loader2, PenLine, Sparkles, LayoutTemplate, Wand2 } from "lucide-react";
 import { TEMPLATE_CHOICES, type TemplateChoice } from "@/lib/site-url";
+import {
+  DEFAULT_CAMPAIGN_BODY,
+  DEMO_URL_TOKEN,
+  defaultCampaignSubject,
+} from "@/lib/default-campaign";
 
 type Candidate = {
   id: string;
@@ -53,21 +58,35 @@ export function EmailGenForm({ candidates }: { candidates: Candidate[] }) {
 
 function ComposeForm({ candidates }: { candidates: Candidate[] }) {
   const router = useRouter();
-  const [businessId, setBusinessId] = useState(candidates[0]?.id ?? "");
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
+  const first = candidates[0];
+  const [businessId, setBusinessId] = useState(first?.id ?? "");
+  const [subject, setSubject] = useState(defaultCampaignSubject(first?.name));
+  const [body, setBody] = useState(DEFAULT_CAMPAIGN_BODY);
   const [template, setTemplate] = useState<TemplateChoice>(
-    candidates[0]?.templateChoice ?? "site",
+    first?.templateChoice ?? "site",
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const selected = candidates.find((c) => c.id === businessId);
+  const hasInlineToken = body.includes(DEMO_URL_TOKEN);
 
   function pickBusiness(id: string) {
     setBusinessId(id);
     const c = candidates.find((x) => x.id === id);
-    if (c) setTemplate(c.templateChoice);
+    if (c) {
+      setTemplate(c.templateChoice);
+      // Refresh the subject to track the newly-picked business, but only when
+      // the user hasn't customized it away from the default for any candidate.
+      if (isDefaultSubjectForAny(subject, candidates)) {
+        setSubject(defaultCampaignSubject(c.name));
+      }
+    }
+  }
+
+  function applyDefault() {
+    setSubject(defaultCampaignSubject(selected?.name));
+    setBody(DEFAULT_CAMPAIGN_BODY);
   }
 
   async function submit(e: React.FormEvent) {
@@ -110,6 +129,19 @@ function ComposeForm({ candidates }: { candidates: Candidate[] }) {
         ))}
       </select>
       <TemplatePicker value={template} onChange={setTemplate} />
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          Default campaign
+        </span>
+        <button
+          type="button"
+          onClick={applyDefault}
+          className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] font-semibold text-slate-300 hover:border-indigo-600 hover:text-indigo-300"
+        >
+          <Wand2 className="h-3 w-3" />
+          Use default
+        </button>
+      </div>
       <input
         value={subject}
         onChange={(e) => setSubject(e.target.value)}
@@ -119,13 +151,20 @@ function ComposeForm({ candidates }: { candidates: Candidate[] }) {
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder={"Write your email…\n\nA link to the mockup we built will auto-append when you send."}
+        placeholder={`Write your email…\n\nDrop ${DEMO_URL_TOKEN} anywhere to inline the tracked mockup link, or leave it out and we'll append it as a P.S.`}
         rows={10}
         className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm leading-relaxed text-slate-200 placeholder:text-slate-500"
       />
       {selected && (
         <div className="rounded-md border border-slate-800 bg-slate-900/60 px-2.5 py-2 text-[11px] leading-snug text-slate-400">
-          We'll append the mockup link at the bottom when sending — the recipient will see the site you built for them.
+          {hasInlineToken ? (
+            <>
+              <code className="rounded bg-slate-800 px-1 py-px text-[10px] text-indigo-300">{DEMO_URL_TOKEN}</code>{" "}
+              will be replaced inline with the tracked mockup link when sending.
+            </>
+          ) : (
+            <>We'll append the mockup link at the bottom when sending — the recipient will see the site you built for them.</>
+          )}
         </div>
       )}
       {error && (
@@ -216,6 +255,16 @@ function AIForm({ candidates }: { candidates: Candidate[] }) {
       </button>
     </form>
   );
+}
+
+function isDefaultSubjectForAny(
+  subject: string,
+  candidates: Candidate[],
+): boolean {
+  const trimmed = subject.trim();
+  if (!trimmed) return true;
+  if (trimmed === defaultCampaignSubject(null).trim()) return true;
+  return candidates.some((c) => trimmed === defaultCampaignSubject(c.name).trim());
 }
 
 function TemplatePicker({

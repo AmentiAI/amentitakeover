@@ -20,6 +20,7 @@ import {
   Terminal,
   LayoutTemplate,
   ClipboardEdit,
+  Inbox,
   type LucideIcon,
 } from "lucide-react";
 
@@ -35,10 +36,11 @@ export const OUTREACH_NAV: OutreachNavGroup[] = [
   {
     label: "Data Scraping",
     items: [
+      { label: "Lead Generator", href: "/outreach/leads", icon: Sparkles },
       { label: "Scrape Map", href: "/outreach/scrape/map", icon: Map },
       { label: "Agent Details", href: "/outreach/scrape/agent", icon: UserCog },
       {
-        label: "Google Businesses",
+        label: "All Businesses",
         href: "/outreach/scrape/google",
         icon: Chrome,
       },
@@ -61,6 +63,7 @@ export const OUTREACH_NAV: OutreachNavGroup[] = [
       { label: "Email Generation", href: "/outreach/email-gen", icon: Mail },
       { label: "Email Campaigns", href: "/outreach/email-campaigns", icon: Send },
       { label: "Form Prefill", href: "/outreach/prefill", icon: ClipboardEdit },
+      { label: "Form Submissions", href: "/outreach/form-submissions", icon: Inbox },
     ],
   },
   {

@@ -398,6 +398,16 @@ const NON_SERVICE_PATTERNS = [
   /\d{3,}/, // phone numbers, zip codes
   /@/,
   /^(our services|services|what we do|products)$/i,
+  // Sidebar / footer / utility headings that look like service titles but
+  // aren't — these are the items that bleed in from a scraped site's chrome.
+  /^(subscribe|follow|share|sign\s*up)\b/i, // "Subscribe to Podcast"
+  /\b(additional|useful|related|quick|helpful)\s+links?\b/i, // "Additional Links"
+  /\b(service|coverage|delivery)\s+areas?\b/i, // "Pest Control Service Area"
+  /^(hours?|opening\s+hours?|business\s+hours?|office\s+hours?|store\s+hours?)\b[:\s]*$/i, // "Hours:"
+  /^(address|location|directions|find\s+us|visit\s+us|map)$/i, // "Address", "Map"
+  /^(podcast|newsletter|email\s+list|mailing\s+list|rss)\b/i, // "Podcast"
+  /^(socials?|social\s+media|follow\s+us|connect)\b/i, // "Social Media"
+  /^(copyright|all\s+rights|©)/i, // footer copyright stubs
 ];
 
 function extractServiceHeadings(texts: string[]): string[] {

@@ -1,8 +1,9 @@
 "use client";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, RefreshCcw, Star, Trash2 } from "lucide-react";
+import { ExternalLink, Loader2, RefreshCcw, Star, Trash2 } from "lucide-react";
 import { BusinessDrawer } from "@/components/business-drawer";
+import { defaultTemplateForBusiness } from "@/lib/site-url";
 
 export type Row = {
   id: string;
@@ -21,6 +22,10 @@ export type Row = {
   hasContactForm: boolean;
   formHasMessage: boolean;
   formCaptcha: string | null;
+  contentScore: { h1Count?: number; h2Count?: number; passed?: boolean } | null;
+  source: string;
+  cms: string | null;
+  yearsBehind: number | null;
 };
 
 export function BusinessTable({ businesses }: { businesses: Row[] }) {
@@ -113,6 +118,41 @@ export function BusinessTable({ businesses }: { businesses: Row[] }) {
     }
   }
 
+  function openDemosSelected() {
+    if (selected.size === 0) return;
+    const ids = Array.from(selected);
+    const idSet = new Set(ids);
+    const rows = businesses.filter((b) => idSet.has(b.id));
+    if (rows.length === 0) return;
+
+    // Browsers throttle window.open calls fired in a loop from a single user
+    // gesture. Confirm anything over a few tabs so the operator knows their
+    // pop-up blocker may need to allow the rest, and stagger the opens to
+    // give the browser room to honor each one.
+    if (
+      rows.length > 6 &&
+      !confirm(
+        `Open ${rows.length} demo sites in new tabs? Your browser may block some — you might need to allow pop-ups for this page.`,
+      )
+    ) {
+      return;
+    }
+
+    rows.forEach((b, i) => {
+      const template = defaultTemplateForBusiness({
+        industry: b.industry,
+        category: b.category,
+        name: b.name,
+      });
+      const url = `/p/${template}/${b.id}`;
+      // First tab opens immediately to preserve the user-gesture context;
+      // subsequent ones get a tiny delay so Chrome/Firefox don't lump them
+      // into "this page is opening too many windows."
+      if (i === 0) window.open(url, "_blank", "noopener,noreferrer");
+      else setTimeout(() => window.open(url, "_blank", "noopener,noreferrer"), i * 80);
+    });
+  }
+
   async function deleteSelected() {
     if (bulkBusy || selected.size === 0) return;
     const ids = Array.from(selected);
@@ -161,6 +201,15 @@ export function BusinessTable({ businesses }: { businesses: Row[] }) {
               className="rounded-md border border-slate-700 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-slate-800 disabled:opacity-50"
             >
               Clear
+            </button>
+            <button
+              onClick={openDemosSelected}
+              disabled={bulkBusy}
+              title="Open the generated demo site for each selected business in a new tab — uses the industry-locked template (pest, roofing, or general site) per row"
+              className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Open demos
             </button>
             <button
               onClick={rescrapeSelected}
@@ -244,7 +293,10 @@ export function BusinessTable({ businesses }: { businesses: Row[] }) {
                     />
                   </td>
                   <td className="px-3 py-2 font-medium text-slate-100">
-                    {b.name}
+                    <div className="flex items-center gap-2">
+                      <span>{b.name}</span>
+                      <SourcePill source={b.source} />
+                    </div>
                   </td>
                   <td className="px-3 py-2 text-slate-400">
                     {[b.city, b.state].filter(Boolean).join(", ") || "—"}
@@ -289,6 +341,39 @@ export function BusinessTable({ businesses }: { businesses: Row[] }) {
                       {b.hasContactForm && !b.formHasMessage && (
                         <Badge color="rose" title="Form has no message/textarea field — contact-info dropoff only">
                           no-msg
+                        </Badge>
+                      )}
+                      {b.contentScore && (
+                        b.contentScore.passed ? (
+                          <Badge
+                            color="emerald"
+                            title={`Homepage passes content check — h1=${b.contentScore.h1Count ?? "?"}, h2=${b.contentScore.h2Count ?? "?"}`}
+                          >
+                            Content ✓
+                          </Badge>
+                        ) : (
+                          <Badge
+                            color="rose"
+                            title={`Homepage fails content check — needs exactly 1 h1 + at least 3 h2 (got h1=${b.contentScore.h1Count ?? "?"}, h2=${b.contentScore.h2Count ?? "?"})`}
+                          >
+                            Content ✗
+                          </Badge>
+                        )
+                      )}
+                      {b.cms && (
+                        <Badge
+                          color="violet"
+                          title={`Built on ${b.cms}`}
+                        >
+                          {prettyCmsLabel(b.cms)}
+                        </Badge>
+                      )}
+                      {b.yearsBehind !== null && b.yearsBehind >= 2 && (
+                        <Badge
+                          color="rose"
+                          title={`Copyright is ${b.yearsBehind} years out of date — strong outreach hook`}
+                        >
+                          Stale ©
                         </Badge>
                       )}
                       {b.enriched && <Badge color="emerald">Enriched</Badge>}
@@ -352,6 +437,55 @@ function Badge({
       {children}
     </span>
   );
+}
+
+// Tiny chip showing where a row originated so the operator can see at a
+// glance which lead source brought a business in (Google Maps via SerpApi
+// = "google", OSM-imported via /outreach/leads = "osm-*", Foursquare bulk
+// import = "foursquare", manual add = "manual"). Click filters the table
+// to that source.
+function SourcePill({ source }: { source: string }) {
+  const display = source.startsWith("osm-")
+    ? `OSM · ${source.slice(4).replace(/-/g, " ")}`
+    : source === "google"
+      ? "Google"
+      : source === "foursquare"
+        ? "Foursquare"
+        : source === "manual"
+          ? "Manual"
+          : source;
+  const tone =
+    source === "google"
+      ? "bg-sky-500/10 text-sky-300 border-sky-500/30"
+      : source.startsWith("osm-")
+        ? "bg-violet-500/10 text-violet-300 border-violet-500/30"
+        : source === "foursquare"
+          ? "bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/30"
+          : "bg-slate-700/40 text-slate-300 border-slate-600/40";
+  return (
+    <a
+      href={`?source=${encodeURIComponent(source)}`}
+      title={`Filter to ${source}`}
+      className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] uppercase tracking-wider ${tone} hover:brightness-125`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {display}
+    </a>
+  );
+}
+
+function prettyCmsLabel(cms: string): string {
+  const map: Record<string, string> = {
+    wordpress: "WordPress",
+    wix: "Wix",
+    squarespace: "Squarespace",
+    shopify: "Shopify",
+    webflow: "Webflow",
+    godaddy: "GoDaddy",
+    duda: "Duda",
+    weebly: "Weebly",
+  };
+  return map[cms] ?? cms;
 }
 
 function ConfBar({ value }: { value: number }) {

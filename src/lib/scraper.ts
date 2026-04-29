@@ -22,6 +22,20 @@ export type ScrapeResult = {
   palette: string[];
   fonts: string[];
   forms: FormSchema[];
+  // Pass/fail snapshot of the homepage's heading hygiene. Pass = exactly
+  // one <h1> AND at least three <h2>s — a quick proxy for "this page is
+  // structured content, not a single hero with a contact button."
+  contentScore: ContentScore;
+  // Cheap-to-extract pitch signals — CMS, last-updated year, mobile flag,
+  // SEO completeness, analytics + booking + chat stack, schema.org,
+  // stock-photo count. See src/lib/site-signals.ts.
+  signals: import("./site-signals").SiteSignals;
+};
+
+export type ContentScore = {
+  h1Count: number;
+  h2Count: number;
+  passed: boolean;
 };
 
 // Captured shape of a `<form>` element on the page. We persist this so that
@@ -120,19 +134,96 @@ function isIrrelevantAsset(src: string, alt: string | null): boolean {
   return false;
 }
 
+// Thrown when a fetch hits a Cloudflare / WAF challenge page that gates
+// content behind a JS-solver. We can't get past this with plain fetch —
+// the operator gets a clear error message so they know to switch tactics
+// (headless browser, paid scraping API, manual visit).
+export class BotChallengeError extends Error {
+  constructor(public vendor: string, public url: string) {
+    super(`Blocked by ${vendor} bot challenge — site requires JS-solving browser to scrape (${url})`);
+    this.name = "BotChallengeError";
+  }
+}
+
+// Tries plain fetch first (cheap, fast). If we hit a bot challenge, falls
+// back to a headless browser that can execute the challenge JS. Set
+// SCRAPER_FORCE_BROWSER=1 to skip the fetch attempt entirely.
+async function fetchPageHtml(
+  inputUrl: string,
+): Promise<{ rawHtml: string; url: string; usedBrowser: boolean }> {
+  const requestUrl = normalizeUrl(inputUrl);
+  const forceBrowser = process.env.SCRAPER_FORCE_BROWSER === "1";
+
+  if (!forceBrowser) {
+    try {
+      // Lean on a real-browser header set so we don't get auto-flagged as
+      // a crawler by lightweight bot rules. Doesn't beat full JS
+      // challenges (those require a real browser), but gets us past the
+      // easy heuristics.
+      const res = await fetch(requestUrl, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
+          "Sec-CH-UA":
+            '"Chromium";v="124", "Google Chrome";v="124", "Not?A_Brand";v="99"',
+          "Sec-CH-UA-Mobile": "?0",
+          "Sec-CH-UA-Platform": '"macOS"',
+          "Sec-Fetch-Dest": "document",
+          "Sec-Fetch-Mode": "navigate",
+          "Sec-Fetch-Site": "none",
+          "Sec-Fetch-User": "?1",
+          "Upgrade-Insecure-Requests": "1",
+        },
+        redirect: "follow",
+      });
+      // Use the final URL after any redirect chain as the canonical
+      // origin. Critical for sites that redirect http→https or apex→www.
+      const url = res.url || requestUrl;
+
+      // Cloudflare's challenge response → fall through to browser.
+      if (res.status === 403 && /cloudflare/i.test(res.headers.get("server") ?? "")) {
+        throw new BotChallengeError("Cloudflare", url);
+      }
+      if (!res.ok) throw new Error(`Fetch failed (${res.status})`);
+
+      const rawHtml = await res.text();
+      if (
+        /<title>\s*Just a moment\.{2,}\s*<\/title>/i.test(rawHtml) ||
+        /challenge-platform|cf_chl_opt|_cf_chl_/i.test(rawHtml)
+      ) {
+        throw new BotChallengeError("Cloudflare", url);
+      }
+      if (/<title>\s*Access denied/i.test(rawHtml) && /perimeterx|akamai|incapsula|sucuri/i.test(rawHtml)) {
+        throw new BotChallengeError("WAF", url);
+      }
+      return { rawHtml, url, usedBrowser: false };
+    } catch (err) {
+      if (!(err instanceof BotChallengeError)) throw err;
+      // Fall through to browser path.
+    }
+  }
+
+  // Browser fallback — dynamic-imported so we only load Playwright when
+  // we actually need it (most scrapes never reach this branch).
+  const { fetchPageWithBrowser } = await import("./scraper-browser");
+  const r = await fetchPageWithBrowser(requestUrl);
+  // Even after the browser runs the challenge, if we still see the
+  // challenge title the solver couldn't get past — surface as a clean
+  // error rather than parsing the challenge HTML as content.
+  if (
+    /<title>\s*Just a moment\.{2,}\s*<\/title>/i.test(r.rawHtml) ||
+    /<title>\s*Attention Required/i.test(r.rawHtml)
+  ) {
+    throw new BotChallengeError("Cloudflare", r.finalUrl);
+  }
+  return { rawHtml: r.rawHtml, url: r.finalUrl, usedBrowser: true };
+}
+
 export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
-  const url = normalizeUrl(inputUrl);
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (compatible; AmentiAffiliateBot/1.0; +https://amentiaiaffiliates.online/bot)",
-      Accept:
-        "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    },
-    redirect: "follow",
-  });
-  if (!res.ok) throw new Error(`Fetch failed (${res.status})`);
-  const rawHtml = await res.text();
+  const { rawHtml, url } = await fetchPageHtml(inputUrl);
   const $ = cheerio.load(rawHtml);
 
   // Fetch a few same-origin stylesheets so we actually see the site's real
@@ -272,6 +363,27 @@ export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
   const palette = extractPalette(rawHtml + "\n" + cssBlob);
   const fonts = extractFonts(rawHtml + "\n" + cssBlob);
 
+  // Heading-hygiene pass/fail snapshot of the page. Lives at the page
+  // level (homepage gets the meaningful score in deep-scrape) — the
+  // criteria match an "is this a real content page, not just a hero +
+  // contact button" rubric.
+  const h1Count = headings.filter((h) => h.tag === "h1").length;
+  const h2Count = headings.filter((h) => h.tag === "h2").length;
+  const contentScore: ContentScore = {
+    h1Count,
+    h2Count,
+    passed: h1Count === 1 && h2Count >= 3,
+  };
+
+  // Outreach-personalization signals derived from the same HTML we
+  // already parsed — runs inline so we never touch the network for it.
+  const { extractSignals } = await import("./site-signals");
+  const signals = extractSignals(
+    $,
+    rawHtml,
+    images.map((i) => i.src),
+  );
+
   return {
     url,
     title,
@@ -287,6 +399,8 @@ export async function scrapeSite(inputUrl: string): Promise<ScrapeResult> {
     palette,
     fonts,
     forms,
+    contentScore,
+    signals,
   };
 }
 
@@ -478,6 +592,7 @@ async function fetchText(url: string, maxBytes: number): Promise<string> {
     const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; SignullBot/1.0)" },
       signal: ctrl.signal,
+      redirect: "follow",
     });
     if (!res.ok) return "";
     const text = await res.text();
