@@ -14,10 +14,24 @@ const PUBLIC_PREFIXES = [
   "/favicon.ico",
 ];
 
+// Endpoints that bypass auth ONLY in dev. Used so a script can curl the
+// dry-run-aggregate endpoint without juggling session cookies during local
+// prefill iteration. Production NODE_ENV stays fully gated.
+const DEV_ONLY_PUBLIC_PREFIXES = [
+  "/api/outreach/form-submissions/dry-run-aggregate",
+];
+
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (PUBLIC_PREFIXES.some((p) => pathname === p.replace(/\/$/, "") || pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
+  if (
+    process.env.NODE_ENV !== "production" &&
+    DEV_ONLY_PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))
+  ) {
     return NextResponse.next();
   }
 

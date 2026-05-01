@@ -17,7 +17,8 @@
     "pestworld": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/fetch-pestworld.ts",
     "leads:findsite": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/find-missing-websites.ts",
     "campaigns:seed-default": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/seed-default-campaign.ts",
-    "dedupe:domains": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/archive-domain-dupes.ts"
+    "dedupe:domains": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/archive-domain-dupes.ts",
+    "dry-run-fields": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/dry-run-fields.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

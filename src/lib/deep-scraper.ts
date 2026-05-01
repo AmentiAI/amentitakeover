@@ -257,6 +257,57 @@ export async function deepScrapeSite(inputUrl: string): Promise<DeepScrapeResult
   };
 }
 
+// Drops forms that look like the site's WordPress / theme search box rather
+// than a real contact form. When a domain has no real contact form we'd
+// otherwise rank a single-input search box as the "best" candidate, which
+// then gets piped into form-submissions and shows up as a permanent
+// "unmapped field" gap because we'd never want to submit our pitch into
+// somebody's site search anyway.
+function looksLikeSearchForm(
+  form: ScrapeResult["forms"][number],
+): boolean {
+  // Visible (non-hidden) fields are what defines a form's purpose.
+  const visible = form.fields.filter((f) => f.type !== "hidden");
+  if (visible.length === 0) return false;
+
+  const SEARCH_NAMES = new Set([
+    "s",
+    "q",
+    "search",
+    "search_input",
+    "search-query",
+    "searchterm",
+    "search_term",
+    "keyword",
+    "keywords",
+    "query",
+  ]);
+  const searchish = visible.filter(
+    (f) =>
+      f.type === "search" ||
+      SEARCH_NAMES.has((f.name ?? "").toLowerCase()) ||
+      /(^|[^a-z])search([^a-z]|$)/i.test(`${f.name ?? ""} ${f.label ?? ""} ${f.placeholder ?? ""}`),
+  );
+
+  // Search forms are almost always: 1–2 visible inputs total, all of them
+  // search-shaped, GET method. Multi-field forms (name + email + message)
+  // are real contact forms even if one field happens to mention "search."
+  if (visible.length <= 2 && searchish.length === visible.length) return true;
+
+  // Fallback signal: GET method + search action path + only one visible
+  // input. Catches Wix/Squarespace generic search modules whose input name
+  // doesn't follow the WP `s` convention.
+  if (
+    form.method === "GET" &&
+    visible.length === 1 &&
+    /\bsearch\b/i.test(form.action ?? "")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 function pickBestContactForm(
   forms: (ScrapeResult["forms"][number] & {
     pageUrl: string;
@@ -265,16 +316,21 @@ function pickBestContactForm(
 ): DeepScrapeResult["contactForm"] {
   if (!forms.length) return null;
 
+  // Filter out site search boxes before ranking — they otherwise win when
+  // a site has no real contact form on the crawled pages.
+  const nonSearch = forms.filter((f) => !looksLikeSearchForm(f));
+  if (nonSearch.length === 0) return null;
+
   // Hard preference: if any form on any crawled page has a real <textarea>
   // field, only those are eligible. A contact page with just name/email/phone
   // (no message box) shouldn't beat a homepage form that actually lets a
   // visitor write us a message — even though it's "more contact-y" by URL.
   // Only when zero forms have a textarea do we fall back to keyword-matched
   // message fields and finally everything else.
-  const withTextarea = forms.filter((f) =>
+  const withTextarea = nonSearch.filter((f) =>
     f.fields.some((field) => field.type === "textarea"),
   );
-  const pool = withTextarea.length > 0 ? withTextarea : forms;
+  const pool = withTextarea.length > 0 ? withTextarea : nonSearch;
 
   const ranked = pool
     .map((f) => ({

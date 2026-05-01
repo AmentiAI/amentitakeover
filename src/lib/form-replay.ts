@@ -37,6 +37,11 @@ export type SubmitInput = {
   // Override the User-Agent we send. Defaults to a desktop Chrome string
   // because some WAFs reject blank or bot UAs outright.
   userAgent?: string;
+  // True = build the request and report what would be sent / what's still
+  // missing, but skip the actual outbound POST. The caller must NOT see a
+  // delivery on the prospect's side. Used by the bulk dry-run + prefill
+  // gap-finder flow.
+  dryRun?: boolean;
 };
 
 export type SubmitResult = {
@@ -85,6 +90,22 @@ export async function submitContactForm(
   const unmatchedRequiredFields = form.fields
     .filter((f) => f.required && !(f.name in data))
     .map((f) => ({ name: f.name, type: f.type, label: f.label }));
+
+  // Dry-run short-circuit. Returns what *would* be sent so the caller can
+  // diff submitted vs. unmatched fields without delivering anything to the
+  // prospect. Critical that this lives BEFORE any fetch() to the form's
+  // action URL — the previous "dry-run" path still POSTed.
+  if (input.dryRun) {
+    return {
+      ok: true,
+      httpStatus: 0,
+      finalUrl: null,
+      bodyPreview: "",
+      submittedFields,
+      unmatchedRequiredFields,
+      refreshedHidden,
+    };
+  }
 
   const isMultipart = (form.encoding ?? "").toLowerCase().includes("multipart");
   const ua = input.userAgent ?? DEFAULT_UA;

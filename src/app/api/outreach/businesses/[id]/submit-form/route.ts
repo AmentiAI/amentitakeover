@@ -6,6 +6,7 @@ import {
   type StoredContactForm,
   type SubmitInput,
 } from "@/lib/form-replay";
+import { loadPrefillAsSubmitInput } from "@/lib/prefill-loader";
 
 export const maxDuration = 60;
 
@@ -46,7 +47,11 @@ export async function POST(
     );
   }
 
-  const input: SubmitInput = {
+  // Merge the saved prefill row with any caller-supplied overrides so a
+  // bare `{ dryRun: true }` POST still gets sensible name/email/phone/etc.
+  // — the single-row UI can keep passing fully-populated SubmitInputs and
+  // those still win key-by-key.
+  const input = await loadPrefillAsSubmitInput({
     name: body.name,
     email: body.email,
     phone: body.phone,
@@ -55,7 +60,7 @@ export async function POST(
     fieldValues: body.fieldValues,
     refresh: body.refresh,
     userAgent: body.userAgent,
-  };
+  });
 
   const startedAt = Date.now();
   await log.info("form.submit_started", `Submitting contact form for ${b.name}`, {
@@ -76,7 +81,11 @@ export async function POST(
   // Dry-run: build the request but don't actually POST. Returns the
   // mapping so the caller can verify what would be sent before going live.
   if (body.dryRun) {
-    const dummy = await submitContactForm(form, { ...input, refresh: false });
+    const dummy = await submitContactForm(form, {
+      ...input,
+      refresh: false,
+      dryRun: true,
+    });
     await log.info("form.dry_run", "Dry-run produced field mapping", {
       submittedFields: dummy.submittedFields,
       unmatchedRequiredFields: dummy.unmatchedRequiredFields,
